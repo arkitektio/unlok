@@ -115,7 +115,6 @@ def test_every_operation_is_a_method_of_the_client() -> None:
 
     assert isinstance(service, UnlokApi)
     assert callable(service.aget_service) and callable(service.list_services)
-    # A kontext that answers for itself, so actions can be handed it.
 
 
 @pytest.mark.asyncio
