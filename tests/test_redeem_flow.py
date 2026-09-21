@@ -43,7 +43,7 @@ def test_minted_token_is_pinned_and_unredeemed(deployed_app: DeployedUnlok, unlo
     [
         ({"identifier": "com.example.other"}, "pinned to app"),
         ({"version": "2.0.0"}, "pinned to version"),
-        ({"device_id": "node-b"}, "different node"),
+        ({"device_id": "node-b"}, "different device"),
         ({"scopes": ["write"]}, "does not authorize the scope"),
     ],
 )
