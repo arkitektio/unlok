@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
 
     # `uv run pytest` below has no marker filter, so it runs the integration
-    # tests too, against docker-compose's `jhnnsrs/lok:${LOK_SERVICE_TAG:-next}`.
+    # tests too, against docker-compose's `jhnnsrs/lok:${LOK_SERVICE_TAG:-latest}`.
     env:
       LOK_SERVICE_TAG: next
 
