@@ -2,9 +2,7 @@ from datetime import datetime
 from enum import Enum
 from pydantic import AliasChoices, BaseModel, ConfigDict, Field
 from rath.scalars import ID, IDCoercible
-from typing import Annotated, Any, AsyncIterator, Iterable, Iterator, Literal
-from unlok.funcs import aexecute, asubscribe, execute, subscribe
-from unlok.rath import UnlokRath
+from typing import Annotated, Any, Iterable, Literal
 
 
 class GraphQLDefault:
@@ -54,15 +52,6 @@ class ClientRole(str, Enum):
 
     INTERFACE = "INTERFACE"
     AGENT = "AGENT"
-    __str__ = str.__str__
-
-
-class DescendantKind(str, Enum):
-    """The Kind of a Descendant"""
-
-    LEAF = "LEAF"
-    MENTION = "MENTION"
-    PARAGRAPH = "PARAGRAPH"
     __str__ = str.__str__
 
 
@@ -196,21 +185,6 @@ class CreateServiceInstanceInput(BaseModel):
         serialization_alias="deniedUsers",
         default=None,
     )
-    model_config = ConfigDict(
-        frozen=True, extra="forbid", populate_by_name=True, use_enum_values=True
-    )
-
-
-class DescendantInput(BaseModel):
-    """No documentation"""
-
-    kind: DescendantKind
-    children: tuple["DescendantInput", ...] | None = None
-    user: str | None = None
-    bold: bool | None = None
-    italic: bool | None = None
-    code: bool | None = None
-    text: str | None = None
     model_config = ConfigDict(
         frozen=True, extra="forbid", populate_by_name=True, use_enum_values=True
     )
@@ -509,17 +483,6 @@ class ServiceReleaseFilter(BaseModel):
     )
 
 
-class StashItemInput(BaseModel):
-    """No documentation"""
-
-    identifier: str
-    description: str | None = None
-    object: str
-    model_config = ConfigDict(
-        frozen=True, extra="forbid", populate_by_name=True, use_enum_values=True
-    )
-
-
 class StrFilterLookup(BaseModel):
     """No documentation"""
 
@@ -712,7 +675,6 @@ class ListClientUser(BaseModel):
 
     All users can have social accounts associated with them. These are used to authenticate the user with external services,
     such as ORCID or GitHub.
-
     """
 
     typename: Literal["User"] = Field(alias="__typename", default="User", exclude=True)
@@ -804,101 +766,6 @@ class ListClient(BaseModel):
         type = "Client"
 
 
-class Leaf(BaseModel):
-    """A leaf of text. This is the most basic descendant and always ends a tree."""
-
-    typename: Literal["LeafDescendant"] = Field(
-        alias="__typename", default="LeafDescendant", exclude=True
-    )
-    bold: bool | None = Field(default=None)
-    italic: bool | None = Field(default=None)
-    code: bool | None = Field(default=None)
-    text: str | None = Field(default=None)
-    model_config = ConfigDict(frozen=True)
-
-    class Meta:
-        """Meta class for Leaf"""
-
-        document = "fragment Leaf on LeafDescendant {\n  bold\n  italic\n  code\n  text\n  __typename\n}"
-        name = "Leaf"
-        type = "LeafDescendant"
-
-
-class CommentUserProfileAvatar(BaseModel):
-    """Small helper around S3-backed stored objects.
-
-    Provides convenience helpers for generating presigned URLs and
-    uploading content."""
-
-    typename: Literal["MediaStore"] = Field(
-        alias="__typename", default="MediaStore", exclude=True
-    )
-    presigned_url: str = Field(alias="presignedUrl")
-    model_config = ConfigDict(frozen=True)
-
-
-class CommentUserProfile(BaseModel):
-    """
-    A Profile of a User. A Profile can be used to display personalised information about a user,
-    such as a display name, a short bio and an avatar.
-    """
-
-    typename: Literal["Profile"] = Field(
-        alias="__typename", default="Profile", exclude=True
-    )
-    avatar: CommentUserProfileAvatar | None = Field(default=None)
-    "The avatar of the user"
-    model_config = ConfigDict(frozen=True)
-
-
-class CommentUser(BaseModel):
-    """
-    A User is a person that can log in to the system. They are uniquely identified by their username.
-    And can have an email address associated with them (but don't have to).
-
-    A user can be assigned to groups and has a profile that can be used to display information about them.
-    Detail information about a user can be found in the profile.
-
-    All users can have social accounts associated with them. These are used to authenticate the user with external services,
-    such as ORCID or GitHub.
-
-    """
-
-    typename: Literal["User"] = Field(alias="__typename", default="User", exclude=True)
-    id: ID
-    username: str
-    "Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only."
-    avatar: str | None = Field(default=None)
-    profile: CommentUserProfile
-    model_config = ConfigDict(frozen=True)
-
-    class Meta:
-        """Meta class for CommentUser"""
-
-        document = "fragment CommentUser on User {\n  id\n  username\n  avatar\n  profile {\n    avatar {\n      presignedUrl\n      __typename\n    }\n    __typename\n  }\n  __typename\n}"
-        name = "CommentUser"
-        type = "User"
-
-
-class Paragraph(BaseModel):
-    """A Paragraph of text"""
-
-    typename: Literal["ParagraphDescendant"] = Field(
-        alias="__typename", default="ParagraphDescendant", exclude=True
-    )
-    size: str | None = Field(default=None)
-    model_config = ConfigDict(frozen=True)
-
-    class Meta:
-        """Meta class for Paragraph"""
-
-        document = (
-            "fragment Paragraph on ParagraphDescendant {\n  size\n  __typename\n}"
-        )
-        name = "Paragraph"
-        type = "ParagraphDescendant"
-
-
 class PresignedPostCredentials(BaseModel):
     """Temporary Credentials for a file upload that can be used by a Client (e.g. in a python datalayer)"""
 
@@ -940,8 +807,7 @@ class ListGroupProfileAvatar(BaseModel):
 class ListGroupProfile(BaseModel):
     """
     A Profile of a Group. A GroupProfile can be used to display information about a group,
-    such as a display name, a short bio and an avatar.
-    """
+    such as a display name, a short bio and an avatar."""
 
     typename: Literal["GroupProfile"] = Field(
         alias="__typename", default="GroupProfile", exclude=True
@@ -992,8 +858,7 @@ class GroupProfileAvatar(BaseModel):
 class GroupProfile(BaseModel):
     """
     A Profile of a Group. A GroupProfile can be used to display information about a group,
-    such as a display name, a short bio and an avatar.
-    """
+    such as a display name, a short bio and an avatar."""
 
     typename: Literal["GroupProfile"] = Field(
         alias="__typename", default="GroupProfile", exclude=True
@@ -1103,8 +968,7 @@ class ProfileAvatar(BaseModel):
 class Profile(BaseModel):
     """
     A Profile of a User. A Profile can be used to display personalised information about a user,
-    such as a display name, a short bio and an avatar.
-    """
+    such as a display name, a short bio and an avatar."""
 
     typename: Literal["Profile"] = Field(
         alias="__typename", default="Profile", exclude=True
@@ -1134,7 +998,6 @@ class ListRedeemTokenUser(BaseModel):
 
     All users can have social accounts associated with them. These are used to authenticate the user with external services,
     such as ORCID or GitHub.
-
     """
 
     typename: Literal["User"] = Field(alias="__typename", default="User", exclude=True)
@@ -1219,7 +1082,6 @@ class DetailRedeemTokenUser(BaseModel):
 
     All users can have social accounts associated with them. These are used to authenticate the user with external services,
     such as ORCID or GitHub.
-
     """
 
     typename: Literal["User"] = Field(alias="__typename", default="User", exclude=True)
@@ -1375,72 +1237,6 @@ class ListServiceRelease(BaseModel):
         type = "ServiceRelease"
 
 
-class StashOwner(BaseModel):
-    """
-    A User is a person that can log in to the system. They are uniquely identified by their username.
-    And can have an email address associated with them (but don't have to).
-
-    A user can be assigned to groups and has a profile that can be used to display information about them.
-    Detail information about a user can be found in the profile.
-
-    All users can have social accounts associated with them. These are used to authenticate the user with external services,
-    such as ORCID or GitHub.
-
-    """
-
-    typename: Literal["User"] = Field(alias="__typename", default="User", exclude=True)
-    id: ID
-    username: str
-    "Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only."
-    model_config = ConfigDict(frozen=True)
-
-
-class Stash(BaseModel):
-    """
-    A Stash
-    """
-
-    typename: Literal["Stash"] = Field(
-        alias="__typename", default="Stash", exclude=True
-    )
-    id: ID
-    name: str
-    description: str | None = Field(default=None)
-    created_at: datetime = Field(alias="createdAt")
-    updated_at: datetime = Field(alias="updatedAt")
-    owner: StashOwner
-    "The owner of the stash"
-    model_config = ConfigDict(frozen=True)
-
-    class Meta:
-        """Meta class for Stash"""
-
-        document = "fragment Stash on Stash {\n  id\n  name\n  description\n  createdAt\n  updatedAt\n  owner {\n    id\n    username\n    __typename\n  }\n  __typename\n}"
-        name = "Stash"
-        type = "Stash"
-
-
-class StashItem(BaseModel):
-    """
-    A stashed item
-    """
-
-    typename: Literal["StashItem"] = Field(
-        alias="__typename", default="StashItem", exclude=True
-    )
-    id: ID
-    identifier: str
-    object: str
-    model_config = ConfigDict(frozen=True)
-
-    class Meta:
-        """Meta class for StashItem"""
-
-        document = "fragment StashItem on StashItem {\n  id\n  identifier\n  object\n  __typename\n}"
-        name = "StashItem"
-        type = "StashItem"
-
-
 class ListUser(BaseModel):
     """
     A User is a person that can log in to the system. They are uniquely identified by their username.
@@ -1451,7 +1247,6 @@ class ListUser(BaseModel):
 
     All users can have social accounts associated with them. These are used to authenticate the user with external services,
     such as ORCID or GitHub.
-
     """
 
     typename: Literal["User"] = Field(alias="__typename", default="User", exclude=True)
@@ -1482,7 +1277,6 @@ class MeUser(BaseModel):
 
     All users can have social accounts associated with them. These are used to authenticate the user with external services,
     such as ORCID or GitHub.
-
     """
 
     typename: Literal["User"] = Field(alias="__typename", default="User", exclude=True)
@@ -1577,23 +1371,6 @@ class DetailRelease(BaseModel):
         type = "Release"
 
 
-class Mention(BaseModel):
-    """A mention of a user"""
-
-    typename: Literal["MentionDescendant"] = Field(
-        alias="__typename", default="MentionDescendant", exclude=True
-    )
-    user: CommentUser | None = Field(default=None)
-    model_config = ConfigDict(frozen=True)
-
-    class Meta:
-        """Meta class for Mention"""
-
-        document = "fragment CommentUser on User {\n  id\n  username\n  avatar\n  profile {\n    avatar {\n      presignedUrl\n      __typename\n    }\n    __typename\n  }\n  __typename\n}\n\nfragment Mention on MentionDescendant {\n  user {\n    ...CommentUser\n    __typename\n  }\n  __typename\n}"
-        name = "Mention"
-        type = "MentionDescendant"
-
-
 class DetailUserGroups(BaseModel):
     """
     A Group is the base unit of Role Based Access Control. A Group can have many users and many permissions. A user can have many groups. A user with a group that has a permission can perform the action that the permission allows.
@@ -1618,7 +1395,6 @@ class DetailUser(BaseModel):
 
     All users can have social accounts associated with them. These are used to authenticate the user with external services,
     such as ORCID or GitHub.
-
     """
 
     typename: Literal["User"] = Field(alias="__typename", default="User", exclude=True)
@@ -1663,25 +1439,6 @@ class ListService(BaseModel):
         document = "fragment ListServiceRelease on ServiceRelease {\n  id\n  service {\n    id\n    name\n    __typename\n  }\n  version\n  __typename\n}\n\nfragment ListService on Service {\n  identifier\n  id\n  name\n  releases {\n    ...ListServiceRelease\n    __typename\n  }\n  __typename\n}"
         name = "ListService"
         type = "Service"
-
-
-class ListStash(Stash, BaseModel):
-    """
-    A Stash
-    """
-
-    typename: Literal["Stash"] = Field(
-        alias="__typename", default="Stash", exclude=True
-    )
-    items: tuple[StashItem, ...]
-    model_config = ConfigDict(frozen=True)
-
-    class Meta:
-        """Meta class for ListStash"""
-
-        document = "fragment Stash on Stash {\n  id\n  name\n  description\n  createdAt\n  updatedAt\n  owner {\n    id\n    username\n    __typename\n  }\n  __typename\n}\n\nfragment StashItem on StashItem {\n  id\n  identifier\n  object\n  __typename\n}\n\nfragment ListStash on Stash {\n  ...Stash\n  items {\n    ...StashItem\n    __typename\n  }\n  __typename\n}"
-        name = "ListStash"
-        type = "Stash"
 
 
 class DetailGroup(BaseModel):
@@ -1765,171 +1522,6 @@ class DetailApp(BaseModel):
         type = "App"
 
 
-class DescendantChildrenChildrenBase(BaseModel):
-    """A descendant of a comment. Descendend are used to render rich text in the frontend."""
-
-    kind: DescendantKind
-    unsafe_children: tuple[Any, ...] | None = Field(
-        default=None, alias="unsafeChildren"
-    )
-    "Unsafe children are not typed and fall back to json. This is a workaround if queries get too complex."
-    model_config = ConfigDict(frozen=True)
-
-
-class DescendantChildrenChildrenBaseLeafDescendant(
-    Leaf, DescendantChildrenChildrenBase, BaseModel
-):
-    """A leaf of text. This is the most basic descendant and always ends a tree."""
-
-    typename: Literal["LeafDescendant"] = Field(
-        alias="__typename", default="LeafDescendant", exclude=True
-    )
-
-
-class DescendantChildrenChildrenBaseMentionDescendant(
-    Mention, DescendantChildrenChildrenBase, BaseModel
-):
-    """A mention of a user"""
-
-    typename: Literal["MentionDescendant"] = Field(
-        alias="__typename", default="MentionDescendant", exclude=True
-    )
-
-
-class DescendantChildrenChildrenBaseParagraphDescendant(
-    Paragraph, DescendantChildrenChildrenBase, BaseModel
-):
-    """A Paragraph of text"""
-
-    typename: Literal["ParagraphDescendant"] = Field(
-        alias="__typename", default="ParagraphDescendant", exclude=True
-    )
-
-
-class DescendantChildrenChildrenBaseCatchAll(DescendantChildrenChildrenBase, BaseModel):
-    """Catch all class for DescendantChildrenChildrenBase"""
-
-    typename: str = Field(alias="__typename", exclude=True)
-
-
-class DescendantChildrenBase(BaseModel):
-    """A descendant of a comment. Descendend are used to render rich text in the frontend."""
-
-    kind: DescendantKind
-    children: (
-        tuple[
-            Annotated[
-                DescendantChildrenChildrenBaseLeafDescendant
-                | DescendantChildrenChildrenBaseMentionDescendant
-                | DescendantChildrenChildrenBaseParagraphDescendant,
-                Field(discriminator="typename"),
-            ]
-            | DescendantChildrenChildrenBaseCatchAll,
-            ...,
-        ]
-        | None
-    ) = Field(default=None)
-    model_config = ConfigDict(frozen=True)
-
-
-class DescendantChildrenBaseLeafDescendant(Leaf, DescendantChildrenBase, BaseModel):
-    """A leaf of text. This is the most basic descendant and always ends a tree."""
-
-    typename: Literal["LeafDescendant"] = Field(
-        alias="__typename", default="LeafDescendant", exclude=True
-    )
-
-
-class DescendantChildrenBaseMentionDescendant(
-    Mention, DescendantChildrenBase, BaseModel
-):
-    """A mention of a user"""
-
-    typename: Literal["MentionDescendant"] = Field(
-        alias="__typename", default="MentionDescendant", exclude=True
-    )
-
-
-class DescendantChildrenBaseParagraphDescendant(
-    Paragraph, DescendantChildrenBase, BaseModel
-):
-    """A Paragraph of text"""
-
-    typename: Literal["ParagraphDescendant"] = Field(
-        alias="__typename", default="ParagraphDescendant", exclude=True
-    )
-
-
-class DescendantChildrenBaseCatchAll(DescendantChildrenBase, BaseModel):
-    """Catch all class for DescendantChildrenBase"""
-
-    typename: str = Field(alias="__typename", exclude=True)
-
-
-class DescendantBase(BaseModel):
-    """A descendant of a comment. Descendend are used to render rich text in the frontend."""
-
-    kind: DescendantKind
-    children: (
-        tuple[
-            Annotated[
-                DescendantChildrenBaseLeafDescendant
-                | DescendantChildrenBaseMentionDescendant
-                | DescendantChildrenBaseParagraphDescendant,
-                Field(discriminator="typename"),
-            ]
-            | DescendantChildrenBaseCatchAll,
-            ...,
-        ]
-        | None
-    ) = Field(default=None)
-
-
-class DescendantCatch(DescendantBase):
-    """Catch all class for DescendantBase"""
-
-    typename: str = Field(alias="__typename", exclude=True)
-    "A descendant of a comment. Descendend are used to render rich text in the frontend."
-    kind: DescendantKind
-    children: (
-        tuple[
-            Annotated[
-                DescendantChildrenBaseLeafDescendant
-                | DescendantChildrenBaseMentionDescendant
-                | DescendantChildrenBaseParagraphDescendant,
-                Field(discriminator="typename"),
-            ]
-            | DescendantChildrenBaseCatchAll,
-            ...,
-        ]
-        | None
-    ) = Field(default=None)
-
-
-class DescendantLeafDescendant(Leaf, DescendantBase, BaseModel):
-    """A leaf of text. This is the most basic descendant and always ends a tree."""
-
-    typename: Literal["LeafDescendant"] = Field(
-        alias="__typename", default="LeafDescendant", exclude=True
-    )
-
-
-class DescendantMentionDescendant(Mention, DescendantBase, BaseModel):
-    """A mention of a user"""
-
-    typename: Literal["MentionDescendant"] = Field(
-        alias="__typename", default="MentionDescendant", exclude=True
-    )
-
-
-class DescendantParagraphDescendant(Paragraph, DescendantBase, BaseModel):
-    """A Paragraph of text"""
-
-    typename: Literal["ParagraphDescendant"] = Field(
-        alias="__typename", default="ParagraphDescendant", exclude=True
-    )
-
-
 class ServiceReleaseService(BaseModel):
     """A Service is a Webservice that a Client might want to access. It is not the configured instance of the service, but the service itself."""
 
@@ -1990,113 +1582,6 @@ class ListServiceInstanceMapping(BaseModel):
         type = "ServiceInstanceMapping"
 
 
-class SubthreadCommentParent(BaseModel):
-    """Comments represent the comments of a user on a specific data item
-    tart are identified by the unique combination of `identifier` and `object`.
-    E.g a comment for an Image on the Mikro services would be serverd as
-    `@mikro/image:imageID`.
-
-    Comments always belong to the user that created it. Comments in threads
-    get a parent attribute set, that points to the immediate parent.
-
-    Each comment contains multiple descendents, that make up a *rich* representation
-    of the underlying comment data including potential mentions, or links, or
-    paragraphs."""
-
-    typename: Literal["Comment"] = Field(
-        alias="__typename", default="Comment", exclude=True
-    )
-    id: ID
-    model_config = ConfigDict(frozen=True)
-
-
-class SubthreadCommentDescendantsBase(BaseModel):
-    """A descendant of a comment. Descendend are used to render rich text in the frontend."""
-
-    model_config = ConfigDict(frozen=True)
-
-
-class SubthreadCommentDescendantsBaseLeafDescendant(
-    DescendantLeafDescendant, SubthreadCommentDescendantsBase, BaseModel
-):
-    """A leaf of text. This is the most basic descendant and always ends a tree."""
-
-    typename: Literal["LeafDescendant"] = Field(
-        alias="__typename", default="LeafDescendant", exclude=True
-    )
-
-
-class SubthreadCommentDescendantsBaseMentionDescendant(
-    DescendantMentionDescendant, SubthreadCommentDescendantsBase, BaseModel
-):
-    """A mention of a user"""
-
-    typename: Literal["MentionDescendant"] = Field(
-        alias="__typename", default="MentionDescendant", exclude=True
-    )
-
-
-class SubthreadCommentDescendantsBaseParagraphDescendant(
-    DescendantParagraphDescendant, SubthreadCommentDescendantsBase, BaseModel
-):
-    """A Paragraph of text"""
-
-    typename: Literal["ParagraphDescendant"] = Field(
-        alias="__typename", default="ParagraphDescendant", exclude=True
-    )
-
-
-class SubthreadCommentDescendantsBaseCatchAll(
-    SubthreadCommentDescendantsBase, BaseModel
-):
-    """Catch all class for SubthreadCommentDescendantsBase"""
-
-    typename: str = Field(alias="__typename", exclude=True)
-
-
-class SubthreadComment(BaseModel):
-    """Comments represent the comments of a user on a specific data item
-    tart are identified by the unique combination of `identifier` and `object`.
-    E.g a comment for an Image on the Mikro services would be serverd as
-    `@mikro/image:imageID`.
-
-    Comments always belong to the user that created it. Comments in threads
-    get a parent attribute set, that points to the immediate parent.
-
-    Each comment contains multiple descendents, that make up a *rich* representation
-    of the underlying comment data including potential mentions, or links, or
-    paragraphs."""
-
-    typename: Literal["Comment"] = Field(
-        alias="__typename", default="Comment", exclude=True
-    )
-    user: CommentUser
-    "The user that created this comment"
-    parent: SubthreadCommentParent | None = Field(default=None)
-    "The parent of this comment. Think Thread"
-    created_at: datetime = Field(alias="createdAt")
-    "The time this comment got created"
-    descendants: tuple[
-        Annotated[
-            SubthreadCommentDescendantsBaseLeafDescendant
-            | SubthreadCommentDescendantsBaseMentionDescendant
-            | SubthreadCommentDescendantsBaseParagraphDescendant,
-            Field(discriminator="typename"),
-        ]
-        | SubthreadCommentDescendantsBaseCatchAll,
-        ...,
-    ]
-    "The immediate descendends of the comments. Think typed Rich Representation"
-    model_config = ConfigDict(frozen=True)
-
-    class Meta:
-        """Meta class for SubthreadComment"""
-
-        document = "fragment Leaf on LeafDescendant {\n  bold\n  italic\n  code\n  text\n  __typename\n}\n\nfragment Mention on MentionDescendant {\n  user {\n    ...CommentUser\n    __typename\n  }\n  __typename\n}\n\nfragment Paragraph on ParagraphDescendant {\n  size\n  __typename\n}\n\nfragment CommentUser on User {\n  id\n  username\n  avatar\n  profile {\n    avatar {\n      presignedUrl\n      __typename\n    }\n    __typename\n  }\n  __typename\n}\n\nfragment Descendant on Descendant {\n  kind\n  children {\n    kind\n    children {\n      kind\n      unsafeChildren\n      ...Leaf\n      ...Mention\n      ...Paragraph\n      __typename\n    }\n    ...Leaf\n    ...Mention\n    ...Paragraph\n    __typename\n  }\n  ...Mention\n  ...Paragraph\n  ...Leaf\n  __typename\n}\n\nfragment SubthreadComment on Comment {\n  user {\n    ...CommentUser\n    __typename\n  }\n  parent {\n    id\n    __typename\n  }\n  createdAt\n  descendants {\n    ...Descendant\n    __typename\n  }\n  __typename\n}"
-        name = "SubthreadComment"
-        type = "Comment"
-
-
 class DetailClientUser(BaseModel):
     """
     A User is a person that can log in to the system. They are uniquely identified by their username.
@@ -2107,7 +1592,6 @@ class DetailClientUser(BaseModel):
 
     All users can have social accounts associated with them. These are used to authenticate the user with external services,
     such as ORCID or GitHub.
-
     """
 
     typename: Literal["User"] = Field(alias="__typename", default="User", exclude=True)
@@ -2238,351 +1722,6 @@ class ServiceInstance(BaseModel):
         type = "ServiceInstance"
 
 
-class ListCommentParent(BaseModel):
-    """Comments represent the comments of a user on a specific data item
-    tart are identified by the unique combination of `identifier` and `object`.
-    E.g a comment for an Image on the Mikro services would be serverd as
-    `@mikro/image:imageID`.
-
-    Comments always belong to the user that created it. Comments in threads
-    get a parent attribute set, that points to the immediate parent.
-
-    Each comment contains multiple descendents, that make up a *rich* representation
-    of the underlying comment data including potential mentions, or links, or
-    paragraphs."""
-
-    typename: Literal["Comment"] = Field(
-        alias="__typename", default="Comment", exclude=True
-    )
-    id: ID
-    model_config = ConfigDict(frozen=True)
-
-
-class ListCommentDescendantsBase(BaseModel):
-    """A descendant of a comment. Descendend are used to render rich text in the frontend."""
-
-    model_config = ConfigDict(frozen=True)
-
-
-class ListCommentDescendantsBaseLeafDescendant(
-    DescendantLeafDescendant, ListCommentDescendantsBase, BaseModel
-):
-    """A leaf of text. This is the most basic descendant and always ends a tree."""
-
-    typename: Literal["LeafDescendant"] = Field(
-        alias="__typename", default="LeafDescendant", exclude=True
-    )
-
-
-class ListCommentDescendantsBaseMentionDescendant(
-    DescendantMentionDescendant, ListCommentDescendantsBase, BaseModel
-):
-    """A mention of a user"""
-
-    typename: Literal["MentionDescendant"] = Field(
-        alias="__typename", default="MentionDescendant", exclude=True
-    )
-
-
-class ListCommentDescendantsBaseParagraphDescendant(
-    DescendantParagraphDescendant, ListCommentDescendantsBase, BaseModel
-):
-    """A Paragraph of text"""
-
-    typename: Literal["ParagraphDescendant"] = Field(
-        alias="__typename", default="ParagraphDescendant", exclude=True
-    )
-
-
-class ListCommentDescendantsBaseCatchAll(ListCommentDescendantsBase, BaseModel):
-    """Catch all class for ListCommentDescendantsBase"""
-
-    typename: str = Field(alias="__typename", exclude=True)
-
-
-class ListComment(BaseModel):
-    """Comments represent the comments of a user on a specific data item
-    tart are identified by the unique combination of `identifier` and `object`.
-    E.g a comment for an Image on the Mikro services would be serverd as
-    `@mikro/image:imageID`.
-
-    Comments always belong to the user that created it. Comments in threads
-    get a parent attribute set, that points to the immediate parent.
-
-    Each comment contains multiple descendents, that make up a *rich* representation
-    of the underlying comment data including potential mentions, or links, or
-    paragraphs."""
-
-    typename: Literal["Comment"] = Field(
-        alias="__typename", default="Comment", exclude=True
-    )
-    user: CommentUser
-    "The user that created this comment"
-    parent: ListCommentParent | None = Field(default=None)
-    "The parent of this comment. Think Thread"
-    descendants: tuple[
-        Annotated[
-            ListCommentDescendantsBaseLeafDescendant
-            | ListCommentDescendantsBaseMentionDescendant
-            | ListCommentDescendantsBaseParagraphDescendant,
-            Field(discriminator="typename"),
-        ]
-        | ListCommentDescendantsBaseCatchAll,
-        ...,
-    ]
-    "The immediate descendends of the comments. Think typed Rich Representation"
-    resolved: bool
-    resolved_by: CommentUser | None = Field(default=None, alias="resolvedBy")
-    "The user that resolved this comment"
-    id: ID
-    created_at: datetime = Field(alias="createdAt")
-    "The time this comment got created"
-    children: tuple[SubthreadComment, ...]
-    "The children of this comment"
-    model_config = ConfigDict(frozen=True)
-
-    class Meta:
-        """Meta class for ListComment"""
-
-        document = "fragment Leaf on LeafDescendant {\n  bold\n  italic\n  code\n  text\n  __typename\n}\n\nfragment Mention on MentionDescendant {\n  user {\n    ...CommentUser\n    __typename\n  }\n  __typename\n}\n\nfragment Paragraph on ParagraphDescendant {\n  size\n  __typename\n}\n\nfragment CommentUser on User {\n  id\n  username\n  avatar\n  profile {\n    avatar {\n      presignedUrl\n      __typename\n    }\n    __typename\n  }\n  __typename\n}\n\nfragment Descendant on Descendant {\n  kind\n  children {\n    kind\n    children {\n      kind\n      unsafeChildren\n      ...Leaf\n      ...Mention\n      ...Paragraph\n      __typename\n    }\n    ...Leaf\n    ...Mention\n    ...Paragraph\n    __typename\n  }\n  ...Mention\n  ...Paragraph\n  ...Leaf\n  __typename\n}\n\nfragment SubthreadComment on Comment {\n  user {\n    ...CommentUser\n    __typename\n  }\n  parent {\n    id\n    __typename\n  }\n  createdAt\n  descendants {\n    ...Descendant\n    __typename\n  }\n  __typename\n}\n\nfragment ListComment on Comment {\n  user {\n    ...CommentUser\n    __typename\n  }\n  parent {\n    id\n    __typename\n  }\n  descendants {\n    ...Descendant\n    __typename\n  }\n  resolved\n  resolvedBy {\n    ...CommentUser\n    __typename\n  }\n  id\n  createdAt\n  children {\n    ...SubthreadComment\n    __typename\n  }\n  __typename\n}"
-        name = "ListComment"
-        type = "Comment"
-
-
-class MentionCommentParent(BaseModel):
-    """Comments represent the comments of a user on a specific data item
-    tart are identified by the unique combination of `identifier` and `object`.
-    E.g a comment for an Image on the Mikro services would be serverd as
-    `@mikro/image:imageID`.
-
-    Comments always belong to the user that created it. Comments in threads
-    get a parent attribute set, that points to the immediate parent.
-
-    Each comment contains multiple descendents, that make up a *rich* representation
-    of the underlying comment data including potential mentions, or links, or
-    paragraphs."""
-
-    typename: Literal["Comment"] = Field(
-        alias="__typename", default="Comment", exclude=True
-    )
-    id: ID
-    model_config = ConfigDict(frozen=True)
-
-
-class MentionCommentDescendantsBase(BaseModel):
-    """A descendant of a comment. Descendend are used to render rich text in the frontend."""
-
-    model_config = ConfigDict(frozen=True)
-
-
-class MentionCommentDescendantsBaseLeafDescendant(
-    DescendantLeafDescendant, MentionCommentDescendantsBase, BaseModel
-):
-    """A leaf of text. This is the most basic descendant and always ends a tree."""
-
-    typename: Literal["LeafDescendant"] = Field(
-        alias="__typename", default="LeafDescendant", exclude=True
-    )
-
-
-class MentionCommentDescendantsBaseMentionDescendant(
-    DescendantMentionDescendant, MentionCommentDescendantsBase, BaseModel
-):
-    """A mention of a user"""
-
-    typename: Literal["MentionDescendant"] = Field(
-        alias="__typename", default="MentionDescendant", exclude=True
-    )
-
-
-class MentionCommentDescendantsBaseParagraphDescendant(
-    DescendantParagraphDescendant, MentionCommentDescendantsBase, BaseModel
-):
-    """A Paragraph of text"""
-
-    typename: Literal["ParagraphDescendant"] = Field(
-        alias="__typename", default="ParagraphDescendant", exclude=True
-    )
-
-
-class MentionCommentDescendantsBaseCatchAll(MentionCommentDescendantsBase, BaseModel):
-    """Catch all class for MentionCommentDescendantsBase"""
-
-    typename: str = Field(alias="__typename", exclude=True)
-
-
-class MentionComment(BaseModel):
-    """Comments represent the comments of a user on a specific data item
-    tart are identified by the unique combination of `identifier` and `object`.
-    E.g a comment for an Image on the Mikro services would be serverd as
-    `@mikro/image:imageID`.
-
-    Comments always belong to the user that created it. Comments in threads
-    get a parent attribute set, that points to the immediate parent.
-
-    Each comment contains multiple descendents, that make up a *rich* representation
-    of the underlying comment data including potential mentions, or links, or
-    paragraphs."""
-
-    typename: Literal["Comment"] = Field(
-        alias="__typename", default="Comment", exclude=True
-    )
-    user: CommentUser
-    "The user that created this comment"
-    parent: MentionCommentParent | None = Field(default=None)
-    "The parent of this comment. Think Thread"
-    descendants: tuple[
-        Annotated[
-            MentionCommentDescendantsBaseLeafDescendant
-            | MentionCommentDescendantsBaseMentionDescendant
-            | MentionCommentDescendantsBaseParagraphDescendant,
-            Field(discriminator="typename"),
-        ]
-        | MentionCommentDescendantsBaseCatchAll,
-        ...,
-    ]
-    "The immediate descendends of the comments. Think typed Rich Representation"
-    id: ID
-    created_at: datetime = Field(alias="createdAt")
-    "The time this comment got created"
-    children: tuple[SubthreadComment, ...]
-    "The children of this comment"
-    mentions: tuple[CommentUser, ...]
-    "The users that got mentioned in this comment"
-    resolved: bool
-    resolved_by: CommentUser | None = Field(default=None, alias="resolvedBy")
-    "The user that resolved this comment"
-    object: str
-    "The object id of the object, on its associated service"
-    identifier: str
-    "The identifier of the object. Consult the documentation for the format"
-    model_config = ConfigDict(frozen=True)
-
-    class Meta:
-        """Meta class for MentionComment"""
-
-        document = "fragment Leaf on LeafDescendant {\n  bold\n  italic\n  code\n  text\n  __typename\n}\n\nfragment Mention on MentionDescendant {\n  user {\n    ...CommentUser\n    __typename\n  }\n  __typename\n}\n\nfragment Paragraph on ParagraphDescendant {\n  size\n  __typename\n}\n\nfragment CommentUser on User {\n  id\n  username\n  avatar\n  profile {\n    avatar {\n      presignedUrl\n      __typename\n    }\n    __typename\n  }\n  __typename\n}\n\nfragment Descendant on Descendant {\n  kind\n  children {\n    kind\n    children {\n      kind\n      unsafeChildren\n      ...Leaf\n      ...Mention\n      ...Paragraph\n      __typename\n    }\n    ...Leaf\n    ...Mention\n    ...Paragraph\n    __typename\n  }\n  ...Mention\n  ...Paragraph\n  ...Leaf\n  __typename\n}\n\nfragment SubthreadComment on Comment {\n  user {\n    ...CommentUser\n    __typename\n  }\n  parent {\n    id\n    __typename\n  }\n  createdAt\n  descendants {\n    ...Descendant\n    __typename\n  }\n  __typename\n}\n\nfragment MentionComment on Comment {\n  user {\n    ...CommentUser\n    __typename\n  }\n  parent {\n    id\n    __typename\n  }\n  descendants {\n    ...Descendant\n    __typename\n  }\n  id\n  createdAt\n  children {\n    ...SubthreadComment\n    __typename\n  }\n  mentions {\n    ...CommentUser\n    __typename\n  }\n  resolved\n  resolvedBy {\n    ...CommentUser\n    __typename\n  }\n  object\n  identifier\n  __typename\n}"
-        name = "MentionComment"
-        type = "Comment"
-
-
-class DetailCommentParent(BaseModel):
-    """Comments represent the comments of a user on a specific data item
-    tart are identified by the unique combination of `identifier` and `object`.
-    E.g a comment for an Image on the Mikro services would be serverd as
-    `@mikro/image:imageID`.
-
-    Comments always belong to the user that created it. Comments in threads
-    get a parent attribute set, that points to the immediate parent.
-
-    Each comment contains multiple descendents, that make up a *rich* representation
-    of the underlying comment data including potential mentions, or links, or
-    paragraphs."""
-
-    typename: Literal["Comment"] = Field(
-        alias="__typename", default="Comment", exclude=True
-    )
-    id: ID
-    model_config = ConfigDict(frozen=True)
-
-
-class DetailCommentDescendantsBase(BaseModel):
-    """A descendant of a comment. Descendend are used to render rich text in the frontend."""
-
-    model_config = ConfigDict(frozen=True)
-
-
-class DetailCommentDescendantsBaseLeafDescendant(
-    DescendantLeafDescendant, DetailCommentDescendantsBase, BaseModel
-):
-    """A leaf of text. This is the most basic descendant and always ends a tree."""
-
-    typename: Literal["LeafDescendant"] = Field(
-        alias="__typename", default="LeafDescendant", exclude=True
-    )
-
-
-class DetailCommentDescendantsBaseMentionDescendant(
-    DescendantMentionDescendant, DetailCommentDescendantsBase, BaseModel
-):
-    """A mention of a user"""
-
-    typename: Literal["MentionDescendant"] = Field(
-        alias="__typename", default="MentionDescendant", exclude=True
-    )
-
-
-class DetailCommentDescendantsBaseParagraphDescendant(
-    DescendantParagraphDescendant, DetailCommentDescendantsBase, BaseModel
-):
-    """A Paragraph of text"""
-
-    typename: Literal["ParagraphDescendant"] = Field(
-        alias="__typename", default="ParagraphDescendant", exclude=True
-    )
-
-
-class DetailCommentDescendantsBaseCatchAll(DetailCommentDescendantsBase, BaseModel):
-    """Catch all class for DetailCommentDescendantsBase"""
-
-    typename: str = Field(alias="__typename", exclude=True)
-
-
-class DetailComment(BaseModel):
-    """Comments represent the comments of a user on a specific data item
-    tart are identified by the unique combination of `identifier` and `object`.
-    E.g a comment for an Image on the Mikro services would be serverd as
-    `@mikro/image:imageID`.
-
-    Comments always belong to the user that created it. Comments in threads
-    get a parent attribute set, that points to the immediate parent.
-
-    Each comment contains multiple descendents, that make up a *rich* representation
-    of the underlying comment data including potential mentions, or links, or
-    paragraphs."""
-
-    typename: Literal["Comment"] = Field(
-        alias="__typename", default="Comment", exclude=True
-    )
-    user: CommentUser
-    "The user that created this comment"
-    parent: DetailCommentParent | None = Field(default=None)
-    "The parent of this comment. Think Thread"
-    descendants: tuple[
-        Annotated[
-            DetailCommentDescendantsBaseLeafDescendant
-            | DetailCommentDescendantsBaseMentionDescendant
-            | DetailCommentDescendantsBaseParagraphDescendant,
-            Field(discriminator="typename"),
-        ]
-        | DetailCommentDescendantsBaseCatchAll,
-        ...,
-    ]
-    "The immediate descendends of the comments. Think typed Rich Representation"
-    id: ID
-    resolved: bool
-    resolved_by: CommentUser | None = Field(default=None, alias="resolvedBy")
-    "The user that resolved this comment"
-    created_at: datetime = Field(alias="createdAt")
-    "The time this comment got created"
-    children: tuple[SubthreadComment, ...]
-    "The children of this comment"
-    mentions: tuple[CommentUser, ...]
-    "The users that got mentioned in this comment"
-    object: str
-    "The object id of the object, on its associated service"
-    identifier: str
-    "The identifier of the object. Consult the documentation for the format"
-    model_config = ConfigDict(frozen=True)
-
-    class Meta:
-        """Meta class for DetailComment"""
-
-        document = "fragment Leaf on LeafDescendant {\n  bold\n  italic\n  code\n  text\n  __typename\n}\n\nfragment Mention on MentionDescendant {\n  user {\n    ...CommentUser\n    __typename\n  }\n  __typename\n}\n\nfragment Paragraph on ParagraphDescendant {\n  size\n  __typename\n}\n\nfragment CommentUser on User {\n  id\n  username\n  avatar\n  profile {\n    avatar {\n      presignedUrl\n      __typename\n    }\n    __typename\n  }\n  __typename\n}\n\nfragment Descendant on Descendant {\n  kind\n  children {\n    kind\n    children {\n      kind\n      unsafeChildren\n      ...Leaf\n      ...Mention\n      ...Paragraph\n      __typename\n    }\n    ...Leaf\n    ...Mention\n    ...Paragraph\n    __typename\n  }\n  ...Mention\n  ...Paragraph\n  ...Leaf\n  __typename\n}\n\nfragment SubthreadComment on Comment {\n  user {\n    ...CommentUser\n    __typename\n  }\n  parent {\n    id\n    __typename\n  }\n  createdAt\n  descendants {\n    ...Descendant\n    __typename\n  }\n  __typename\n}\n\nfragment DetailComment on Comment {\n  user {\n    ...CommentUser\n    __typename\n  }\n  parent {\n    id\n    __typename\n  }\n  descendants {\n    ...Descendant\n    __typename\n  }\n  id\n  resolved\n  resolvedBy {\n    ...CommentUser\n    __typename\n  }\n  createdAt\n  children {\n    ...SubthreadComment\n    __typename\n  }\n  mentions {\n    ...CommentUser\n    __typename\n  }\n  object\n  identifier\n  __typename\n}"
-        name = "DetailComment"
-        type = "Comment"
-
-
 class CreateClientMutation(BaseModel):
     """No documentation found for this operation."""
 
@@ -2597,58 +1736,6 @@ class CreateClientMutation(BaseModel):
         """Meta class for CreateClient"""
 
         document = "fragment ListUser on User {\n  username\n  firstName\n  lastName\n  email\n  avatar\n  id\n  __typename\n}\n\nfragment ListApp on App {\n  id\n  identifier\n  logo {\n    presignedUrl\n    __typename\n  }\n  __typename\n}\n\nfragment ListClient on Client {\n  id\n  user {\n    id\n    username\n    __typename\n  }\n  name\n  kind\n  release {\n    version\n    logo {\n      presignedUrl\n      __typename\n    }\n    app {\n      id\n      identifier\n      logo {\n        presignedUrl\n        __typename\n      }\n      __typename\n    }\n    __typename\n  }\n  __typename\n}\n\nfragment ListServiceInstance on ServiceInstance {\n  id\n  instanceId\n  allowedUsers {\n    ...ListUser\n    __typename\n  }\n  deniedUsers {\n    ...ListUser\n    __typename\n  }\n  __typename\n}\n\nfragment ListRelease on Release {\n  id\n  version\n  logo {\n    presignedUrl\n    __typename\n  }\n  app {\n    ...ListApp\n    __typename\n  }\n  __typename\n}\n\nfragment ListServiceInstanceMapping on ServiceInstanceMapping {\n  id\n  key\n  instance {\n    ...ListServiceInstance\n    __typename\n  }\n  client {\n    ...ListClient\n    __typename\n  }\n  optional\n  __typename\n}\n\nfragment DetailClient on Client {\n  id\n  name\n  clientId\n  user {\n    id\n    username\n    __typename\n  }\n  kind\n  release {\n    ...ListRelease\n    __typename\n  }\n  logo {\n    presignedUrl\n    __typename\n  }\n  mappings {\n    ...ListServiceInstanceMapping\n    __typename\n  }\n  issueUrl\n  __typename\n}\n\nmutation CreateClient($input: DevelopmentClientInput!) {\n  createDevelopmentalClient(input: $input) {\n    ...DetailClient\n    __typename\n  }\n}"
-
-
-class CreateCommentMutation(BaseModel):
-    """No documentation found for this operation."""
-
-    create_comment: ListComment = Field(alias="createComment")
-
-    class Arguments(BaseModel):
-        """Arguments for CreateComment"""
-
-        object: ID
-        identifier: str
-        descendants: list[DescendantInput]
-        parent: ID | None = Field(default=None)
-
-    class Meta:
-        """Meta class for CreateComment"""
-
-        document = "fragment Leaf on LeafDescendant {\n  bold\n  italic\n  code\n  text\n  __typename\n}\n\nfragment Mention on MentionDescendant {\n  user {\n    ...CommentUser\n    __typename\n  }\n  __typename\n}\n\nfragment Paragraph on ParagraphDescendant {\n  size\n  __typename\n}\n\nfragment CommentUser on User {\n  id\n  username\n  avatar\n  profile {\n    avatar {\n      presignedUrl\n      __typename\n    }\n    __typename\n  }\n  __typename\n}\n\nfragment Descendant on Descendant {\n  kind\n  children {\n    kind\n    children {\n      kind\n      unsafeChildren\n      ...Leaf\n      ...Mention\n      ...Paragraph\n      __typename\n    }\n    ...Leaf\n    ...Mention\n    ...Paragraph\n    __typename\n  }\n  ...Mention\n  ...Paragraph\n  ...Leaf\n  __typename\n}\n\nfragment SubthreadComment on Comment {\n  user {\n    ...CommentUser\n    __typename\n  }\n  parent {\n    id\n    __typename\n  }\n  createdAt\n  descendants {\n    ...Descendant\n    __typename\n  }\n  __typename\n}\n\nfragment ListComment on Comment {\n  user {\n    ...CommentUser\n    __typename\n  }\n  parent {\n    id\n    __typename\n  }\n  descendants {\n    ...Descendant\n    __typename\n  }\n  resolved\n  resolvedBy {\n    ...CommentUser\n    __typename\n  }\n  id\n  createdAt\n  children {\n    ...SubthreadComment\n    __typename\n  }\n  __typename\n}\n\nmutation CreateComment($object: ID!, $identifier: Identifier!, $descendants: [DescendantInput!]!, $parent: ID) {\n  createComment(\n    input: {object: $object, identifier: $identifier, descendants: $descendants, parent: $parent}\n  ) {\n    ...ListComment\n    __typename\n  }\n}"
-
-
-class ReplyToMutation(BaseModel):
-    """No documentation found for this operation."""
-
-    reply_to: ListComment = Field(alias="replyTo")
-
-    class Arguments(BaseModel):
-        """Arguments for ReplyTo"""
-
-        descendants: list[DescendantInput]
-        parent: ID
-
-    class Meta:
-        """Meta class for ReplyTo"""
-
-        document = "fragment Leaf on LeafDescendant {\n  bold\n  italic\n  code\n  text\n  __typename\n}\n\nfragment Mention on MentionDescendant {\n  user {\n    ...CommentUser\n    __typename\n  }\n  __typename\n}\n\nfragment Paragraph on ParagraphDescendant {\n  size\n  __typename\n}\n\nfragment CommentUser on User {\n  id\n  username\n  avatar\n  profile {\n    avatar {\n      presignedUrl\n      __typename\n    }\n    __typename\n  }\n  __typename\n}\n\nfragment Descendant on Descendant {\n  kind\n  children {\n    kind\n    children {\n      kind\n      unsafeChildren\n      ...Leaf\n      ...Mention\n      ...Paragraph\n      __typename\n    }\n    ...Leaf\n    ...Mention\n    ...Paragraph\n    __typename\n  }\n  ...Mention\n  ...Paragraph\n  ...Leaf\n  __typename\n}\n\nfragment SubthreadComment on Comment {\n  user {\n    ...CommentUser\n    __typename\n  }\n  parent {\n    id\n    __typename\n  }\n  createdAt\n  descendants {\n    ...Descendant\n    __typename\n  }\n  __typename\n}\n\nfragment ListComment on Comment {\n  user {\n    ...CommentUser\n    __typename\n  }\n  parent {\n    id\n    __typename\n  }\n  descendants {\n    ...Descendant\n    __typename\n  }\n  resolved\n  resolvedBy {\n    ...CommentUser\n    __typename\n  }\n  id\n  createdAt\n  children {\n    ...SubthreadComment\n    __typename\n  }\n  __typename\n}\n\nmutation ReplyTo($descendants: [DescendantInput!]!, $parent: ID!) {\n  replyTo(input: {descendants: $descendants, parent: $parent}) {\n    ...ListComment\n    __typename\n  }\n}"
-
-
-class ResolveCommentMutation(BaseModel):
-    """No documentation found for this operation."""
-
-    resolve_comment: ListComment = Field(alias="resolveComment")
-
-    class Arguments(BaseModel):
-        """Arguments for ResolveComment"""
-
-        id: ID
-
-    class Meta:
-        """Meta class for ResolveComment"""
-
-        document = "fragment Leaf on LeafDescendant {\n  bold\n  italic\n  code\n  text\n  __typename\n}\n\nfragment Mention on MentionDescendant {\n  user {\n    ...CommentUser\n    __typename\n  }\n  __typename\n}\n\nfragment Paragraph on ParagraphDescendant {\n  size\n  __typename\n}\n\nfragment CommentUser on User {\n  id\n  username\n  avatar\n  profile {\n    avatar {\n      presignedUrl\n      __typename\n    }\n    __typename\n  }\n  __typename\n}\n\nfragment Descendant on Descendant {\n  kind\n  children {\n    kind\n    children {\n      kind\n      unsafeChildren\n      ...Leaf\n      ...Mention\n      ...Paragraph\n      __typename\n    }\n    ...Leaf\n    ...Mention\n    ...Paragraph\n    __typename\n  }\n  ...Mention\n  ...Paragraph\n  ...Leaf\n  __typename\n}\n\nfragment SubthreadComment on Comment {\n  user {\n    ...CommentUser\n    __typename\n  }\n  parent {\n    id\n    __typename\n  }\n  createdAt\n  descendants {\n    ...Descendant\n    __typename\n  }\n  __typename\n}\n\nfragment ListComment on Comment {\n  user {\n    ...CommentUser\n    __typename\n  }\n  parent {\n    id\n    __typename\n  }\n  descendants {\n    ...Descendant\n    __typename\n  }\n  resolved\n  resolvedBy {\n    ...CommentUser\n    __typename\n  }\n  id\n  createdAt\n  children {\n    ...SubthreadComment\n    __typename\n  }\n  __typename\n}\n\nmutation ResolveComment($id: ID!) {\n  resolveComment(input: {id: $id}) {\n    ...ListComment\n    __typename\n  }\n}"
 
 
 class CreateGroupProfileMutation(BaseModel):
@@ -2777,75 +1864,6 @@ class DeleteRedeemTokenMutation(BaseModel):
         """Meta class for DeleteRedeemToken"""
 
         document = "mutation DeleteRedeemToken($id: ID!) {\n  deleteRedeemToken(input: {id: $id})\n}"
-
-
-class CreateStashMutation(BaseModel):
-    """No documentation found for this operation."""
-
-    create_stash: ListStash = Field(alias="createStash")
-    "Create a new stash"
-
-    class Arguments(BaseModel):
-        """Arguments for CreateStash"""
-
-        name: str | None = Field(default=None)
-        description: Annotated[str | None, GraphQLDefault("")] = Field(default=None)
-
-    class Meta:
-        """Meta class for CreateStash"""
-
-        document = 'fragment Stash on Stash {\n  id\n  name\n  description\n  createdAt\n  updatedAt\n  owner {\n    id\n    username\n    __typename\n  }\n  __typename\n}\n\nfragment StashItem on StashItem {\n  id\n  identifier\n  object\n  __typename\n}\n\nfragment ListStash on Stash {\n  ...Stash\n  items {\n    ...StashItem\n    __typename\n  }\n  __typename\n}\n\nmutation CreateStash($name: String, $description: String = "") {\n  createStash(input: {name: $name, description: $description}) {\n    ...ListStash\n    __typename\n  }\n}'
-
-
-class AddItemsToStashMutation(BaseModel):
-    """No documentation found for this operation."""
-
-    add_items_to_stash: tuple[StashItem, ...] = Field(alias="addItemsToStash")
-    "Add items to a stash"
-
-    class Arguments(BaseModel):
-        """Arguments for AddItemsToStash"""
-
-        stash: ID
-        items: list[StashItemInput]
-
-    class Meta:
-        """Meta class for AddItemsToStash"""
-
-        document = "fragment StashItem on StashItem {\n  id\n  identifier\n  object\n  __typename\n}\n\nmutation AddItemsToStash($stash: ID!, $items: [StashItemInput!]!) {\n  addItemsToStash(input: {stash: $stash, items: $items}) {\n    ...StashItem\n    __typename\n  }\n}"
-
-
-class DeleteStashItemsMutation(BaseModel):
-    """No documentation found for this operation."""
-
-    delete_stash_items: tuple[ID, ...] = Field(alias="deleteStashItems")
-    "Delete items from a stash"
-
-    class Arguments(BaseModel):
-        """Arguments for DeleteStashItems"""
-
-        items: list[ID]
-
-    class Meta:
-        """Meta class for DeleteStashItems"""
-
-        document = "mutation DeleteStashItems($items: [ID!]!) {\n  deleteStashItems(input: {items: $items})\n}"
-
-
-class DeleteStashMutation(BaseModel):
-    """No documentation found for this operation."""
-
-    delete_stash: ID = Field(alias="deleteStash")
-
-    class Arguments(BaseModel):
-        """Arguments for DeleteStash"""
-
-        stash: ID
-
-    class Meta:
-        """Meta class for DeleteStash"""
-
-        document = "mutation DeleteStash($stash: ID!) {\n  deleteStash(input: {stash: $stash})\n}"
 
 
 class RequestMediaUploadMutation(BaseModel):
@@ -2986,55 +2004,6 @@ class ClientQuery(BaseModel):
         """Meta class for Client"""
 
         document = "fragment ListUser on User {\n  username\n  firstName\n  lastName\n  email\n  avatar\n  id\n  __typename\n}\n\nfragment ListApp on App {\n  id\n  identifier\n  logo {\n    presignedUrl\n    __typename\n  }\n  __typename\n}\n\nfragment ListClient on Client {\n  id\n  user {\n    id\n    username\n    __typename\n  }\n  name\n  kind\n  release {\n    version\n    logo {\n      presignedUrl\n      __typename\n    }\n    app {\n      id\n      identifier\n      logo {\n        presignedUrl\n        __typename\n      }\n      __typename\n    }\n    __typename\n  }\n  __typename\n}\n\nfragment ListServiceInstance on ServiceInstance {\n  id\n  instanceId\n  allowedUsers {\n    ...ListUser\n    __typename\n  }\n  deniedUsers {\n    ...ListUser\n    __typename\n  }\n  __typename\n}\n\nfragment ListRelease on Release {\n  id\n  version\n  logo {\n    presignedUrl\n    __typename\n  }\n  app {\n    ...ListApp\n    __typename\n  }\n  __typename\n}\n\nfragment ListServiceInstanceMapping on ServiceInstanceMapping {\n  id\n  key\n  instance {\n    ...ListServiceInstance\n    __typename\n  }\n  client {\n    ...ListClient\n    __typename\n  }\n  optional\n  __typename\n}\n\nfragment DetailClient on Client {\n  id\n  name\n  clientId\n  user {\n    id\n    username\n    __typename\n  }\n  kind\n  release {\n    ...ListRelease\n    __typename\n  }\n  logo {\n    presignedUrl\n    __typename\n  }\n  mappings {\n    ...ListServiceInstanceMapping\n    __typename\n  }\n  issueUrl\n  __typename\n}\n\nquery Client($clientId: ID!) {\n  client(clientId: $clientId) {\n    ...DetailClient\n    __typename\n  }\n}"
-
-
-class CommentsForQuery(BaseModel):
-    """No documentation found for this operation."""
-
-    comments_for: tuple[ListComment, ...] = Field(alias="commentsFor")
-
-    class Arguments(BaseModel):
-        """Arguments for CommentsFor"""
-
-        object: ID
-        identifier: str
-
-    class Meta:
-        """Meta class for CommentsFor"""
-
-        document = "fragment Leaf on LeafDescendant {\n  bold\n  italic\n  code\n  text\n  __typename\n}\n\nfragment Mention on MentionDescendant {\n  user {\n    ...CommentUser\n    __typename\n  }\n  __typename\n}\n\nfragment Paragraph on ParagraphDescendant {\n  size\n  __typename\n}\n\nfragment CommentUser on User {\n  id\n  username\n  avatar\n  profile {\n    avatar {\n      presignedUrl\n      __typename\n    }\n    __typename\n  }\n  __typename\n}\n\nfragment Descendant on Descendant {\n  kind\n  children {\n    kind\n    children {\n      kind\n      unsafeChildren\n      ...Leaf\n      ...Mention\n      ...Paragraph\n      __typename\n    }\n    ...Leaf\n    ...Mention\n    ...Paragraph\n    __typename\n  }\n  ...Mention\n  ...Paragraph\n  ...Leaf\n  __typename\n}\n\nfragment SubthreadComment on Comment {\n  user {\n    ...CommentUser\n    __typename\n  }\n  parent {\n    id\n    __typename\n  }\n  createdAt\n  descendants {\n    ...Descendant\n    __typename\n  }\n  __typename\n}\n\nfragment ListComment on Comment {\n  user {\n    ...CommentUser\n    __typename\n  }\n  parent {\n    id\n    __typename\n  }\n  descendants {\n    ...Descendant\n    __typename\n  }\n  resolved\n  resolvedBy {\n    ...CommentUser\n    __typename\n  }\n  id\n  createdAt\n  children {\n    ...SubthreadComment\n    __typename\n  }\n  __typename\n}\n\nquery CommentsFor($object: ID!, $identifier: Identifier!) {\n  commentsFor(identifier: $identifier, object: $object) {\n    ...ListComment\n    __typename\n  }\n}"
-
-
-class MyMentionsQuery(BaseModel):
-    """No documentation found for this operation."""
-
-    my_mentions: tuple[MentionComment, ...] = Field(alias="myMentions")
-
-    class Arguments(BaseModel):
-        """Arguments for MyMentions"""
-
-        pass
-
-    class Meta:
-        """Meta class for MyMentions"""
-
-        document = "fragment Leaf on LeafDescendant {\n  bold\n  italic\n  code\n  text\n  __typename\n}\n\nfragment Mention on MentionDescendant {\n  user {\n    ...CommentUser\n    __typename\n  }\n  __typename\n}\n\nfragment Paragraph on ParagraphDescendant {\n  size\n  __typename\n}\n\nfragment CommentUser on User {\n  id\n  username\n  avatar\n  profile {\n    avatar {\n      presignedUrl\n      __typename\n    }\n    __typename\n  }\n  __typename\n}\n\nfragment Descendant on Descendant {\n  kind\n  children {\n    kind\n    children {\n      kind\n      unsafeChildren\n      ...Leaf\n      ...Mention\n      ...Paragraph\n      __typename\n    }\n    ...Leaf\n    ...Mention\n    ...Paragraph\n    __typename\n  }\n  ...Mention\n  ...Paragraph\n  ...Leaf\n  __typename\n}\n\nfragment SubthreadComment on Comment {\n  user {\n    ...CommentUser\n    __typename\n  }\n  parent {\n    id\n    __typename\n  }\n  createdAt\n  descendants {\n    ...Descendant\n    __typename\n  }\n  __typename\n}\n\nfragment MentionComment on Comment {\n  user {\n    ...CommentUser\n    __typename\n  }\n  parent {\n    id\n    __typename\n  }\n  descendants {\n    ...Descendant\n    __typename\n  }\n  id\n  createdAt\n  children {\n    ...SubthreadComment\n    __typename\n  }\n  mentions {\n    ...CommentUser\n    __typename\n  }\n  resolved\n  resolvedBy {\n    ...CommentUser\n    __typename\n  }\n  object\n  identifier\n  __typename\n}\n\nquery MyMentions {\n  myMentions {\n    ...MentionComment\n    __typename\n  }\n}"
-
-
-class DetailCommentQuery(BaseModel):
-    """No documentation found for this operation."""
-
-    comment: DetailComment
-
-    class Arguments(BaseModel):
-        """Arguments for DetailComment"""
-
-        id: ID
-
-    class Meta:
-        """Meta class for DetailComment"""
-
-        document = "fragment Leaf on LeafDescendant {\n  bold\n  italic\n  code\n  text\n  __typename\n}\n\nfragment Mention on MentionDescendant {\n  user {\n    ...CommentUser\n    __typename\n  }\n  __typename\n}\n\nfragment Paragraph on ParagraphDescendant {\n  size\n  __typename\n}\n\nfragment CommentUser on User {\n  id\n  username\n  avatar\n  profile {\n    avatar {\n      presignedUrl\n      __typename\n    }\n    __typename\n  }\n  __typename\n}\n\nfragment Descendant on Descendant {\n  kind\n  children {\n    kind\n    children {\n      kind\n      unsafeChildren\n      ...Leaf\n      ...Mention\n      ...Paragraph\n      __typename\n    }\n    ...Leaf\n    ...Mention\n    ...Paragraph\n    __typename\n  }\n  ...Mention\n  ...Paragraph\n  ...Leaf\n  __typename\n}\n\nfragment SubthreadComment on Comment {\n  user {\n    ...CommentUser\n    __typename\n  }\n  parent {\n    id\n    __typename\n  }\n  createdAt\n  descendants {\n    ...Descendant\n    __typename\n  }\n  __typename\n}\n\nfragment DetailComment on Comment {\n  user {\n    ...CommentUser\n    __typename\n  }\n  parent {\n    id\n    __typename\n  }\n  descendants {\n    ...Descendant\n    __typename\n  }\n  id\n  resolved\n  resolvedBy {\n    ...CommentUser\n    __typename\n  }\n  createdAt\n  children {\n    ...SubthreadComment\n    __typename\n  }\n  mentions {\n    ...CommentUser\n    __typename\n  }\n  object\n  identifier\n  __typename\n}\n\nquery DetailComment($id: ID!) {\n  comment(id: $id) {\n    ...DetailComment\n    __typename\n  }\n}"
 
 
 class GroupOptionsQueryOptions(BaseModel):
@@ -3407,22 +2376,6 @@ class GetServiceQuery(BaseModel):
         document = "fragment Service on Service {\n  identifier\n  id\n  name\n  logo {\n    presignedUrl\n    __typename\n  }\n  description\n  __typename\n}\n\nquery GetService($id: ID!) {\n  service(id: $id) {\n    ...Service\n    __typename\n  }\n}"
 
 
-class MyStashesQuery(BaseModel):
-    """No documentation found for this operation."""
-
-    stashes: tuple[ListStash, ...]
-
-    class Arguments(BaseModel):
-        """Arguments for MyStashes"""
-
-        pagination: OffsetPaginationInput | None = Field(default=None)
-
-    class Meta:
-        """Meta class for MyStashes"""
-
-        document = "fragment Stash on Stash {\n  id\n  name\n  description\n  createdAt\n  updatedAt\n  owner {\n    id\n    username\n    __typename\n  }\n  __typename\n}\n\nfragment StashItem on StashItem {\n  id\n  identifier\n  object\n  __typename\n}\n\nfragment ListStash on Stash {\n  ...Stash\n  items {\n    ...StashItem\n    __typename\n  }\n  __typename\n}\n\nquery MyStashes($pagination: OffsetPaginationInput) {\n  stashes(pagination: $pagination) {\n    ...ListStash\n    __typename\n  }\n}"
-
-
 class MeQuery(BaseModel):
     """No documentation found for this operation."""
 
@@ -3498,7 +2451,6 @@ class UserOptionsQueryOptions(BaseModel):
 
     All users can have social accounts associated with them. These are used to authenticate the user with external services,
     such as ORCID or GitHub.
-
     """
 
     typename: Literal["User"] = Field(alias="__typename", default="User", exclude=True)
@@ -3541,2379 +2493,1601 @@ class ProfileQuery(BaseModel):
         document = "fragment MeUser on User {\n  id\n  username\n  email\n  firstName\n  lastName\n  avatar\n  __typename\n}\n\nquery Profile {\n  me {\n    ...MeUser\n    __typename\n  }\n}"
 
 
-class WatchMentionsSubscription(BaseModel):
-    """No documentation found for this operation."""
+class UnlokApi:
+    """Every operation of this API as a method. Generated by turms.
 
-    mentions: MentionComment
-
-    class Arguments(BaseModel):
-        """Arguments for WatchMentions"""
-
-        pass
-
-    class Meta:
-        """Meta class for WatchMentions"""
-
-        document = "fragment Leaf on LeafDescendant {\n  bold\n  italic\n  code\n  text\n  __typename\n}\n\nfragment Mention on MentionDescendant {\n  user {\n    ...CommentUser\n    __typename\n  }\n  __typename\n}\n\nfragment Paragraph on ParagraphDescendant {\n  size\n  __typename\n}\n\nfragment CommentUser on User {\n  id\n  username\n  avatar\n  profile {\n    avatar {\n      presignedUrl\n      __typename\n    }\n    __typename\n  }\n  __typename\n}\n\nfragment Descendant on Descendant {\n  kind\n  children {\n    kind\n    children {\n      kind\n      unsafeChildren\n      ...Leaf\n      ...Mention\n      ...Paragraph\n      __typename\n    }\n    ...Leaf\n    ...Mention\n    ...Paragraph\n    __typename\n  }\n  ...Mention\n  ...Paragraph\n  ...Leaf\n  __typename\n}\n\nfragment SubthreadComment on Comment {\n  user {\n    ...CommentUser\n    __typename\n  }\n  parent {\n    id\n    __typename\n  }\n  createdAt\n  descendants {\n    ...Descendant\n    __typename\n  }\n  __typename\n}\n\nfragment MentionComment on Comment {\n  user {\n    ...CommentUser\n    __typename\n  }\n  parent {\n    id\n    __typename\n  }\n  descendants {\n    ...Descendant\n    __typename\n  }\n  id\n  createdAt\n  children {\n    ...SubthreadComment\n    __typename\n  }\n  mentions {\n    ...CommentUser\n    __typename\n  }\n  resolved\n  resolvedBy {\n    ...CommentUser\n    __typename\n  }\n  object\n  identifier\n  __typename\n}\n\nsubscription WatchMentions {\n  mentions {\n    ...MentionComment\n    __typename\n  }\n}"
-
-
-async def acreate_client(
-    manifest: ManifestInput,
-    hub: IDCoercible | None | UnsetType = UNSET,
-    layers: Iterable[str] | None | UnsetType = UNSET,
-    role: ClientRole | None | UnsetType = UNSET,
-    rath: UnlokRath | None = None,
-) -> DetailClient:
-    """CreateClient
-
-
-    Args:
-        manifest:  (required)
-        hub: The `ID` scalar type represents a unique identifier, often used to refetch an object or as key for a cache. The ID type appears in a JSON response as a String; however, it is not intended to be human-readable. When expected as an input type, any string (such as `"4"`) or integer (such as `4`) input value will be accepted as an ID.
-        layers: The `String` scalar type represents textual data, represented as UTF-8 character sequences. The String type is most often used by GraphQL to represent free-form human-readable text. (required) (list)
-        role: ClientRole
-        rath (unlok.rath.UnlokRath, optional): The client we want to use (defaults to the currently active client)
-
-    Returns:
-        DetailClient
+    Each method hands its operation to ``execute``, ``aexecute``, ``subscribe``, ``asubscribe`` of ``self``, which the class this one is mixed into (or a base of it) provides.
     """
-    variables: dict[str, Any] = {}
-    _input: dict[str, Any] = {}
-    _input["manifest"] = manifest
-    if hub is not UNSET:
-        _input["hub"] = hub
-    if layers is not UNSET:
-        _input["layers"] = layers
-    if role is not UNSET:
-        _input["role"] = role
-    variables["input"] = _input
-    return (
-        await aexecute(CreateClientMutation, variables, rath=rath)
-    ).create_developmental_client
-
-
-def create_client(
-    manifest: ManifestInput,
-    hub: IDCoercible | None | UnsetType = UNSET,
-    layers: Iterable[str] | None | UnsetType = UNSET,
-    role: ClientRole | None | UnsetType = UNSET,
-    rath: UnlokRath | None = None,
-) -> DetailClient:
-    """CreateClient
-
-
-    Args:
-        manifest:  (required)
-        hub: The `ID` scalar type represents a unique identifier, often used to refetch an object or as key for a cache. The ID type appears in a JSON response as a String; however, it is not intended to be human-readable. When expected as an input type, any string (such as `"4"`) or integer (such as `4`) input value will be accepted as an ID.
-        layers: The `String` scalar type represents textual data, represented as UTF-8 character sequences. The String type is most often used by GraphQL to represent free-form human-readable text. (required) (list)
-        role: ClientRole
-        rath (unlok.rath.UnlokRath, optional): The client we want to use (defaults to the currently active client)
-
-    Returns:
-        DetailClient
-    """
-    variables: dict[str, Any] = {}
-    _input: dict[str, Any] = {}
-    _input["manifest"] = manifest
-    if hub is not UNSET:
-        _input["hub"] = hub
-    if layers is not UNSET:
-        _input["layers"] = layers
-    if role is not UNSET:
-        _input["role"] = role
-    variables["input"] = _input
-    return execute(
-        CreateClientMutation, variables, rath=rath
-    ).create_developmental_client
-
-
-async def acreate_comment(
-    object: IDCoercible,
-    identifier: str,
-    descendants: list[DescendantInput],
-    parent: IDCoercible | None | UnsetType = UNSET,
-    rath: UnlokRath | None = None,
-) -> ListComment:
-    """CreateComment
-
-
-    Args:
-        object (ID): No description
-        identifier (str): No description
-        descendants (list[DescendantInput]): No description
-        parent (ID | None, optional): No description.
-        rath (unlok.rath.UnlokRath, optional): The client we want to use (defaults to the currently active client)
-
-    Returns:
-        ListComment
-    """
-    variables: dict[str, Any] = {}
-    variables["object"] = object
-    variables["identifier"] = identifier
-    variables["descendants"] = descendants
-    if parent is not UNSET:
-        variables["parent"] = parent
-    return (await aexecute(CreateCommentMutation, variables, rath=rath)).create_comment
-
-
-def create_comment(
-    object: IDCoercible,
-    identifier: str,
-    descendants: list[DescendantInput],
-    parent: IDCoercible | None | UnsetType = UNSET,
-    rath: UnlokRath | None = None,
-) -> ListComment:
-    """CreateComment
-
-
-    Args:
-        object (ID): No description
-        identifier (str): No description
-        descendants (list[DescendantInput]): No description
-        parent (ID | None, optional): No description.
-        rath (unlok.rath.UnlokRath, optional): The client we want to use (defaults to the currently active client)
-
-    Returns:
-        ListComment
-    """
-    variables: dict[str, Any] = {}
-    variables["object"] = object
-    variables["identifier"] = identifier
-    variables["descendants"] = descendants
-    if parent is not UNSET:
-        variables["parent"] = parent
-    return execute(CreateCommentMutation, variables, rath=rath).create_comment
-
-
-async def areply_to(
-    descendants: list[DescendantInput],
-    parent: IDCoercible,
-    rath: UnlokRath | None = None,
-) -> ListComment:
-    """ReplyTo
-
-
-    Args:
-        descendants (list[DescendantInput]): No description
-        parent (ID): No description
-        rath (unlok.rath.UnlokRath, optional): The client we want to use (defaults to the currently active client)
-
-    Returns:
-        ListComment
-    """
-    variables: dict[str, Any] = {}
-    variables["descendants"] = descendants
-    variables["parent"] = parent
-    return (await aexecute(ReplyToMutation, variables, rath=rath)).reply_to
-
-
-def reply_to(
-    descendants: list[DescendantInput],
-    parent: IDCoercible,
-    rath: UnlokRath | None = None,
-) -> ListComment:
-    """ReplyTo
-
-
-    Args:
-        descendants (list[DescendantInput]): No description
-        parent (ID): No description
-        rath (unlok.rath.UnlokRath, optional): The client we want to use (defaults to the currently active client)
-
-    Returns:
-        ListComment
-    """
-    variables: dict[str, Any] = {}
-    variables["descendants"] = descendants
-    variables["parent"] = parent
-    return execute(ReplyToMutation, variables, rath=rath).reply_to
-
-
-async def aresolve_comment(
-    id: IDCoercible, rath: UnlokRath | None = None
-) -> ListComment:
-    """ResolveComment
-
-
-    Args:
-        id (ID): No description
-        rath (unlok.rath.UnlokRath, optional): The client we want to use (defaults to the currently active client)
-
-    Returns:
-        ListComment
-    """
-    variables: dict[str, Any] = {}
-    variables["id"] = id
-    return (
-        await aexecute(ResolveCommentMutation, variables, rath=rath)
-    ).resolve_comment
-
-
-def resolve_comment(id: IDCoercible, rath: UnlokRath | None = None) -> ListComment:
-    """ResolveComment
-
-
-    Args:
-        id (ID): No description
-        rath (unlok.rath.UnlokRath, optional): The client we want to use (defaults to the currently active client)
-
-    Returns:
-        ListComment
-    """
-    variables: dict[str, Any] = {}
-    variables["id"] = id
-    return execute(ResolveCommentMutation, variables, rath=rath).resolve_comment
-
-
-async def acreate_group_profile(
-    group: IDCoercible, name: str, avatar: IDCoercible, rath: UnlokRath | None = None
-) -> GroupProfile:
-    """CreateGroupProfile
-
-
-    Args:
-        group: The `ID` scalar type represents a unique identifier, often used to refetch an object or as key for a cache. The ID type appears in a JSON response as a String; however, it is not intended to be human-readable. When expected as an input type, any string (such as `"4"`) or integer (such as `4`) input value will be accepted as an ID. (required)
-        name: The `String` scalar type represents textual data, represented as UTF-8 character sequences. The String type is most often used by GraphQL to represent free-form human-readable text. (required)
-        avatar: The `ID` scalar type represents a unique identifier, often used to refetch an object or as key for a cache. The ID type appears in a JSON response as a String; however, it is not intended to be human-readable. When expected as an input type, any string (such as `"4"`) or integer (such as `4`) input value will be accepted as an ID. (required)
-        rath (unlok.rath.UnlokRath, optional): The client we want to use (defaults to the currently active client)
-
-    Returns:
-        GroupProfile
-    """
-    variables: dict[str, Any] = {}
-    _input: dict[str, Any] = {}
-    _input["group"] = group
-    _input["name"] = name
-    _input["avatar"] = avatar
-    variables["input"] = _input
-    return (
-        await aexecute(CreateGroupProfileMutation, variables, rath=rath)
-    ).create_group_profile
-
-
-def create_group_profile(
-    group: IDCoercible, name: str, avatar: IDCoercible, rath: UnlokRath | None = None
-) -> GroupProfile:
-    """CreateGroupProfile
-
-
-    Args:
-        group: The `ID` scalar type represents a unique identifier, often used to refetch an object or as key for a cache. The ID type appears in a JSON response as a String; however, it is not intended to be human-readable. When expected as an input type, any string (such as `"4"`) or integer (such as `4`) input value will be accepted as an ID. (required)
-        name: The `String` scalar type represents textual data, represented as UTF-8 character sequences. The String type is most often used by GraphQL to represent free-form human-readable text. (required)
-        avatar: The `ID` scalar type represents a unique identifier, often used to refetch an object or as key for a cache. The ID type appears in a JSON response as a String; however, it is not intended to be human-readable. When expected as an input type, any string (such as `"4"`) or integer (such as `4`) input value will be accepted as an ID. (required)
-        rath (unlok.rath.UnlokRath, optional): The client we want to use (defaults to the currently active client)
-
-    Returns:
-        GroupProfile
-    """
-    variables: dict[str, Any] = {}
-    _input: dict[str, Any] = {}
-    _input["group"] = group
-    _input["name"] = name
-    _input["avatar"] = avatar
-    variables["input"] = _input
-    return execute(
-        CreateGroupProfileMutation, variables, rath=rath
-    ).create_group_profile
-
-
-async def aupdate_group_profile(
-    id: IDCoercible, name: str, avatar: IDCoercible, rath: UnlokRath | None = None
-) -> GroupProfile:
-    """UpdateGroupProfile
-
-
-    Args:
-        id: The `ID` scalar type represents a unique identifier, often used to refetch an object or as key for a cache. The ID type appears in a JSON response as a String; however, it is not intended to be human-readable. When expected as an input type, any string (such as `"4"`) or integer (such as `4`) input value will be accepted as an ID. (required)
-        name: The `String` scalar type represents textual data, represented as UTF-8 character sequences. The String type is most often used by GraphQL to represent free-form human-readable text. (required)
-        avatar: The `ID` scalar type represents a unique identifier, often used to refetch an object or as key for a cache. The ID type appears in a JSON response as a String; however, it is not intended to be human-readable. When expected as an input type, any string (such as `"4"`) or integer (such as `4`) input value will be accepted as an ID. (required)
-        rath (unlok.rath.UnlokRath, optional): The client we want to use (defaults to the currently active client)
-
-    Returns:
-        GroupProfile
-    """
-    variables: dict[str, Any] = {}
-    _input: dict[str, Any] = {}
-    _input["id"] = id
-    _input["name"] = name
-    _input["avatar"] = avatar
-    variables["input"] = _input
-    return (
-        await aexecute(UpdateGroupProfileMutation, variables, rath=rath)
-    ).update_group_profile
-
-
-def update_group_profile(
-    id: IDCoercible, name: str, avatar: IDCoercible, rath: UnlokRath | None = None
-) -> GroupProfile:
-    """UpdateGroupProfile
-
-
-    Args:
-        id: The `ID` scalar type represents a unique identifier, often used to refetch an object or as key for a cache. The ID type appears in a JSON response as a String; however, it is not intended to be human-readable. When expected as an input type, any string (such as `"4"`) or integer (such as `4`) input value will be accepted as an ID. (required)
-        name: The `String` scalar type represents textual data, represented as UTF-8 character sequences. The String type is most often used by GraphQL to represent free-form human-readable text. (required)
-        avatar: The `ID` scalar type represents a unique identifier, often used to refetch an object or as key for a cache. The ID type appears in a JSON response as a String; however, it is not intended to be human-readable. When expected as an input type, any string (such as `"4"`) or integer (such as `4`) input value will be accepted as an ID. (required)
-        rath (unlok.rath.UnlokRath, optional): The client we want to use (defaults to the currently active client)
-
-    Returns:
-        GroupProfile
-    """
-    variables: dict[str, Any] = {}
-    _input: dict[str, Any] = {}
-    _input["id"] = id
-    _input["name"] = name
-    _input["avatar"] = avatar
-    variables["input"] = _input
-    return execute(
-        UpdateGroupProfileMutation, variables, rath=rath
-    ).update_group_profile
-
-
-async def aupdate_service_instance(
-    id: IDCoercible,
-    allowed_users: Iterable[IDCoercible] | None | UnsetType = UNSET,
-    allowed_groups: Iterable[IDCoercible] | None | UnsetType = UNSET,
-    denied_groups: Iterable[IDCoercible] | None | UnsetType = UNSET,
-    denied_users: Iterable[IDCoercible] | None | UnsetType = UNSET,
-    rath: UnlokRath | None = None,
-) -> ServiceInstance:
-    """UpdateServiceInstance
-
-
-    Args:
-        allowed_users: The `ID` scalar type represents a unique identifier, often used to refetch an object or as key for a cache. The ID type appears in a JSON response as a String; however, it is not intended to be human-readable. When expected as an input type, any string (such as `"4"`) or integer (such as `4`) input value will be accepted as an ID. (required) (list)
-        allowed_groups: The `ID` scalar type represents a unique identifier, often used to refetch an object or as key for a cache. The ID type appears in a JSON response as a String; however, it is not intended to be human-readable. When expected as an input type, any string (such as `"4"`) or integer (such as `4`) input value will be accepted as an ID. (required) (list)
-        denied_groups: The `ID` scalar type represents a unique identifier, often used to refetch an object or as key for a cache. The ID type appears in a JSON response as a String; however, it is not intended to be human-readable. When expected as an input type, any string (such as `"4"`) or integer (such as `4`) input value will be accepted as an ID. (required) (list)
-        denied_users: The `ID` scalar type represents a unique identifier, often used to refetch an object or as key for a cache. The ID type appears in a JSON response as a String; however, it is not intended to be human-readable. When expected as an input type, any string (such as `"4"`) or integer (such as `4`) input value will be accepted as an ID. (required) (list)
-        id: The `ID` scalar type represents a unique identifier, often used to refetch an object or as key for a cache. The ID type appears in a JSON response as a String; however, it is not intended to be human-readable. When expected as an input type, any string (such as `"4"`) or integer (such as `4`) input value will be accepted as an ID. (required)
-        rath (unlok.rath.UnlokRath, optional): The client we want to use (defaults to the currently active client)
-
-    Returns:
-        ServiceInstance
-    """
-    variables: dict[str, Any] = {}
-    _input: dict[str, Any] = {}
-    if allowed_users is not UNSET:
-        _input["allowedUsers"] = allowed_users
-    if allowed_groups is not UNSET:
-        _input["allowedGroups"] = allowed_groups
-    if denied_groups is not UNSET:
-        _input["deniedGroups"] = denied_groups
-    if denied_users is not UNSET:
-        _input["deniedUsers"] = denied_users
-    _input["id"] = id
-    variables["input"] = _input
-    return (
-        await aexecute(UpdateServiceInstanceMutation, variables, rath=rath)
-    ).update_service_instance
-
-
-def update_service_instance(
-    id: IDCoercible,
-    allowed_users: Iterable[IDCoercible] | None | UnsetType = UNSET,
-    allowed_groups: Iterable[IDCoercible] | None | UnsetType = UNSET,
-    denied_groups: Iterable[IDCoercible] | None | UnsetType = UNSET,
-    denied_users: Iterable[IDCoercible] | None | UnsetType = UNSET,
-    rath: UnlokRath | None = None,
-) -> ServiceInstance:
-    """UpdateServiceInstance
-
-
-    Args:
-        allowed_users: The `ID` scalar type represents a unique identifier, often used to refetch an object or as key for a cache. The ID type appears in a JSON response as a String; however, it is not intended to be human-readable. When expected as an input type, any string (such as `"4"`) or integer (such as `4`) input value will be accepted as an ID. (required) (list)
-        allowed_groups: The `ID` scalar type represents a unique identifier, often used to refetch an object or as key for a cache. The ID type appears in a JSON response as a String; however, it is not intended to be human-readable. When expected as an input type, any string (such as `"4"`) or integer (such as `4`) input value will be accepted as an ID. (required) (list)
-        denied_groups: The `ID` scalar type represents a unique identifier, often used to refetch an object or as key for a cache. The ID type appears in a JSON response as a String; however, it is not intended to be human-readable. When expected as an input type, any string (such as `"4"`) or integer (such as `4`) input value will be accepted as an ID. (required) (list)
-        denied_users: The `ID` scalar type represents a unique identifier, often used to refetch an object or as key for a cache. The ID type appears in a JSON response as a String; however, it is not intended to be human-readable. When expected as an input type, any string (such as `"4"`) or integer (such as `4`) input value will be accepted as an ID. (required) (list)
-        id: The `ID` scalar type represents a unique identifier, often used to refetch an object or as key for a cache. The ID type appears in a JSON response as a String; however, it is not intended to be human-readable. When expected as an input type, any string (such as `"4"`) or integer (such as `4`) input value will be accepted as an ID. (required)
-        rath (unlok.rath.UnlokRath, optional): The client we want to use (defaults to the currently active client)
-
-    Returns:
-        ServiceInstance
-    """
-    variables: dict[str, Any] = {}
-    _input: dict[str, Any] = {}
-    if allowed_users is not UNSET:
-        _input["allowedUsers"] = allowed_users
-    if allowed_groups is not UNSET:
-        _input["allowedGroups"] = allowed_groups
-    if denied_groups is not UNSET:
-        _input["deniedGroups"] = denied_groups
-    if denied_users is not UNSET:
-        _input["deniedUsers"] = denied_users
-    _input["id"] = id
-    variables["input"] = _input
-    return execute(
-        UpdateServiceInstanceMutation, variables, rath=rath
-    ).update_service_instance
-
-
-async def acreate_service_instance(
-    identifier: str,
-    service: IDCoercible,
-    allowed_users: Iterable[IDCoercible] | None | UnsetType = UNSET,
-    allowed_groups: Iterable[IDCoercible] | None | UnsetType = UNSET,
-    denied_groups: Iterable[IDCoercible] | None | UnsetType = UNSET,
-    denied_users: Iterable[IDCoercible] | None | UnsetType = UNSET,
-    rath: UnlokRath | None = None,
-) -> ServiceInstance:
-    """CreateServiceInstance
-
-
-    Args:
-        identifier: The `String` scalar type represents textual data, represented as UTF-8 character sequences. The String type is most often used by GraphQL to represent free-form human-readable text. (required)
-        service: The `ID` scalar type represents a unique identifier, often used to refetch an object or as key for a cache. The ID type appears in a JSON response as a String; however, it is not intended to be human-readable. When expected as an input type, any string (such as `"4"`) or integer (such as `4`) input value will be accepted as an ID. (required)
-        allowed_users: The `ID` scalar type represents a unique identifier, often used to refetch an object or as key for a cache. The ID type appears in a JSON response as a String; however, it is not intended to be human-readable. When expected as an input type, any string (such as `"4"`) or integer (such as `4`) input value will be accepted as an ID. (required) (list)
-        allowed_groups: The `ID` scalar type represents a unique identifier, often used to refetch an object or as key for a cache. The ID type appears in a JSON response as a String; however, it is not intended to be human-readable. When expected as an input type, any string (such as `"4"`) or integer (such as `4`) input value will be accepted as an ID. (required) (list)
-        denied_groups: The `ID` scalar type represents a unique identifier, often used to refetch an object or as key for a cache. The ID type appears in a JSON response as a String; however, it is not intended to be human-readable. When expected as an input type, any string (such as `"4"`) or integer (such as `4`) input value will be accepted as an ID. (required) (list)
-        denied_users: The `ID` scalar type represents a unique identifier, often used to refetch an object or as key for a cache. The ID type appears in a JSON response as a String; however, it is not intended to be human-readable. When expected as an input type, any string (such as `"4"`) or integer (such as `4`) input value will be accepted as an ID. (required) (list)
-        rath (unlok.rath.UnlokRath, optional): The client we want to use (defaults to the currently active client)
-
-    Returns:
-        ServiceInstance
-    """
-    variables: dict[str, Any] = {}
-    _input: dict[str, Any] = {}
-    _input["identifier"] = identifier
-    _input["service"] = service
-    if allowed_users is not UNSET:
-        _input["allowedUsers"] = allowed_users
-    if allowed_groups is not UNSET:
-        _input["allowedGroups"] = allowed_groups
-    if denied_groups is not UNSET:
-        _input["deniedGroups"] = denied_groups
-    if denied_users is not UNSET:
-        _input["deniedUsers"] = denied_users
-    variables["input"] = _input
-    return (
-        await aexecute(CreateServiceInstanceMutation, variables, rath=rath)
-    ).create_service_instance
-
-
-def create_service_instance(
-    identifier: str,
-    service: IDCoercible,
-    allowed_users: Iterable[IDCoercible] | None | UnsetType = UNSET,
-    allowed_groups: Iterable[IDCoercible] | None | UnsetType = UNSET,
-    denied_groups: Iterable[IDCoercible] | None | UnsetType = UNSET,
-    denied_users: Iterable[IDCoercible] | None | UnsetType = UNSET,
-    rath: UnlokRath | None = None,
-) -> ServiceInstance:
-    """CreateServiceInstance
-
-
-    Args:
-        identifier: The `String` scalar type represents textual data, represented as UTF-8 character sequences. The String type is most often used by GraphQL to represent free-form human-readable text. (required)
-        service: The `ID` scalar type represents a unique identifier, often used to refetch an object or as key for a cache. The ID type appears in a JSON response as a String; however, it is not intended to be human-readable. When expected as an input type, any string (such as `"4"`) or integer (such as `4`) input value will be accepted as an ID. (required)
-        allowed_users: The `ID` scalar type represents a unique identifier, often used to refetch an object or as key for a cache. The ID type appears in a JSON response as a String; however, it is not intended to be human-readable. When expected as an input type, any string (such as `"4"`) or integer (such as `4`) input value will be accepted as an ID. (required) (list)
-        allowed_groups: The `ID` scalar type represents a unique identifier, often used to refetch an object or as key for a cache. The ID type appears in a JSON response as a String; however, it is not intended to be human-readable. When expected as an input type, any string (such as `"4"`) or integer (such as `4`) input value will be accepted as an ID. (required) (list)
-        denied_groups: The `ID` scalar type represents a unique identifier, often used to refetch an object or as key for a cache. The ID type appears in a JSON response as a String; however, it is not intended to be human-readable. When expected as an input type, any string (such as `"4"`) or integer (such as `4`) input value will be accepted as an ID. (required) (list)
-        denied_users: The `ID` scalar type represents a unique identifier, often used to refetch an object or as key for a cache. The ID type appears in a JSON response as a String; however, it is not intended to be human-readable. When expected as an input type, any string (such as `"4"`) or integer (such as `4`) input value will be accepted as an ID. (required) (list)
-        rath (unlok.rath.UnlokRath, optional): The client we want to use (defaults to the currently active client)
-
-    Returns:
-        ServiceInstance
-    """
-    variables: dict[str, Any] = {}
-    _input: dict[str, Any] = {}
-    _input["identifier"] = identifier
-    _input["service"] = service
-    if allowed_users is not UNSET:
-        _input["allowedUsers"] = allowed_users
-    if allowed_groups is not UNSET:
-        _input["allowedGroups"] = allowed_groups
-    if denied_groups is not UNSET:
-        _input["deniedGroups"] = denied_groups
-    if denied_users is not UNSET:
-        _input["deniedUsers"] = denied_users
-    variables["input"] = _input
-    return execute(
-        CreateServiceInstanceMutation, variables, rath=rath
-    ).create_service_instance
-
-
-async def acreate_user_profile(
-    user: IDCoercible, name: str, rath: UnlokRath | None = None
-) -> Profile:
-    """CreateUserProfile
-
-
-    Args:
-        user: The `ID` scalar type represents a unique identifier, often used to refetch an object or as key for a cache. The ID type appears in a JSON response as a String; however, it is not intended to be human-readable. When expected as an input type, any string (such as `"4"`) or integer (such as `4`) input value will be accepted as an ID. (required)
-        name: The `String` scalar type represents textual data, represented as UTF-8 character sequences. The String type is most often used by GraphQL to represent free-form human-readable text. (required)
-        rath (unlok.rath.UnlokRath, optional): The client we want to use (defaults to the currently active client)
-
-    Returns:
-        Profile
-    """
-    variables: dict[str, Any] = {}
-    _input: dict[str, Any] = {}
-    _input["user"] = user
-    _input["name"] = name
-    variables["input"] = _input
-    return (
-        await aexecute(CreateUserProfileMutation, variables, rath=rath)
-    ).create_profile
-
-
-def create_user_profile(
-    user: IDCoercible, name: str, rath: UnlokRath | None = None
-) -> Profile:
-    """CreateUserProfile
-
-
-    Args:
-        user: The `ID` scalar type represents a unique identifier, often used to refetch an object or as key for a cache. The ID type appears in a JSON response as a String; however, it is not intended to be human-readable. When expected as an input type, any string (such as `"4"`) or integer (such as `4`) input value will be accepted as an ID. (required)
-        name: The `String` scalar type represents textual data, represented as UTF-8 character sequences. The String type is most often used by GraphQL to represent free-form human-readable text. (required)
-        rath (unlok.rath.UnlokRath, optional): The client we want to use (defaults to the currently active client)
-
-    Returns:
-        Profile
-    """
-    variables: dict[str, Any] = {}
-    _input: dict[str, Any] = {}
-    _input["user"] = user
-    _input["name"] = name
-    variables["input"] = _input
-    return execute(CreateUserProfileMutation, variables, rath=rath).create_profile
-
-
-async def aupdate_user_profile(
-    id: IDCoercible, name: str, avatar: IDCoercible, rath: UnlokRath | None = None
-) -> Profile:
-    """UpdateUserProfile
-
-
-    Args:
-        id: The `ID` scalar type represents a unique identifier, often used to refetch an object or as key for a cache. The ID type appears in a JSON response as a String; however, it is not intended to be human-readable. When expected as an input type, any string (such as `"4"`) or integer (such as `4`) input value will be accepted as an ID. (required)
-        name: The `String` scalar type represents textual data, represented as UTF-8 character sequences. The String type is most often used by GraphQL to represent free-form human-readable text. (required)
-        avatar: The `ID` scalar type represents a unique identifier, often used to refetch an object or as key for a cache. The ID type appears in a JSON response as a String; however, it is not intended to be human-readable. When expected as an input type, any string (such as `"4"`) or integer (such as `4`) input value will be accepted as an ID. (required)
-        rath (unlok.rath.UnlokRath, optional): The client we want to use (defaults to the currently active client)
-
-    Returns:
-        Profile
-    """
-    variables: dict[str, Any] = {}
-    _input: dict[str, Any] = {}
-    _input["id"] = id
-    _input["name"] = name
-    _input["avatar"] = avatar
-    variables["input"] = _input
-    return (
-        await aexecute(UpdateUserProfileMutation, variables, rath=rath)
-    ).update_profile
-
-
-def update_user_profile(
-    id: IDCoercible, name: str, avatar: IDCoercible, rath: UnlokRath | None = None
-) -> Profile:
-    """UpdateUserProfile
-
-
-    Args:
-        id: The `ID` scalar type represents a unique identifier, often used to refetch an object or as key for a cache. The ID type appears in a JSON response as a String; however, it is not intended to be human-readable. When expected as an input type, any string (such as `"4"`) or integer (such as `4`) input value will be accepted as an ID. (required)
-        name: The `String` scalar type represents textual data, represented as UTF-8 character sequences. The String type is most often used by GraphQL to represent free-form human-readable text. (required)
-        avatar: The `ID` scalar type represents a unique identifier, often used to refetch an object or as key for a cache. The ID type appears in a JSON response as a String; however, it is not intended to be human-readable. When expected as an input type, any string (such as `"4"`) or integer (such as `4`) input value will be accepted as an ID. (required)
-        rath (unlok.rath.UnlokRath, optional): The client we want to use (defaults to the currently active client)
-
-    Returns:
-        Profile
-    """
-    variables: dict[str, Any] = {}
-    _input: dict[str, Any] = {}
-    _input["id"] = id
-    _input["name"] = name
-    _input["avatar"] = avatar
-    variables["input"] = _input
-    return execute(UpdateUserProfileMutation, variables, rath=rath).update_profile
-
-
-async def acreate_redeem_token(
-    manifest: ManifestInput,
-    token: str | None | UnsetType = UNSET,
-    expires_in_days: int | None | UnsetType = UNSET,
-    max_redemptions: int | None | UnsetType = UNSET,
-    rath: UnlokRath | None = None,
-) -> DetailRedeemToken:
-    """CreateRedeemToken
-
-
-    Args:
-        manifest:  (required)
-        token: The `String` scalar type represents textual data, represented as UTF-8 character sequences. The String type is most often used by GraphQL to represent free-form human-readable text.
-        expires_in_days: The `Int` scalar type represents non-fractional signed whole numeric values. Int can represent values between -(2^31) and 2^31 - 1.
-        max_redemptions: The `Int` scalar type represents non-fractional signed whole numeric values. Int can represent values between -(2^31) and 2^31 - 1.
-        rath (unlok.rath.UnlokRath, optional): The client we want to use (defaults to the currently active client)
-
-    Returns:
-        DetailRedeemToken
-    """
-    variables: dict[str, Any] = {}
-    _input: dict[str, Any] = {}
-    _input["manifest"] = manifest
-    if token is not UNSET:
-        _input["token"] = token
-    if expires_in_days is not UNSET:
-        _input["expiresInDays"] = expires_in_days
-    if max_redemptions is not UNSET:
-        _input["maxRedemptions"] = max_redemptions
-    variables["input"] = _input
-    return (
-        await aexecute(CreateRedeemTokenMutation, variables, rath=rath)
-    ).create_redeem_token
-
-
-def create_redeem_token(
-    manifest: ManifestInput,
-    token: str | None | UnsetType = UNSET,
-    expires_in_days: int | None | UnsetType = UNSET,
-    max_redemptions: int | None | UnsetType = UNSET,
-    rath: UnlokRath | None = None,
-) -> DetailRedeemToken:
-    """CreateRedeemToken
-
-
-    Args:
-        manifest:  (required)
-        token: The `String` scalar type represents textual data, represented as UTF-8 character sequences. The String type is most often used by GraphQL to represent free-form human-readable text.
-        expires_in_days: The `Int` scalar type represents non-fractional signed whole numeric values. Int can represent values between -(2^31) and 2^31 - 1.
-        max_redemptions: The `Int` scalar type represents non-fractional signed whole numeric values. Int can represent values between -(2^31) and 2^31 - 1.
-        rath (unlok.rath.UnlokRath, optional): The client we want to use (defaults to the currently active client)
-
-    Returns:
-        DetailRedeemToken
-    """
-    variables: dict[str, Any] = {}
-    _input: dict[str, Any] = {}
-    _input["manifest"] = manifest
-    if token is not UNSET:
-        _input["token"] = token
-    if expires_in_days is not UNSET:
-        _input["expiresInDays"] = expires_in_days
-    if max_redemptions is not UNSET:
-        _input["maxRedemptions"] = max_redemptions
-    variables["input"] = _input
-    return execute(CreateRedeemTokenMutation, variables, rath=rath).create_redeem_token
-
-
-async def adelete_redeem_token(id: IDCoercible, rath: UnlokRath | None = None) -> ID:
-    """DeleteRedeemToken
-
-
-    Args:
-        id (ID): No description
-        rath (unlok.rath.UnlokRath, optional): The client we want to use (defaults to the currently active client)
-
-    Returns:
-        ID
-    """
-    variables: dict[str, Any] = {}
-    variables["id"] = id
-    return (
-        await aexecute(DeleteRedeemTokenMutation, variables, rath=rath)
-    ).delete_redeem_token
-
-
-def delete_redeem_token(id: IDCoercible, rath: UnlokRath | None = None) -> ID:
-    """DeleteRedeemToken
-
-
-    Args:
-        id (ID): No description
-        rath (unlok.rath.UnlokRath, optional): The client we want to use (defaults to the currently active client)
-
-    Returns:
-        ID
-    """
-    variables: dict[str, Any] = {}
-    variables["id"] = id
-    return execute(DeleteRedeemTokenMutation, variables, rath=rath).delete_redeem_token
-
-
-async def acreate_stash(
-    name: str | None | UnsetType = UNSET,
-    description: str | None | UnsetType = UNSET,
-    rath: UnlokRath | None = None,
-) -> ListStash:
-    """CreateStash
-
-    Create a new stash
-
-    Args:
-        name (str | None, optional): No description.
-        description (str | None, optional): No description. Defaults to
-        rath (unlok.rath.UnlokRath, optional): The client we want to use (defaults to the currently active client)
-
-    Returns:
-        ListStash
-    """
-    variables: dict[str, Any] = {}
-    if name is not UNSET:
-        variables["name"] = name
-    if description is not UNSET:
-        variables["description"] = description
-    return (await aexecute(CreateStashMutation, variables, rath=rath)).create_stash
-
-
-def create_stash(
-    name: str | None | UnsetType = UNSET,
-    description: str | None | UnsetType = UNSET,
-    rath: UnlokRath | None = None,
-) -> ListStash:
-    """CreateStash
-
-    Create a new stash
-
-    Args:
-        name (str | None, optional): No description.
-        description (str | None, optional): No description. Defaults to
-        rath (unlok.rath.UnlokRath, optional): The client we want to use (defaults to the currently active client)
-
-    Returns:
-        ListStash
-    """
-    variables: dict[str, Any] = {}
-    if name is not UNSET:
-        variables["name"] = name
-    if description is not UNSET:
-        variables["description"] = description
-    return execute(CreateStashMutation, variables, rath=rath).create_stash
-
-
-async def aadd_items_to_stash(
-    stash: IDCoercible, items: list[StashItemInput], rath: UnlokRath | None = None
-) -> tuple[StashItem, ...]:
-    """AddItemsToStash
-
-    Add items to a stash
-
-    Args:
-        stash (ID): No description
-        items (list[StashItemInput]): No description
-        rath (unlok.rath.UnlokRath, optional): The client we want to use (defaults to the currently active client)
-
-    Returns:
-        list[StashItem]
-    """
-    variables: dict[str, Any] = {}
-    variables["stash"] = stash
-    variables["items"] = items
-    return (
-        await aexecute(AddItemsToStashMutation, variables, rath=rath)
-    ).add_items_to_stash
-
-
-def add_items_to_stash(
-    stash: IDCoercible, items: list[StashItemInput], rath: UnlokRath | None = None
-) -> tuple[StashItem, ...]:
-    """AddItemsToStash
-
-    Add items to a stash
-
-    Args:
-        stash (ID): No description
-        items (list[StashItemInput]): No description
-        rath (unlok.rath.UnlokRath, optional): The client we want to use (defaults to the currently active client)
-
-    Returns:
-        list[StashItem]
-    """
-    variables: dict[str, Any] = {}
-    variables["stash"] = stash
-    variables["items"] = items
-    return execute(AddItemsToStashMutation, variables, rath=rath).add_items_to_stash
-
-
-async def adelete_stash_items(
-    items: list[IDCoercible], rath: UnlokRath | None = None
-) -> tuple[ID, ...]:
-    """DeleteStashItems
-
-    Delete items from a stash
-
-    Args:
-        items (list[ID]): No description
-        rath (unlok.rath.UnlokRath, optional): The client we want to use (defaults to the currently active client)
-
-    Returns:
-        list[ID]
-    """
-    variables: dict[str, Any] = {}
-    variables["items"] = items
-    return (
-        await aexecute(DeleteStashItemsMutation, variables, rath=rath)
-    ).delete_stash_items
-
-
-def delete_stash_items(
-    items: list[IDCoercible], rath: UnlokRath | None = None
-) -> tuple[ID, ...]:
-    """DeleteStashItems
-
-    Delete items from a stash
-
-    Args:
-        items (list[ID]): No description
-        rath (unlok.rath.UnlokRath, optional): The client we want to use (defaults to the currently active client)
-
-    Returns:
-        list[ID]
-    """
-    variables: dict[str, Any] = {}
-    variables["items"] = items
-    return execute(DeleteStashItemsMutation, variables, rath=rath).delete_stash_items
-
-
-async def adelete_stash(stash: IDCoercible, rath: UnlokRath | None = None) -> ID:
-    """DeleteStash
-
-
-    Args:
-        stash (ID): No description
-        rath (unlok.rath.UnlokRath, optional): The client we want to use (defaults to the currently active client)
-
-    Returns:
-        ID
-    """
-    variables: dict[str, Any] = {}
-    variables["stash"] = stash
-    return (await aexecute(DeleteStashMutation, variables, rath=rath)).delete_stash
-
-
-def delete_stash(stash: IDCoercible, rath: UnlokRath | None = None) -> ID:
-    """DeleteStash
-
-
-    Args:
-        stash (ID): No description
-        rath (unlok.rath.UnlokRath, optional): The client we want to use (defaults to the currently active client)
-
-    Returns:
-        ID
-    """
-    variables: dict[str, Any] = {}
-    variables["stash"] = stash
-    return execute(DeleteStashMutation, variables, rath=rath).delete_stash
-
-
-async def arequest_media_upload(
-    key: str, datalayer: str, rath: UnlokRath | None = None
-) -> PresignedPostCredentials:
-    """RequestMediaUpload
-
-
-    Args:
-        key (str): No description
-        datalayer (str): No description
-        rath (unlok.rath.UnlokRath, optional): The client we want to use (defaults to the currently active client)
-
-    Returns:
-        PresignedPostCredentials
-    """
-    variables: dict[str, Any] = {}
-    variables["key"] = key
-    variables["datalayer"] = datalayer
-    return (
-        await aexecute(RequestMediaUploadMutation, variables, rath=rath)
-    ).request_media_upload
-
-
-def request_media_upload(
-    key: str, datalayer: str, rath: UnlokRath | None = None
-) -> PresignedPostCredentials:
-    """RequestMediaUpload
-
-
-    Args:
-        key (str): No description
-        datalayer (str): No description
-        rath (unlok.rath.UnlokRath, optional): The client we want to use (defaults to the currently active client)
-
-    Returns:
-        PresignedPostCredentials
-    """
-    variables: dict[str, Any] = {}
-    variables["key"] = key
-    variables["datalayer"] = datalayer
-    return execute(
-        RequestMediaUploadMutation, variables, rath=rath
-    ).request_media_upload
-
-
-async def aapps(
-    filters: AppFilter | None | UnsetType = UNSET,
-    pagination: OffsetPaginationInput | None | UnsetType = UNSET,
-    rath: UnlokRath | None = None,
-) -> tuple[ListApp, ...]:
-    """Apps
-
-
-    Args:
-        filters (AppFilter | None, optional): No description.
-        pagination (OffsetPaginationInput | None, optional): No description.
-        rath (unlok.rath.UnlokRath, optional): The client we want to use (defaults to the currently active client)
-
-    Returns:
-        list[ListApp]
-    """
-    variables: dict[str, Any] = {}
-    if filters is not UNSET:
-        variables["filters"] = filters
-    if pagination is not UNSET:
-        variables["pagination"] = pagination
-    return (await aexecute(AppsQuery, variables, rath=rath)).apps
-
-
-def apps(
-    filters: AppFilter | None | UnsetType = UNSET,
-    pagination: OffsetPaginationInput | None | UnsetType = UNSET,
-    rath: UnlokRath | None = None,
-) -> tuple[ListApp, ...]:
-    """Apps
-
-
-    Args:
-        filters (AppFilter | None, optional): No description.
-        pagination (OffsetPaginationInput | None, optional): No description.
-        rath (unlok.rath.UnlokRath, optional): The client we want to use (defaults to the currently active client)
-
-    Returns:
-        list[ListApp]
-    """
-    variables: dict[str, Any] = {}
-    if filters is not UNSET:
-        variables["filters"] = filters
-    if pagination is not UNSET:
-        variables["pagination"] = pagination
-    return execute(AppsQuery, variables, rath=rath).apps
-
-
-async def aapp(
-    identifier: str | None | UnsetType = UNSET,
-    id: IDCoercible | None | UnsetType = UNSET,
-    client_id: IDCoercible | None | UnsetType = UNSET,
-    rath: UnlokRath | None = None,
-) -> DetailApp:
-    """App
-
-
-    Args:
-        identifier (str | None, optional): No description.
-        id (ID | None, optional): No description.
-        client_id (ID | None, optional): No description.
-        rath (unlok.rath.UnlokRath, optional): The client we want to use (defaults to the currently active client)
-
-    Returns:
-        DetailApp
-    """
-    variables: dict[str, Any] = {}
-    if identifier is not UNSET:
-        variables["identifier"] = identifier
-    if id is not UNSET:
+
+    async def acreate_client(
+        self,
+        manifest: ManifestInput,
+        hub: IDCoercible | None | UnsetType = UNSET,
+        layers: Iterable[str] | None | UnsetType = UNSET,
+        role: ClientRole | None | UnsetType = UNSET,
+    ) -> DetailClient:
+        """CreateClient
+
+
+        Args:
+            manifest:  (required)
+            hub: The `ID` scalar type represents a unique identifier, often used to refetch an object or as key for a cache. The ID type appears in a JSON response as a String; however, it is not intended to be human-readable. When expected as an input type, any string (such as `"4"`) or integer (such as `4`) input value will be accepted as an ID.
+            layers: The `String` scalar type represents textual data, represented as UTF-8 character sequences. The String type is most often used by GraphQL to represent free-form human-readable text. (required) (list)
+            role: ClientRole
+
+        Returns:
+            DetailClient"""
+        variables: dict[str, Any] = {}
+        _input: dict[str, Any] = {}
+        _input["manifest"] = manifest
+        if hub is not UNSET:
+            _input["hub"] = hub
+        if layers is not UNSET:
+            _input["layers"] = layers
+        if role is not UNSET:
+            _input["role"] = role
+        variables["input"] = _input
+        return (
+            await self.aexecute(CreateClientMutation, variables)
+        ).create_developmental_client
+
+    def create_client(
+        self,
+        manifest: ManifestInput,
+        hub: IDCoercible | None | UnsetType = UNSET,
+        layers: Iterable[str] | None | UnsetType = UNSET,
+        role: ClientRole | None | UnsetType = UNSET,
+    ) -> DetailClient:
+        """CreateClient
+
+
+        Args:
+            manifest:  (required)
+            hub: The `ID` scalar type represents a unique identifier, often used to refetch an object or as key for a cache. The ID type appears in a JSON response as a String; however, it is not intended to be human-readable. When expected as an input type, any string (such as `"4"`) or integer (such as `4`) input value will be accepted as an ID.
+            layers: The `String` scalar type represents textual data, represented as UTF-8 character sequences. The String type is most often used by GraphQL to represent free-form human-readable text. (required) (list)
+            role: ClientRole
+
+        Returns:
+            DetailClient"""
+        variables: dict[str, Any] = {}
+        _input: dict[str, Any] = {}
+        _input["manifest"] = manifest
+        if hub is not UNSET:
+            _input["hub"] = hub
+        if layers is not UNSET:
+            _input["layers"] = layers
+        if role is not UNSET:
+            _input["role"] = role
+        variables["input"] = _input
+        return self.execute(CreateClientMutation, variables).create_developmental_client
+
+    async def acreate_group_profile(
+        self, group: IDCoercible, name: str, avatar: IDCoercible
+    ) -> GroupProfile:
+        """CreateGroupProfile
+
+
+        Args:
+            group: The `ID` scalar type represents a unique identifier, often used to refetch an object or as key for a cache. The ID type appears in a JSON response as a String; however, it is not intended to be human-readable. When expected as an input type, any string (such as `"4"`) or integer (such as `4`) input value will be accepted as an ID. (required)
+            name: The `String` scalar type represents textual data, represented as UTF-8 character sequences. The String type is most often used by GraphQL to represent free-form human-readable text. (required)
+            avatar: The `ID` scalar type represents a unique identifier, often used to refetch an object or as key for a cache. The ID type appears in a JSON response as a String; however, it is not intended to be human-readable. When expected as an input type, any string (such as `"4"`) or integer (such as `4`) input value will be accepted as an ID. (required)
+
+        Returns:
+            GroupProfile"""
+        variables: dict[str, Any] = {}
+        _input: dict[str, Any] = {}
+        _input["group"] = group
+        _input["name"] = name
+        _input["avatar"] = avatar
+        variables["input"] = _input
+        return (
+            await self.aexecute(CreateGroupProfileMutation, variables)
+        ).create_group_profile
+
+    def create_group_profile(
+        self, group: IDCoercible, name: str, avatar: IDCoercible
+    ) -> GroupProfile:
+        """CreateGroupProfile
+
+
+        Args:
+            group: The `ID` scalar type represents a unique identifier, often used to refetch an object or as key for a cache. The ID type appears in a JSON response as a String; however, it is not intended to be human-readable. When expected as an input type, any string (such as `"4"`) or integer (such as `4`) input value will be accepted as an ID. (required)
+            name: The `String` scalar type represents textual data, represented as UTF-8 character sequences. The String type is most often used by GraphQL to represent free-form human-readable text. (required)
+            avatar: The `ID` scalar type represents a unique identifier, often used to refetch an object or as key for a cache. The ID type appears in a JSON response as a String; however, it is not intended to be human-readable. When expected as an input type, any string (such as `"4"`) or integer (such as `4`) input value will be accepted as an ID. (required)
+
+        Returns:
+            GroupProfile"""
+        variables: dict[str, Any] = {}
+        _input: dict[str, Any] = {}
+        _input["group"] = group
+        _input["name"] = name
+        _input["avatar"] = avatar
+        variables["input"] = _input
+        return self.execute(CreateGroupProfileMutation, variables).create_group_profile
+
+    async def aupdate_group_profile(
+        self, id: IDCoercible, name: str, avatar: IDCoercible
+    ) -> GroupProfile:
+        """UpdateGroupProfile
+
+
+        Args:
+            id: The `ID` scalar type represents a unique identifier, often used to refetch an object or as key for a cache. The ID type appears in a JSON response as a String; however, it is not intended to be human-readable. When expected as an input type, any string (such as `"4"`) or integer (such as `4`) input value will be accepted as an ID. (required)
+            name: The `String` scalar type represents textual data, represented as UTF-8 character sequences. The String type is most often used by GraphQL to represent free-form human-readable text. (required)
+            avatar: The `ID` scalar type represents a unique identifier, often used to refetch an object or as key for a cache. The ID type appears in a JSON response as a String; however, it is not intended to be human-readable. When expected as an input type, any string (such as `"4"`) or integer (such as `4`) input value will be accepted as an ID. (required)
+
+        Returns:
+            GroupProfile"""
+        variables: dict[str, Any] = {}
+        _input: dict[str, Any] = {}
+        _input["id"] = id
+        _input["name"] = name
+        _input["avatar"] = avatar
+        variables["input"] = _input
+        return (
+            await self.aexecute(UpdateGroupProfileMutation, variables)
+        ).update_group_profile
+
+    def update_group_profile(
+        self, id: IDCoercible, name: str, avatar: IDCoercible
+    ) -> GroupProfile:
+        """UpdateGroupProfile
+
+
+        Args:
+            id: The `ID` scalar type represents a unique identifier, often used to refetch an object or as key for a cache. The ID type appears in a JSON response as a String; however, it is not intended to be human-readable. When expected as an input type, any string (such as `"4"`) or integer (such as `4`) input value will be accepted as an ID. (required)
+            name: The `String` scalar type represents textual data, represented as UTF-8 character sequences. The String type is most often used by GraphQL to represent free-form human-readable text. (required)
+            avatar: The `ID` scalar type represents a unique identifier, often used to refetch an object or as key for a cache. The ID type appears in a JSON response as a String; however, it is not intended to be human-readable. When expected as an input type, any string (such as `"4"`) or integer (such as `4`) input value will be accepted as an ID. (required)
+
+        Returns:
+            GroupProfile"""
+        variables: dict[str, Any] = {}
+        _input: dict[str, Any] = {}
+        _input["id"] = id
+        _input["name"] = name
+        _input["avatar"] = avatar
+        variables["input"] = _input
+        return self.execute(UpdateGroupProfileMutation, variables).update_group_profile
+
+    async def aupdate_service_instance(
+        self,
+        id: IDCoercible,
+        allowed_users: Iterable[IDCoercible] | None | UnsetType = UNSET,
+        allowed_groups: Iterable[IDCoercible] | None | UnsetType = UNSET,
+        denied_groups: Iterable[IDCoercible] | None | UnsetType = UNSET,
+        denied_users: Iterable[IDCoercible] | None | UnsetType = UNSET,
+    ) -> ServiceInstance:
+        """UpdateServiceInstance
+
+
+        Args:
+            allowed_users: The `ID` scalar type represents a unique identifier, often used to refetch an object or as key for a cache. The ID type appears in a JSON response as a String; however, it is not intended to be human-readable. When expected as an input type, any string (such as `"4"`) or integer (such as `4`) input value will be accepted as an ID. (required) (list)
+            allowed_groups: The `ID` scalar type represents a unique identifier, often used to refetch an object or as key for a cache. The ID type appears in a JSON response as a String; however, it is not intended to be human-readable. When expected as an input type, any string (such as `"4"`) or integer (such as `4`) input value will be accepted as an ID. (required) (list)
+            denied_groups: The `ID` scalar type represents a unique identifier, often used to refetch an object or as key for a cache. The ID type appears in a JSON response as a String; however, it is not intended to be human-readable. When expected as an input type, any string (such as `"4"`) or integer (such as `4`) input value will be accepted as an ID. (required) (list)
+            denied_users: The `ID` scalar type represents a unique identifier, often used to refetch an object or as key for a cache. The ID type appears in a JSON response as a String; however, it is not intended to be human-readable. When expected as an input type, any string (such as `"4"`) or integer (such as `4`) input value will be accepted as an ID. (required) (list)
+            id: The `ID` scalar type represents a unique identifier, often used to refetch an object or as key for a cache. The ID type appears in a JSON response as a String; however, it is not intended to be human-readable. When expected as an input type, any string (such as `"4"`) or integer (such as `4`) input value will be accepted as an ID. (required)
+
+        Returns:
+            ServiceInstance"""
+        variables: dict[str, Any] = {}
+        _input: dict[str, Any] = {}
+        if allowed_users is not UNSET:
+            _input["allowedUsers"] = allowed_users
+        if allowed_groups is not UNSET:
+            _input["allowedGroups"] = allowed_groups
+        if denied_groups is not UNSET:
+            _input["deniedGroups"] = denied_groups
+        if denied_users is not UNSET:
+            _input["deniedUsers"] = denied_users
+        _input["id"] = id
+        variables["input"] = _input
+        return (
+            await self.aexecute(UpdateServiceInstanceMutation, variables)
+        ).update_service_instance
+
+    def update_service_instance(
+        self,
+        id: IDCoercible,
+        allowed_users: Iterable[IDCoercible] | None | UnsetType = UNSET,
+        allowed_groups: Iterable[IDCoercible] | None | UnsetType = UNSET,
+        denied_groups: Iterable[IDCoercible] | None | UnsetType = UNSET,
+        denied_users: Iterable[IDCoercible] | None | UnsetType = UNSET,
+    ) -> ServiceInstance:
+        """UpdateServiceInstance
+
+
+        Args:
+            allowed_users: The `ID` scalar type represents a unique identifier, often used to refetch an object or as key for a cache. The ID type appears in a JSON response as a String; however, it is not intended to be human-readable. When expected as an input type, any string (such as `"4"`) or integer (such as `4`) input value will be accepted as an ID. (required) (list)
+            allowed_groups: The `ID` scalar type represents a unique identifier, often used to refetch an object or as key for a cache. The ID type appears in a JSON response as a String; however, it is not intended to be human-readable. When expected as an input type, any string (such as `"4"`) or integer (such as `4`) input value will be accepted as an ID. (required) (list)
+            denied_groups: The `ID` scalar type represents a unique identifier, often used to refetch an object or as key for a cache. The ID type appears in a JSON response as a String; however, it is not intended to be human-readable. When expected as an input type, any string (such as `"4"`) or integer (such as `4`) input value will be accepted as an ID. (required) (list)
+            denied_users: The `ID` scalar type represents a unique identifier, often used to refetch an object or as key for a cache. The ID type appears in a JSON response as a String; however, it is not intended to be human-readable. When expected as an input type, any string (such as `"4"`) or integer (such as `4`) input value will be accepted as an ID. (required) (list)
+            id: The `ID` scalar type represents a unique identifier, often used to refetch an object or as key for a cache. The ID type appears in a JSON response as a String; however, it is not intended to be human-readable. When expected as an input type, any string (such as `"4"`) or integer (such as `4`) input value will be accepted as an ID. (required)
+
+        Returns:
+            ServiceInstance"""
+        variables: dict[str, Any] = {}
+        _input: dict[str, Any] = {}
+        if allowed_users is not UNSET:
+            _input["allowedUsers"] = allowed_users
+        if allowed_groups is not UNSET:
+            _input["allowedGroups"] = allowed_groups
+        if denied_groups is not UNSET:
+            _input["deniedGroups"] = denied_groups
+        if denied_users is not UNSET:
+            _input["deniedUsers"] = denied_users
+        _input["id"] = id
+        variables["input"] = _input
+        return self.execute(
+            UpdateServiceInstanceMutation, variables
+        ).update_service_instance
+
+    async def acreate_service_instance(
+        self,
+        identifier: str,
+        service: IDCoercible,
+        allowed_users: Iterable[IDCoercible] | None | UnsetType = UNSET,
+        allowed_groups: Iterable[IDCoercible] | None | UnsetType = UNSET,
+        denied_groups: Iterable[IDCoercible] | None | UnsetType = UNSET,
+        denied_users: Iterable[IDCoercible] | None | UnsetType = UNSET,
+    ) -> ServiceInstance:
+        """CreateServiceInstance
+
+
+        Args:
+            identifier: The `String` scalar type represents textual data, represented as UTF-8 character sequences. The String type is most often used by GraphQL to represent free-form human-readable text. (required)
+            service: The `ID` scalar type represents a unique identifier, often used to refetch an object or as key for a cache. The ID type appears in a JSON response as a String; however, it is not intended to be human-readable. When expected as an input type, any string (such as `"4"`) or integer (such as `4`) input value will be accepted as an ID. (required)
+            allowed_users: The `ID` scalar type represents a unique identifier, often used to refetch an object or as key for a cache. The ID type appears in a JSON response as a String; however, it is not intended to be human-readable. When expected as an input type, any string (such as `"4"`) or integer (such as `4`) input value will be accepted as an ID. (required) (list)
+            allowed_groups: The `ID` scalar type represents a unique identifier, often used to refetch an object or as key for a cache. The ID type appears in a JSON response as a String; however, it is not intended to be human-readable. When expected as an input type, any string (such as `"4"`) or integer (such as `4`) input value will be accepted as an ID. (required) (list)
+            denied_groups: The `ID` scalar type represents a unique identifier, often used to refetch an object or as key for a cache. The ID type appears in a JSON response as a String; however, it is not intended to be human-readable. When expected as an input type, any string (such as `"4"`) or integer (such as `4`) input value will be accepted as an ID. (required) (list)
+            denied_users: The `ID` scalar type represents a unique identifier, often used to refetch an object or as key for a cache. The ID type appears in a JSON response as a String; however, it is not intended to be human-readable. When expected as an input type, any string (such as `"4"`) or integer (such as `4`) input value will be accepted as an ID. (required) (list)
+
+        Returns:
+            ServiceInstance"""
+        variables: dict[str, Any] = {}
+        _input: dict[str, Any] = {}
+        _input["identifier"] = identifier
+        _input["service"] = service
+        if allowed_users is not UNSET:
+            _input["allowedUsers"] = allowed_users
+        if allowed_groups is not UNSET:
+            _input["allowedGroups"] = allowed_groups
+        if denied_groups is not UNSET:
+            _input["deniedGroups"] = denied_groups
+        if denied_users is not UNSET:
+            _input["deniedUsers"] = denied_users
+        variables["input"] = _input
+        return (
+            await self.aexecute(CreateServiceInstanceMutation, variables)
+        ).create_service_instance
+
+    def create_service_instance(
+        self,
+        identifier: str,
+        service: IDCoercible,
+        allowed_users: Iterable[IDCoercible] | None | UnsetType = UNSET,
+        allowed_groups: Iterable[IDCoercible] | None | UnsetType = UNSET,
+        denied_groups: Iterable[IDCoercible] | None | UnsetType = UNSET,
+        denied_users: Iterable[IDCoercible] | None | UnsetType = UNSET,
+    ) -> ServiceInstance:
+        """CreateServiceInstance
+
+
+        Args:
+            identifier: The `String` scalar type represents textual data, represented as UTF-8 character sequences. The String type is most often used by GraphQL to represent free-form human-readable text. (required)
+            service: The `ID` scalar type represents a unique identifier, often used to refetch an object or as key for a cache. The ID type appears in a JSON response as a String; however, it is not intended to be human-readable. When expected as an input type, any string (such as `"4"`) or integer (such as `4`) input value will be accepted as an ID. (required)
+            allowed_users: The `ID` scalar type represents a unique identifier, often used to refetch an object or as key for a cache. The ID type appears in a JSON response as a String; however, it is not intended to be human-readable. When expected as an input type, any string (such as `"4"`) or integer (such as `4`) input value will be accepted as an ID. (required) (list)
+            allowed_groups: The `ID` scalar type represents a unique identifier, often used to refetch an object or as key for a cache. The ID type appears in a JSON response as a String; however, it is not intended to be human-readable. When expected as an input type, any string (such as `"4"`) or integer (such as `4`) input value will be accepted as an ID. (required) (list)
+            denied_groups: The `ID` scalar type represents a unique identifier, often used to refetch an object or as key for a cache. The ID type appears in a JSON response as a String; however, it is not intended to be human-readable. When expected as an input type, any string (such as `"4"`) or integer (such as `4`) input value will be accepted as an ID. (required) (list)
+            denied_users: The `ID` scalar type represents a unique identifier, often used to refetch an object or as key for a cache. The ID type appears in a JSON response as a String; however, it is not intended to be human-readable. When expected as an input type, any string (such as `"4"`) or integer (such as `4`) input value will be accepted as an ID. (required) (list)
+
+        Returns:
+            ServiceInstance"""
+        variables: dict[str, Any] = {}
+        _input: dict[str, Any] = {}
+        _input["identifier"] = identifier
+        _input["service"] = service
+        if allowed_users is not UNSET:
+            _input["allowedUsers"] = allowed_users
+        if allowed_groups is not UNSET:
+            _input["allowedGroups"] = allowed_groups
+        if denied_groups is not UNSET:
+            _input["deniedGroups"] = denied_groups
+        if denied_users is not UNSET:
+            _input["deniedUsers"] = denied_users
+        variables["input"] = _input
+        return self.execute(
+            CreateServiceInstanceMutation, variables
+        ).create_service_instance
+
+    async def acreate_user_profile(self, user: IDCoercible, name: str) -> Profile:
+        """CreateUserProfile
+
+
+        Args:
+            user: The `ID` scalar type represents a unique identifier, often used to refetch an object or as key for a cache. The ID type appears in a JSON response as a String; however, it is not intended to be human-readable. When expected as an input type, any string (such as `"4"`) or integer (such as `4`) input value will be accepted as an ID. (required)
+            name: The `String` scalar type represents textual data, represented as UTF-8 character sequences. The String type is most often used by GraphQL to represent free-form human-readable text. (required)
+
+        Returns:
+            Profile"""
+        variables: dict[str, Any] = {}
+        _input: dict[str, Any] = {}
+        _input["user"] = user
+        _input["name"] = name
+        variables["input"] = _input
+        return (
+            await self.aexecute(CreateUserProfileMutation, variables)
+        ).create_profile
+
+    def create_user_profile(self, user: IDCoercible, name: str) -> Profile:
+        """CreateUserProfile
+
+
+        Args:
+            user: The `ID` scalar type represents a unique identifier, often used to refetch an object or as key for a cache. The ID type appears in a JSON response as a String; however, it is not intended to be human-readable. When expected as an input type, any string (such as `"4"`) or integer (such as `4`) input value will be accepted as an ID. (required)
+            name: The `String` scalar type represents textual data, represented as UTF-8 character sequences. The String type is most often used by GraphQL to represent free-form human-readable text. (required)
+
+        Returns:
+            Profile"""
+        variables: dict[str, Any] = {}
+        _input: dict[str, Any] = {}
+        _input["user"] = user
+        _input["name"] = name
+        variables["input"] = _input
+        return self.execute(CreateUserProfileMutation, variables).create_profile
+
+    async def aupdate_user_profile(
+        self, id: IDCoercible, name: str, avatar: IDCoercible
+    ) -> Profile:
+        """UpdateUserProfile
+
+
+        Args:
+            id: The `ID` scalar type represents a unique identifier, often used to refetch an object or as key for a cache. The ID type appears in a JSON response as a String; however, it is not intended to be human-readable. When expected as an input type, any string (such as `"4"`) or integer (such as `4`) input value will be accepted as an ID. (required)
+            name: The `String` scalar type represents textual data, represented as UTF-8 character sequences. The String type is most often used by GraphQL to represent free-form human-readable text. (required)
+            avatar: The `ID` scalar type represents a unique identifier, often used to refetch an object or as key for a cache. The ID type appears in a JSON response as a String; however, it is not intended to be human-readable. When expected as an input type, any string (such as `"4"`) or integer (such as `4`) input value will be accepted as an ID. (required)
+
+        Returns:
+            Profile"""
+        variables: dict[str, Any] = {}
+        _input: dict[str, Any] = {}
+        _input["id"] = id
+        _input["name"] = name
+        _input["avatar"] = avatar
+        variables["input"] = _input
+        return (
+            await self.aexecute(UpdateUserProfileMutation, variables)
+        ).update_profile
+
+    def update_user_profile(
+        self, id: IDCoercible, name: str, avatar: IDCoercible
+    ) -> Profile:
+        """UpdateUserProfile
+
+
+        Args:
+            id: The `ID` scalar type represents a unique identifier, often used to refetch an object or as key for a cache. The ID type appears in a JSON response as a String; however, it is not intended to be human-readable. When expected as an input type, any string (such as `"4"`) or integer (such as `4`) input value will be accepted as an ID. (required)
+            name: The `String` scalar type represents textual data, represented as UTF-8 character sequences. The String type is most often used by GraphQL to represent free-form human-readable text. (required)
+            avatar: The `ID` scalar type represents a unique identifier, often used to refetch an object or as key for a cache. The ID type appears in a JSON response as a String; however, it is not intended to be human-readable. When expected as an input type, any string (such as `"4"`) or integer (such as `4`) input value will be accepted as an ID. (required)
+
+        Returns:
+            Profile"""
+        variables: dict[str, Any] = {}
+        _input: dict[str, Any] = {}
+        _input["id"] = id
+        _input["name"] = name
+        _input["avatar"] = avatar
+        variables["input"] = _input
+        return self.execute(UpdateUserProfileMutation, variables).update_profile
+
+    async def acreate_redeem_token(
+        self,
+        manifest: ManifestInput,
+        token: str | None | UnsetType = UNSET,
+        expires_in_days: int | None | UnsetType = UNSET,
+        max_redemptions: int | None | UnsetType = UNSET,
+    ) -> DetailRedeemToken:
+        """CreateRedeemToken
+
+
+        Args:
+            manifest:  (required)
+            token: The `String` scalar type represents textual data, represented as UTF-8 character sequences. The String type is most often used by GraphQL to represent free-form human-readable text.
+            expires_in_days: The `Int` scalar type represents non-fractional signed whole numeric values. Int can represent values between -(2^31) and 2^31 - 1.
+            max_redemptions: The `Int` scalar type represents non-fractional signed whole numeric values. Int can represent values between -(2^31) and 2^31 - 1.
+
+        Returns:
+            DetailRedeemToken"""
+        variables: dict[str, Any] = {}
+        _input: dict[str, Any] = {}
+        _input["manifest"] = manifest
+        if token is not UNSET:
+            _input["token"] = token
+        if expires_in_days is not UNSET:
+            _input["expiresInDays"] = expires_in_days
+        if max_redemptions is not UNSET:
+            _input["maxRedemptions"] = max_redemptions
+        variables["input"] = _input
+        return (
+            await self.aexecute(CreateRedeemTokenMutation, variables)
+        ).create_redeem_token
+
+    def create_redeem_token(
+        self,
+        manifest: ManifestInput,
+        token: str | None | UnsetType = UNSET,
+        expires_in_days: int | None | UnsetType = UNSET,
+        max_redemptions: int | None | UnsetType = UNSET,
+    ) -> DetailRedeemToken:
+        """CreateRedeemToken
+
+
+        Args:
+            manifest:  (required)
+            token: The `String` scalar type represents textual data, represented as UTF-8 character sequences. The String type is most often used by GraphQL to represent free-form human-readable text.
+            expires_in_days: The `Int` scalar type represents non-fractional signed whole numeric values. Int can represent values between -(2^31) and 2^31 - 1.
+            max_redemptions: The `Int` scalar type represents non-fractional signed whole numeric values. Int can represent values between -(2^31) and 2^31 - 1.
+
+        Returns:
+            DetailRedeemToken"""
+        variables: dict[str, Any] = {}
+        _input: dict[str, Any] = {}
+        _input["manifest"] = manifest
+        if token is not UNSET:
+            _input["token"] = token
+        if expires_in_days is not UNSET:
+            _input["expiresInDays"] = expires_in_days
+        if max_redemptions is not UNSET:
+            _input["maxRedemptions"] = max_redemptions
+        variables["input"] = _input
+        return self.execute(CreateRedeemTokenMutation, variables).create_redeem_token
+
+    async def adelete_redeem_token(self, id: IDCoercible) -> ID:
+        """DeleteRedeemToken
+
+
+        Args:
+            id (ID): No description
+
+        Returns:
+            ID"""
+        variables: dict[str, Any] = {}
         variables["id"] = id
-    if client_id is not UNSET:
-        variables["clientId"] = client_id
-    return (await aexecute(AppQuery, variables, rath=rath)).app
+        return (
+            await self.aexecute(DeleteRedeemTokenMutation, variables)
+        ).delete_redeem_token
+
+    def delete_redeem_token(self, id: IDCoercible) -> ID:
+        """DeleteRedeemToken
 
 
-def app(
-    identifier: str | None | UnsetType = UNSET,
-    id: IDCoercible | None | UnsetType = UNSET,
-    client_id: IDCoercible | None | UnsetType = UNSET,
-    rath: UnlokRath | None = None,
-) -> DetailApp:
-    """App
+        Args:
+            id (ID): No description
 
-
-    Args:
-        identifier (str | None, optional): No description.
-        id (ID | None, optional): No description.
-        client_id (ID | None, optional): No description.
-        rath (unlok.rath.UnlokRath, optional): The client we want to use (defaults to the currently active client)
-
-    Returns:
-        DetailApp
-    """
-    variables: dict[str, Any] = {}
-    if identifier is not UNSET:
-        variables["identifier"] = identifier
-    if id is not UNSET:
+        Returns:
+            ID"""
+        variables: dict[str, Any] = {}
         variables["id"] = id
-    if client_id is not UNSET:
-        variables["clientId"] = client_id
-    return execute(AppQuery, variables, rath=rath).app
-
-
-async def adetail_app(id: IDCoercible, rath: UnlokRath | None = None) -> DetailApp:
-    """DetailApp
-
-
-    Args:
-        id (ID): No description
-        rath (unlok.rath.UnlokRath, optional): The client we want to use (defaults to the currently active client)
-
-    Returns:
-        DetailApp
-    """
-    variables: dict[str, Any] = {}
-    variables["id"] = id
-    return (await aexecute(DetailAppQuery, variables, rath=rath)).app
-
-
-def detail_app(id: IDCoercible, rath: UnlokRath | None = None) -> DetailApp:
-    """DetailApp
-
-
-    Args:
-        id (ID): No description
-        rath (unlok.rath.UnlokRath, optional): The client we want to use (defaults to the currently active client)
-
-    Returns:
-        DetailApp
-    """
-    variables: dict[str, Any] = {}
-    variables["id"] = id
-    return execute(DetailAppQuery, variables, rath=rath).app
-
-
-async def aclients(
-    filters: ClientFilter | None | UnsetType = UNSET,
-    pagination: OffsetPaginationInput | None | UnsetType = UNSET,
-    rath: UnlokRath | None = None,
-) -> tuple[ListClient, ...]:
-    """Clients
-
-
-    Args:
-        filters (ClientFilter | None, optional): No description.
-        pagination (OffsetPaginationInput | None, optional): No description.
-        rath (unlok.rath.UnlokRath, optional): The client we want to use (defaults to the currently active client)
-
-    Returns:
-        list[ListClient]
-    """
-    variables: dict[str, Any] = {}
-    if filters is not UNSET:
-        variables["filters"] = filters
-    if pagination is not UNSET:
-        variables["pagination"] = pagination
-    return (await aexecute(ClientsQuery, variables, rath=rath)).clients
-
-
-def clients(
-    filters: ClientFilter | None | UnsetType = UNSET,
-    pagination: OffsetPaginationInput | None | UnsetType = UNSET,
-    rath: UnlokRath | None = None,
-) -> tuple[ListClient, ...]:
-    """Clients
-
-
-    Args:
-        filters (ClientFilter | None, optional): No description.
-        pagination (OffsetPaginationInput | None, optional): No description.
-        rath (unlok.rath.UnlokRath, optional): The client we want to use (defaults to the currently active client)
-
-    Returns:
-        list[ListClient]
-    """
-    variables: dict[str, Any] = {}
-    if filters is not UNSET:
-        variables["filters"] = filters
-    if pagination is not UNSET:
-        variables["pagination"] = pagination
-    return execute(ClientsQuery, variables, rath=rath).clients
-
-
-async def adetail_client(
-    id: IDCoercible, rath: UnlokRath | None = None
-) -> DetailClient:
-    """DetailClient
-
-
-    Args:
-        id (ID): No description
-        rath (unlok.rath.UnlokRath, optional): The client we want to use (defaults to the currently active client)
-
-    Returns:
-        DetailClient
-    """
-    variables: dict[str, Any] = {}
-    variables["id"] = id
-    return (await aexecute(DetailClientQuery, variables, rath=rath)).client
-
-
-def detail_client(id: IDCoercible, rath: UnlokRath | None = None) -> DetailClient:
-    """DetailClient
-
-
-    Args:
-        id (ID): No description
-        rath (unlok.rath.UnlokRath, optional): The client we want to use (defaults to the currently active client)
-
-    Returns:
-        DetailClient
-    """
-    variables: dict[str, Any] = {}
-    variables["id"] = id
-    return execute(DetailClientQuery, variables, rath=rath).client
-
-
-async def amy_managed_clients(
-    kind: ClientKind, rath: UnlokRath | None = None
-) -> tuple[ListClient, ...]:
-    """MyManagedClients
-
-
-    Args:
-        kind (ClientKind): No description
-        rath (unlok.rath.UnlokRath, optional): The client we want to use (defaults to the currently active client)
-
-    Returns:
-        list[ListClient]
-    """
-    variables: dict[str, Any] = {}
-    variables["kind"] = kind
-    return (
-        await aexecute(MyManagedClientsQuery, variables, rath=rath)
-    ).my_managed_clients
-
-
-def my_managed_clients(
-    kind: ClientKind, rath: UnlokRath | None = None
-) -> tuple[ListClient, ...]:
-    """MyManagedClients
-
-
-    Args:
-        kind (ClientKind): No description
-        rath (unlok.rath.UnlokRath, optional): The client we want to use (defaults to the currently active client)
-
-    Returns:
-        list[ListClient]
-    """
-    variables: dict[str, Any] = {}
-    variables["kind"] = kind
-    return execute(MyManagedClientsQuery, variables, rath=rath).my_managed_clients
-
-
-async def aclient(
-    client_id: IDCoercible, rath: UnlokRath | None = None
-) -> DetailClient:
-    """Client
-
-
-    Args:
-        client_id (ID): No description
-        rath (unlok.rath.UnlokRath, optional): The client we want to use (defaults to the currently active client)
-
-    Returns:
-        DetailClient
-    """
-    variables: dict[str, Any] = {}
-    variables["clientId"] = client_id
-    return (await aexecute(ClientQuery, variables, rath=rath)).client
-
-
-def client(client_id: IDCoercible, rath: UnlokRath | None = None) -> DetailClient:
-    """Client
-
-
-    Args:
-        client_id (ID): No description
-        rath (unlok.rath.UnlokRath, optional): The client we want to use (defaults to the currently active client)
-
-    Returns:
-        DetailClient
-    """
-    variables: dict[str, Any] = {}
-    variables["clientId"] = client_id
-    return execute(ClientQuery, variables, rath=rath).client
-
-
-async def acomments_for(
-    object: IDCoercible, identifier: str, rath: UnlokRath | None = None
-) -> tuple[ListComment, ...]:
-    """CommentsFor
-
-
-    Args:
-        object (ID): No description
-        identifier (str): No description
-        rath (unlok.rath.UnlokRath, optional): The client we want to use (defaults to the currently active client)
-
-    Returns:
-        list[ListComment]
-    """
-    variables: dict[str, Any] = {}
-    variables["object"] = object
-    variables["identifier"] = identifier
-    return (await aexecute(CommentsForQuery, variables, rath=rath)).comments_for
-
-
-def comments_for(
-    object: IDCoercible, identifier: str, rath: UnlokRath | None = None
-) -> tuple[ListComment, ...]:
-    """CommentsFor
-
-
-    Args:
-        object (ID): No description
-        identifier (str): No description
-        rath (unlok.rath.UnlokRath, optional): The client we want to use (defaults to the currently active client)
-
-    Returns:
-        list[ListComment]
-    """
-    variables: dict[str, Any] = {}
-    variables["object"] = object
-    variables["identifier"] = identifier
-    return execute(CommentsForQuery, variables, rath=rath).comments_for
-
-
-async def amy_mentions(rath: UnlokRath | None = None) -> tuple[MentionComment, ...]:
-    """MyMentions
-
-
-    Args:
-        rath (unlok.rath.UnlokRath, optional): The client we want to use (defaults to the currently active client)
-
-    Returns:
-        list[MentionComment]
-    """
-    variables: dict[str, Any] = {}
-    return (await aexecute(MyMentionsQuery, variables, rath=rath)).my_mentions
-
-
-def my_mentions(rath: UnlokRath | None = None) -> tuple[MentionComment, ...]:
-    """MyMentions
-
-
-    Args:
-        rath (unlok.rath.UnlokRath, optional): The client we want to use (defaults to the currently active client)
-
-    Returns:
-        list[MentionComment]
-    """
-    variables: dict[str, Any] = {}
-    return execute(MyMentionsQuery, variables, rath=rath).my_mentions
-
-
-async def adetail_comment(
-    id: IDCoercible, rath: UnlokRath | None = None
-) -> DetailComment:
-    """DetailComment
-
-
-    Args:
-        id (ID): No description
-        rath (unlok.rath.UnlokRath, optional): The client we want to use (defaults to the currently active client)
-
-    Returns:
-        DetailComment
-    """
-    variables: dict[str, Any] = {}
-    variables["id"] = id
-    return (await aexecute(DetailCommentQuery, variables, rath=rath)).comment
-
-
-def detail_comment(id: IDCoercible, rath: UnlokRath | None = None) -> DetailComment:
-    """DetailComment
-
-
-    Args:
-        id (ID): No description
-        rath (unlok.rath.UnlokRath, optional): The client we want to use (defaults to the currently active client)
-
-    Returns:
-        DetailComment
-    """
-    variables: dict[str, Any] = {}
-    variables["id"] = id
-    return execute(DetailCommentQuery, variables, rath=rath).comment
-
-
-async def agroup_options(
-    search: str | None | UnsetType = UNSET,
-    values: list[IDCoercible] | None | UnsetType = UNSET,
-    rath: UnlokRath | None = None,
-) -> tuple[GroupOptionsQueryOptions, ...]:
-    """GroupOptions
-
-
-    Args:
-        search (str | None, optional): No description.
-        values (list[ID] | None, optional): No description.
-        rath (unlok.rath.UnlokRath, optional): The client we want to use (defaults to the currently active client)
-
-    Returns:
-        list[GroupOptionsQueryGroups]
-    """
-    variables: dict[str, Any] = {}
-    if search is not UNSET:
-        variables["search"] = search
-    if values is not UNSET:
-        variables["values"] = values
-    return (await aexecute(GroupOptionsQuery, variables, rath=rath)).options
-
-
-def group_options(
-    search: str | None | UnsetType = UNSET,
-    values: list[IDCoercible] | None | UnsetType = UNSET,
-    rath: UnlokRath | None = None,
-) -> tuple[GroupOptionsQueryOptions, ...]:
-    """GroupOptions
-
-
-    Args:
-        search (str | None, optional): No description.
-        values (list[ID] | None, optional): No description.
-        rath (unlok.rath.UnlokRath, optional): The client we want to use (defaults to the currently active client)
-
-    Returns:
-        list[GroupOptionsQueryGroups]
-    """
-    variables: dict[str, Any] = {}
-    if search is not UNSET:
-        variables["search"] = search
-    if values is not UNSET:
-        variables["values"] = values
-    return execute(GroupOptionsQuery, variables, rath=rath).options
-
-
-async def adetail_group(id: IDCoercible, rath: UnlokRath | None = None) -> DetailGroup:
-    """DetailGroup
-
-
-    Args:
-        id (ID): No description
-        rath (unlok.rath.UnlokRath, optional): The client we want to use (defaults to the currently active client)
-
-    Returns:
-        DetailGroup
-    """
-    variables: dict[str, Any] = {}
-    variables["id"] = id
-    return (await aexecute(DetailGroupQuery, variables, rath=rath)).group
-
-
-def detail_group(id: IDCoercible, rath: UnlokRath | None = None) -> DetailGroup:
-    """DetailGroup
-
-
-    Args:
-        id (ID): No description
-        rath (unlok.rath.UnlokRath, optional): The client we want to use (defaults to the currently active client)
-
-    Returns:
-        DetailGroup
-    """
-    variables: dict[str, Any] = {}
-    variables["id"] = id
-    return execute(DetailGroupQuery, variables, rath=rath).group
-
-
-async def agroups(
-    filters: GroupFilter | None | UnsetType = UNSET,
-    pagination: OffsetPaginationInput | None | UnsetType = UNSET,
-    rath: UnlokRath | None = None,
-) -> tuple[ListGroup, ...]:
-    """Groups
-
-
-    Args:
-        filters (GroupFilter | None, optional): No description.
-        pagination (OffsetPaginationInput | None, optional): No description.
-        rath (unlok.rath.UnlokRath, optional): The client we want to use (defaults to the currently active client)
-
-    Returns:
-        list[ListGroup]
-    """
-    variables: dict[str, Any] = {}
-    if filters is not UNSET:
-        variables["filters"] = filters
-    if pagination is not UNSET:
-        variables["pagination"] = pagination
-    return (await aexecute(GroupsQuery, variables, rath=rath)).groups
-
-
-def groups(
-    filters: GroupFilter | None | UnsetType = UNSET,
-    pagination: OffsetPaginationInput | None | UnsetType = UNSET,
-    rath: UnlokRath | None = None,
-) -> tuple[ListGroup, ...]:
-    """Groups
-
-
-    Args:
-        filters (GroupFilter | None, optional): No description.
-        pagination (OffsetPaginationInput | None, optional): No description.
-        rath (unlok.rath.UnlokRath, optional): The client we want to use (defaults to the currently active client)
-
-    Returns:
-        list[ListGroup]
-    """
-    variables: dict[str, Any] = {}
-    if filters is not UNSET:
-        variables["filters"] = filters
-    if pagination is not UNSET:
-        variables["pagination"] = pagination
-    return execute(GroupsQuery, variables, rath=rath).groups
-
-
-async def alayers(
-    filters: LayerFilter | None | UnsetType = UNSET,
-    pagination: OffsetPaginationInput | None | UnsetType = UNSET,
-    rath: UnlokRath | None = None,
-) -> tuple[ListLayer, ...]:
-    """Layers
-
-
-    Args:
-        filters (LayerFilter | None, optional): No description.
-        pagination (OffsetPaginationInput | None, optional): No description.
-        rath (unlok.rath.UnlokRath, optional): The client we want to use (defaults to the currently active client)
-
-    Returns:
-        list[ListLayer]
-    """
-    variables: dict[str, Any] = {}
-    if filters is not UNSET:
-        variables["filters"] = filters
-    if pagination is not UNSET:
-        variables["pagination"] = pagination
-    return (await aexecute(LayersQuery, variables, rath=rath)).layers
-
-
-def layers(
-    filters: LayerFilter | None | UnsetType = UNSET,
-    pagination: OffsetPaginationInput | None | UnsetType = UNSET,
-    rath: UnlokRath | None = None,
-) -> tuple[ListLayer, ...]:
-    """Layers
-
-
-    Args:
-        filters (LayerFilter | None, optional): No description.
-        pagination (OffsetPaginationInput | None, optional): No description.
-        rath (unlok.rath.UnlokRath, optional): The client we want to use (defaults to the currently active client)
-
-    Returns:
-        list[ListLayer]
-    """
-    variables: dict[str, Any] = {}
-    if filters is not UNSET:
-        variables["filters"] = filters
-    if pagination is not UNSET:
-        variables["pagination"] = pagination
-    return execute(LayersQuery, variables, rath=rath).layers
-
-
-async def adetail_layer(id: IDCoercible, rath: UnlokRath | None = None) -> Layer:
-    """DetailLayer
-
-
-    Args:
-        id (ID): No description
-        rath (unlok.rath.UnlokRath, optional): The client we want to use (defaults to the currently active client)
-
-    Returns:
-        Layer
-    """
-    variables: dict[str, Any] = {}
-    variables["id"] = id
-    return (await aexecute(DetailLayerQuery, variables, rath=rath)).layer
-
-
-def detail_layer(id: IDCoercible, rath: UnlokRath | None = None) -> Layer:
-    """DetailLayer
-
-
-    Args:
-        id (ID): No description
-        rath (unlok.rath.UnlokRath, optional): The client we want to use (defaults to the currently active client)
-
-    Returns:
-        Layer
-    """
-    variables: dict[str, Any] = {}
-    variables["id"] = id
-    return execute(DetailLayerQuery, variables, rath=rath).layer
-
-
-async def aredeem_token(
-    id: IDCoercible, rath: UnlokRath | None = None
-) -> DetailRedeemToken:
-    """RedeemToken
-
-
-    Args:
-        id (ID): No description
-        rath (unlok.rath.UnlokRath, optional): The client we want to use (defaults to the currently active client)
-
-    Returns:
-        DetailRedeemToken
-    """
-    variables: dict[str, Any] = {}
-    variables["id"] = id
-    return (await aexecute(RedeemTokenQuery, variables, rath=rath)).redeem_token
-
-
-def redeem_token(id: IDCoercible, rath: UnlokRath | None = None) -> DetailRedeemToken:
-    """RedeemToken
-
-
-    Args:
-        id (ID): No description
-        rath (unlok.rath.UnlokRath, optional): The client we want to use (defaults to the currently active client)
-
-    Returns:
-        DetailRedeemToken
-    """
-    variables: dict[str, Any] = {}
-    variables["id"] = id
-    return execute(RedeemTokenQuery, variables, rath=rath).redeem_token
-
-
-async def aredeem_tokens(
-    filters: RedeemTokenFilter | None | UnsetType = UNSET,
-    pagination: OffsetPaginationInput | None | UnsetType = UNSET,
-    rath: UnlokRath | None = None,
-) -> tuple[ListRedeemToken, ...]:
-    """RedeemTokens
-
-
-    Args:
-        filters (RedeemTokenFilter | None, optional): No description.
-        pagination (OffsetPaginationInput | None, optional): No description.
-        rath (unlok.rath.UnlokRath, optional): The client we want to use (defaults to the currently active client)
-
-    Returns:
-        list[ListRedeemToken]
-    """
-    variables: dict[str, Any] = {}
-    if filters is not UNSET:
-        variables["filters"] = filters
-    if pagination is not UNSET:
-        variables["pagination"] = pagination
-    return (await aexecute(RedeemTokensQuery, variables, rath=rath)).redeem_tokens
-
-
-def redeem_tokens(
-    filters: RedeemTokenFilter | None | UnsetType = UNSET,
-    pagination: OffsetPaginationInput | None | UnsetType = UNSET,
-    rath: UnlokRath | None = None,
-) -> tuple[ListRedeemToken, ...]:
-    """RedeemTokens
-
-
-    Args:
-        filters (RedeemTokenFilter | None, optional): No description.
-        pagination (OffsetPaginationInput | None, optional): No description.
-        rath (unlok.rath.UnlokRath, optional): The client we want to use (defaults to the currently active client)
-
-    Returns:
-        list[ListRedeemToken]
-    """
-    variables: dict[str, Any] = {}
-    if filters is not UNSET:
-        variables["filters"] = filters
-    if pagination is not UNSET:
-        variables["pagination"] = pagination
-    return execute(RedeemTokensQuery, variables, rath=rath).redeem_tokens
-
-
-async def areleases(rath: UnlokRath | None = None) -> tuple[ListRelease, ...]:
-    """Releases
-
-
-    Args:
-        rath (unlok.rath.UnlokRath, optional): The client we want to use (defaults to the currently active client)
-
-    Returns:
-        list[ListRelease]
-    """
-    variables: dict[str, Any] = {}
-    return (await aexecute(ReleasesQuery, variables, rath=rath)).releases
-
-
-def releases(rath: UnlokRath | None = None) -> tuple[ListRelease, ...]:
-    """Releases
-
-
-    Args:
-        rath (unlok.rath.UnlokRath, optional): The client we want to use (defaults to the currently active client)
-
-    Returns:
-        list[ListRelease]
-    """
-    variables: dict[str, Any] = {}
-    return execute(ReleasesQuery, variables, rath=rath).releases
-
-
-async def arelease(
-    identifier: str | None | UnsetType = UNSET,
-    version: str | None | UnsetType = UNSET,
-    id: IDCoercible | None | UnsetType = UNSET,
-    client_id: IDCoercible | None | UnsetType = UNSET,
-    rath: UnlokRath | None = None,
-) -> DetailRelease:
-    """Release
-
-
-    Args:
-        identifier (str | None, optional): No description.
-        version (str | None, optional): No description.
-        id (ID | None, optional): No description.
-        client_id (ID | None, optional): No description.
-        rath (unlok.rath.UnlokRath, optional): The client we want to use (defaults to the currently active client)
-
-    Returns:
-        DetailRelease
-    """
-    variables: dict[str, Any] = {}
-    if identifier is not UNSET:
-        variables["identifier"] = identifier
-    if version is not UNSET:
-        variables["version"] = version
-    if id is not UNSET:
+        return self.execute(DeleteRedeemTokenMutation, variables).delete_redeem_token
+
+    async def arequest_media_upload(
+        self, key: str, datalayer: str
+    ) -> PresignedPostCredentials:
+        """RequestMediaUpload
+
+
+        Args:
+            key (str): No description
+            datalayer (str): No description
+
+        Returns:
+            PresignedPostCredentials"""
+        variables: dict[str, Any] = {}
+        variables["key"] = key
+        variables["datalayer"] = datalayer
+        return (
+            await self.aexecute(RequestMediaUploadMutation, variables)
+        ).request_media_upload
+
+    def request_media_upload(
+        self, key: str, datalayer: str
+    ) -> PresignedPostCredentials:
+        """RequestMediaUpload
+
+
+        Args:
+            key (str): No description
+            datalayer (str): No description
+
+        Returns:
+            PresignedPostCredentials"""
+        variables: dict[str, Any] = {}
+        variables["key"] = key
+        variables["datalayer"] = datalayer
+        return self.execute(RequestMediaUploadMutation, variables).request_media_upload
+
+    async def aapps(
+        self,
+        filters: AppFilter | None | UnsetType = UNSET,
+        pagination: OffsetPaginationInput | None | UnsetType = UNSET,
+    ) -> tuple[ListApp, ...]:
+        """Apps
+
+
+        Args:
+            filters (AppFilter | None, optional): No description.
+            pagination (OffsetPaginationInput | None, optional): No description.
+
+        Returns:
+            list[ListApp]"""
+        variables: dict[str, Any] = {}
+        if filters is not UNSET:
+            variables["filters"] = filters
+        if pagination is not UNSET:
+            variables["pagination"] = pagination
+        return (await self.aexecute(AppsQuery, variables)).apps
+
+    def apps(
+        self,
+        filters: AppFilter | None | UnsetType = UNSET,
+        pagination: OffsetPaginationInput | None | UnsetType = UNSET,
+    ) -> tuple[ListApp, ...]:
+        """Apps
+
+
+        Args:
+            filters (AppFilter | None, optional): No description.
+            pagination (OffsetPaginationInput | None, optional): No description.
+
+        Returns:
+            list[ListApp]"""
+        variables: dict[str, Any] = {}
+        if filters is not UNSET:
+            variables["filters"] = filters
+        if pagination is not UNSET:
+            variables["pagination"] = pagination
+        return self.execute(AppsQuery, variables).apps
+
+    async def aapp(
+        self,
+        identifier: str | None | UnsetType = UNSET,
+        id: IDCoercible | None | UnsetType = UNSET,
+        client_id: IDCoercible | None | UnsetType = UNSET,
+    ) -> DetailApp:
+        """App
+
+
+        Args:
+            identifier (str | None, optional): No description.
+            id (ID | None, optional): No description.
+            client_id (ID | None, optional): No description.
+
+        Returns:
+            DetailApp"""
+        variables: dict[str, Any] = {}
+        if identifier is not UNSET:
+            variables["identifier"] = identifier
+        if id is not UNSET:
+            variables["id"] = id
+        if client_id is not UNSET:
+            variables["clientId"] = client_id
+        return (await self.aexecute(AppQuery, variables)).app
+
+    def app(
+        self,
+        identifier: str | None | UnsetType = UNSET,
+        id: IDCoercible | None | UnsetType = UNSET,
+        client_id: IDCoercible | None | UnsetType = UNSET,
+    ) -> DetailApp:
+        """App
+
+
+        Args:
+            identifier (str | None, optional): No description.
+            id (ID | None, optional): No description.
+            client_id (ID | None, optional): No description.
+
+        Returns:
+            DetailApp"""
+        variables: dict[str, Any] = {}
+        if identifier is not UNSET:
+            variables["identifier"] = identifier
+        if id is not UNSET:
+            variables["id"] = id
+        if client_id is not UNSET:
+            variables["clientId"] = client_id
+        return self.execute(AppQuery, variables).app
+
+    async def adetail_app(self, id: IDCoercible) -> DetailApp:
+        """DetailApp
+
+
+        Args:
+            id (ID): No description
+
+        Returns:
+            DetailApp"""
+        variables: dict[str, Any] = {}
         variables["id"] = id
-    if client_id is not UNSET:
-        variables["clientId"] = client_id
-    return (await aexecute(ReleaseQuery, variables, rath=rath)).release
+        return (await self.aexecute(DetailAppQuery, variables)).app
+
+    def detail_app(self, id: IDCoercible) -> DetailApp:
+        """DetailApp
 
 
-def release(
-    identifier: str | None | UnsetType = UNSET,
-    version: str | None | UnsetType = UNSET,
-    id: IDCoercible | None | UnsetType = UNSET,
-    client_id: IDCoercible | None | UnsetType = UNSET,
-    rath: UnlokRath | None = None,
-) -> DetailRelease:
-    """Release
+        Args:
+            id (ID): No description
 
-
-    Args:
-        identifier (str | None, optional): No description.
-        version (str | None, optional): No description.
-        id (ID | None, optional): No description.
-        client_id (ID | None, optional): No description.
-        rath (unlok.rath.UnlokRath, optional): The client we want to use (defaults to the currently active client)
-
-    Returns:
-        DetailRelease
-    """
-    variables: dict[str, Any] = {}
-    if identifier is not UNSET:
-        variables["identifier"] = identifier
-    if version is not UNSET:
-        variables["version"] = version
-    if id is not UNSET:
+        Returns:
+            DetailApp"""
+        variables: dict[str, Any] = {}
         variables["id"] = id
-    if client_id is not UNSET:
+        return self.execute(DetailAppQuery, variables).app
+
+    async def aclients(
+        self,
+        filters: ClientFilter | None | UnsetType = UNSET,
+        pagination: OffsetPaginationInput | None | UnsetType = UNSET,
+    ) -> tuple[ListClient, ...]:
+        """Clients
+
+
+        Args:
+            filters (ClientFilter | None, optional): No description.
+            pagination (OffsetPaginationInput | None, optional): No description.
+
+        Returns:
+            list[ListClient]"""
+        variables: dict[str, Any] = {}
+        if filters is not UNSET:
+            variables["filters"] = filters
+        if pagination is not UNSET:
+            variables["pagination"] = pagination
+        return (await self.aexecute(ClientsQuery, variables)).clients
+
+    def clients(
+        self,
+        filters: ClientFilter | None | UnsetType = UNSET,
+        pagination: OffsetPaginationInput | None | UnsetType = UNSET,
+    ) -> tuple[ListClient, ...]:
+        """Clients
+
+
+        Args:
+            filters (ClientFilter | None, optional): No description.
+            pagination (OffsetPaginationInput | None, optional): No description.
+
+        Returns:
+            list[ListClient]"""
+        variables: dict[str, Any] = {}
+        if filters is not UNSET:
+            variables["filters"] = filters
+        if pagination is not UNSET:
+            variables["pagination"] = pagination
+        return self.execute(ClientsQuery, variables).clients
+
+    async def adetail_client(self, id: IDCoercible) -> DetailClient:
+        """DetailClient
+
+
+        Args:
+            id (ID): No description
+
+        Returns:
+            DetailClient"""
+        variables: dict[str, Any] = {}
+        variables["id"] = id
+        return (await self.aexecute(DetailClientQuery, variables)).client
+
+    def detail_client(self, id: IDCoercible) -> DetailClient:
+        """DetailClient
+
+
+        Args:
+            id (ID): No description
+
+        Returns:
+            DetailClient"""
+        variables: dict[str, Any] = {}
+        variables["id"] = id
+        return self.execute(DetailClientQuery, variables).client
+
+    async def amy_managed_clients(self, kind: ClientKind) -> tuple[ListClient, ...]:
+        """MyManagedClients
+
+
+        Args:
+            kind (ClientKind): No description
+
+        Returns:
+            list[ListClient]"""
+        variables: dict[str, Any] = {}
+        variables["kind"] = kind
+        return (
+            await self.aexecute(MyManagedClientsQuery, variables)
+        ).my_managed_clients
+
+    def my_managed_clients(self, kind: ClientKind) -> tuple[ListClient, ...]:
+        """MyManagedClients
+
+
+        Args:
+            kind (ClientKind): No description
+
+        Returns:
+            list[ListClient]"""
+        variables: dict[str, Any] = {}
+        variables["kind"] = kind
+        return self.execute(MyManagedClientsQuery, variables).my_managed_clients
+
+    async def aclient(self, client_id: IDCoercible) -> DetailClient:
+        """Client
+
+
+        Args:
+            client_id (ID): No description
+
+        Returns:
+            DetailClient"""
+        variables: dict[str, Any] = {}
         variables["clientId"] = client_id
-    return execute(ReleaseQuery, variables, rath=rath).release
-
-
-async def adetail_release(
-    id: IDCoercible, rath: UnlokRath | None = None
-) -> DetailRelease:
-    """DetailRelease
-
-
-    Args:
-        id (ID): No description
-        rath (unlok.rath.UnlokRath, optional): The client we want to use (defaults to the currently active client)
-
-    Returns:
-        DetailRelease
-    """
-    variables: dict[str, Any] = {}
-    variables["id"] = id
-    return (await aexecute(DetailReleaseQuery, variables, rath=rath)).release
-
-
-def detail_release(id: IDCoercible, rath: UnlokRath | None = None) -> DetailRelease:
-    """DetailRelease
-
-
-    Args:
-        id (ID): No description
-        rath (unlok.rath.UnlokRath, optional): The client we want to use (defaults to the currently active client)
-
-    Returns:
-        DetailRelease
-    """
-    variables: dict[str, Any] = {}
-    variables["id"] = id
-    return execute(DetailReleaseQuery, variables, rath=rath).release
-
-
-async def ascopes(rath: UnlokRath | None = None) -> tuple[ScopesQueryScopes, ...]:
-    """Scopes
-
-
-    Args:
-        rath (unlok.rath.UnlokRath, optional): The client we want to use (defaults to the currently active client)
-
-    Returns:
-        list[ScopesQueryScopes]
-    """
-    variables: dict[str, Any] = {}
-    return (await aexecute(ScopesQuery, variables, rath=rath)).scopes
-
-
-def scopes(rath: UnlokRath | None = None) -> tuple[ScopesQueryScopes, ...]:
-    """Scopes
-
-
-    Args:
-        rath (unlok.rath.UnlokRath, optional): The client we want to use (defaults to the currently active client)
-
-    Returns:
-        list[ScopesQueryScopes]
-    """
-    variables: dict[str, Any] = {}
-    return execute(ScopesQuery, variables, rath=rath).scopes
-
-
-async def ascopes_options(
-    rath: UnlokRath | None = None,
-) -> tuple[ScopesOptionsQueryOptions, ...]:
-    """ScopesOptions
-
-
-    Args:
-        rath (unlok.rath.UnlokRath, optional): The client we want to use (defaults to the currently active client)
-
-    Returns:
-        list[ScopesOptionsQueryScopes]
-    """
-    variables: dict[str, Any] = {}
-    return (await aexecute(ScopesOptionsQuery, variables, rath=rath)).options
-
-
-def scopes_options(
-    rath: UnlokRath | None = None,
-) -> tuple[ScopesOptionsQueryOptions, ...]:
-    """ScopesOptions
-
-
-    Args:
-        rath (unlok.rath.UnlokRath, optional): The client we want to use (defaults to the currently active client)
-
-    Returns:
-        list[ScopesOptionsQueryScopes]
-    """
-    variables: dict[str, Any] = {}
-    return execute(ScopesOptionsQuery, variables, rath=rath).options
-
-
-async def aglobal_search(
-    no_users: bool,
-    no_groups: bool,
-    search: str | None | UnsetType = UNSET,
-    pagination: OffsetPaginationInput | None | UnsetType = UNSET,
-    rath: UnlokRath | None = None,
-) -> GlobalSearchQuery:
-    """GlobalSearch
-
-
-    Args:
-        no_users (bool): No description
-        no_groups (bool): No description
-        search (str | None, optional): No description.
-        pagination (OffsetPaginationInput | None, optional): No description.
-        rath (unlok.rath.UnlokRath, optional): The client we want to use (defaults to the currently active client)
-
-    Returns:
-        GlobalSearchQuery
-    """
-    variables: dict[str, Any] = {}
-    if search is not UNSET:
-        variables["search"] = search
-    variables["noUsers"] = no_users
-    variables["noGroups"] = no_groups
-    if pagination is not UNSET:
-        variables["pagination"] = pagination
-    return await aexecute(GlobalSearchQuery, variables, rath=rath)
-
-
-def global_search(
-    no_users: bool,
-    no_groups: bool,
-    search: str | None | UnsetType = UNSET,
-    pagination: OffsetPaginationInput | None | UnsetType = UNSET,
-    rath: UnlokRath | None = None,
-) -> GlobalSearchQuery:
-    """GlobalSearch
-
-
-    Args:
-        no_users (bool): No description
-        no_groups (bool): No description
-        search (str | None, optional): No description.
-        pagination (OffsetPaginationInput | None, optional): No description.
-        rath (unlok.rath.UnlokRath, optional): The client we want to use (defaults to the currently active client)
-
-    Returns:
-        GlobalSearchQuery
-    """
-    variables: dict[str, Any] = {}
-    if search is not UNSET:
-        variables["search"] = search
-    variables["noUsers"] = no_users
-    variables["noGroups"] = no_groups
-    if pagination is not UNSET:
-        variables["pagination"] = pagination
-    return execute(GlobalSearchQuery, variables, rath=rath)
-
-
-async def alist_service_instances(
-    pagination: OffsetPaginationInput | None | UnsetType = UNSET,
-    filters: ServiceInstanceFilter | None | UnsetType = UNSET,
-    rath: UnlokRath | None = None,
-) -> tuple[ListServiceInstance, ...]:
-    """ListServiceInstances
-
-
-    Args:
-        pagination (OffsetPaginationInput | None, optional): No description.
-        filters (ServiceInstanceFilter | None, optional): No description.
-        rath (unlok.rath.UnlokRath, optional): The client we want to use (defaults to the currently active client)
-
-    Returns:
-        list[ListServiceInstance]
-    """
-    variables: dict[str, Any] = {}
-    if pagination is not UNSET:
-        variables["pagination"] = pagination
-    if filters is not UNSET:
-        variables["filters"] = filters
-    return (
-        await aexecute(ListServiceInstancesQuery, variables, rath=rath)
-    ).service_instances
-
-
-def list_service_instances(
-    pagination: OffsetPaginationInput | None | UnsetType = UNSET,
-    filters: ServiceInstanceFilter | None | UnsetType = UNSET,
-    rath: UnlokRath | None = None,
-) -> tuple[ListServiceInstance, ...]:
-    """ListServiceInstances
-
-
-    Args:
-        pagination (OffsetPaginationInput | None, optional): No description.
-        filters (ServiceInstanceFilter | None, optional): No description.
-        rath (unlok.rath.UnlokRath, optional): The client we want to use (defaults to the currently active client)
-
-    Returns:
-        list[ListServiceInstance]
-    """
-    variables: dict[str, Any] = {}
-    if pagination is not UNSET:
-        variables["pagination"] = pagination
-    if filters is not UNSET:
-        variables["filters"] = filters
-    return execute(ListServiceInstancesQuery, variables, rath=rath).service_instances
-
-
-async def aget_service_instance(
-    id: IDCoercible, rath: UnlokRath | None = None
-) -> ServiceInstance:
-    """GetServiceInstance
-
-
-    Args:
-        id (ID): No description
-        rath (unlok.rath.UnlokRath, optional): The client we want to use (defaults to the currently active client)
-
-    Returns:
-        ServiceInstance
-    """
-    variables: dict[str, Any] = {}
-    variables["id"] = id
-    return (
-        await aexecute(GetServiceInstanceQuery, variables, rath=rath)
-    ).service_instance
-
-
-def get_service_instance(
-    id: IDCoercible, rath: UnlokRath | None = None
-) -> ServiceInstance:
-    """GetServiceInstance
-
-
-    Args:
-        id (ID): No description
-        rath (unlok.rath.UnlokRath, optional): The client we want to use (defaults to the currently active client)
-
-    Returns:
-        ServiceInstance
-    """
-    variables: dict[str, Any] = {}
-    variables["id"] = id
-    return execute(GetServiceInstanceQuery, variables, rath=rath).service_instance
-
-
-async def alist_service_releases(
-    pagination: OffsetPaginationInput | None | UnsetType = UNSET,
-    filters: ServiceReleaseFilter | None | UnsetType = UNSET,
-    rath: UnlokRath | None = None,
-) -> tuple[ListServiceRelease, ...]:
-    """ListServiceReleases
-
-
-    Args:
-        pagination (OffsetPaginationInput | None, optional): No description.
-        filters (ServiceReleaseFilter | None, optional): No description.
-        rath (unlok.rath.UnlokRath, optional): The client we want to use (defaults to the currently active client)
-
-    Returns:
-        list[ListServiceRelease]
-    """
-    variables: dict[str, Any] = {}
-    if pagination is not UNSET:
-        variables["pagination"] = pagination
-    if filters is not UNSET:
-        variables["filters"] = filters
-    return (
-        await aexecute(ListServiceReleasesQuery, variables, rath=rath)
-    ).service_releases
-
-
-def list_service_releases(
-    pagination: OffsetPaginationInput | None | UnsetType = UNSET,
-    filters: ServiceReleaseFilter | None | UnsetType = UNSET,
-    rath: UnlokRath | None = None,
-) -> tuple[ListServiceRelease, ...]:
-    """ListServiceReleases
-
-
-    Args:
-        pagination (OffsetPaginationInput | None, optional): No description.
-        filters (ServiceReleaseFilter | None, optional): No description.
-        rath (unlok.rath.UnlokRath, optional): The client we want to use (defaults to the currently active client)
-
-    Returns:
-        list[ListServiceRelease]
-    """
-    variables: dict[str, Any] = {}
-    if pagination is not UNSET:
-        variables["pagination"] = pagination
-    if filters is not UNSET:
-        variables["filters"] = filters
-    return execute(ListServiceReleasesQuery, variables, rath=rath).service_releases
-
-
-async def aget_service_release(
-    id: IDCoercible, rath: UnlokRath | None = None
-) -> ServiceRelease:
-    """GetServiceRelease
-
-
-    Args:
-        id (ID): No description
-        rath (unlok.rath.UnlokRath, optional): The client we want to use (defaults to the currently active client)
-
-    Returns:
-        ServiceRelease
-    """
-    variables: dict[str, Any] = {}
-    variables["id"] = id
-    return (
-        await aexecute(GetServiceReleaseQuery, variables, rath=rath)
-    ).service_release
-
-
-def get_service_release(
-    id: IDCoercible, rath: UnlokRath | None = None
-) -> ServiceRelease:
-    """GetServiceRelease
-
-
-    Args:
-        id (ID): No description
-        rath (unlok.rath.UnlokRath, optional): The client we want to use (defaults to the currently active client)
-
-    Returns:
-        ServiceRelease
-    """
-    variables: dict[str, Any] = {}
-    variables["id"] = id
-    return execute(GetServiceReleaseQuery, variables, rath=rath).service_release
-
-
-async def alist_services(
-    pagination: OffsetPaginationInput | None | UnsetType = UNSET,
-    filters: ServiceFilter | None | UnsetType = UNSET,
-    rath: UnlokRath | None = None,
-) -> tuple[ListService, ...]:
-    """ListServices
-
-
-    Args:
-        pagination (OffsetPaginationInput | None, optional): No description.
-        filters (ServiceFilter | None, optional): No description.
-        rath (unlok.rath.UnlokRath, optional): The client we want to use (defaults to the currently active client)
-
-    Returns:
-        list[ListService]
-    """
-    variables: dict[str, Any] = {}
-    if pagination is not UNSET:
-        variables["pagination"] = pagination
-    if filters is not UNSET:
-        variables["filters"] = filters
-    return (await aexecute(ListServicesQuery, variables, rath=rath)).services
-
-
-def list_services(
-    pagination: OffsetPaginationInput | None | UnsetType = UNSET,
-    filters: ServiceFilter | None | UnsetType = UNSET,
-    rath: UnlokRath | None = None,
-) -> tuple[ListService, ...]:
-    """ListServices
-
-
-    Args:
-        pagination (OffsetPaginationInput | None, optional): No description.
-        filters (ServiceFilter | None, optional): No description.
-        rath (unlok.rath.UnlokRath, optional): The client we want to use (defaults to the currently active client)
-
-    Returns:
-        list[ListService]
-    """
-    variables: dict[str, Any] = {}
-    if pagination is not UNSET:
-        variables["pagination"] = pagination
-    if filters is not UNSET:
-        variables["filters"] = filters
-    return execute(ListServicesQuery, variables, rath=rath).services
-
-
-async def aget_service(id: IDCoercible, rath: UnlokRath | None = None) -> Service:
-    """GetService
-
-
-    Args:
-        id (ID): No description
-        rath (unlok.rath.UnlokRath, optional): The client we want to use (defaults to the currently active client)
-
-    Returns:
-        Service
-    """
-    variables: dict[str, Any] = {}
-    variables["id"] = id
-    return (await aexecute(GetServiceQuery, variables, rath=rath)).service
-
-
-def get_service(id: IDCoercible, rath: UnlokRath | None = None) -> Service:
-    """GetService
-
-
-    Args:
-        id (ID): No description
-        rath (unlok.rath.UnlokRath, optional): The client we want to use (defaults to the currently active client)
-
-    Returns:
-        Service
-    """
-    variables: dict[str, Any] = {}
-    variables["id"] = id
-    return execute(GetServiceQuery, variables, rath=rath).service
-
-
-async def amy_stashes(
-    pagination: OffsetPaginationInput | None | UnsetType = UNSET,
-    rath: UnlokRath | None = None,
-) -> tuple[ListStash, ...]:
-    """MyStashes
-
-
-    Args:
-        pagination (OffsetPaginationInput | None, optional): No description.
-        rath (unlok.rath.UnlokRath, optional): The client we want to use (defaults to the currently active client)
-
-    Returns:
-        list[ListStash]
-    """
-    variables: dict[str, Any] = {}
-    if pagination is not UNSET:
-        variables["pagination"] = pagination
-    return (await aexecute(MyStashesQuery, variables, rath=rath)).stashes
-
-
-def my_stashes(
-    pagination: OffsetPaginationInput | None | UnsetType = UNSET,
-    rath: UnlokRath | None = None,
-) -> tuple[ListStash, ...]:
-    """MyStashes
-
-
-    Args:
-        pagination (OffsetPaginationInput | None, optional): No description.
-        rath (unlok.rath.UnlokRath, optional): The client we want to use (defaults to the currently active client)
-
-    Returns:
-        list[ListStash]
-    """
-    variables: dict[str, Any] = {}
-    if pagination is not UNSET:
-        variables["pagination"] = pagination
-    return execute(MyStashesQuery, variables, rath=rath).stashes
-
-
-async def ame(rath: UnlokRath | None = None) -> DetailUser:
-    """Me
-
-
-    Args:
-        rath (unlok.rath.UnlokRath, optional): The client we want to use (defaults to the currently active client)
-
-    Returns:
-        DetailUser
-    """
-    variables: dict[str, Any] = {}
-    return (await aexecute(MeQuery, variables, rath=rath)).me
-
-
-def me(rath: UnlokRath | None = None) -> DetailUser:
-    """Me
-
-
-    Args:
-        rath (unlok.rath.UnlokRath, optional): The client we want to use (defaults to the currently active client)
-
-    Returns:
-        DetailUser
-    """
-    variables: dict[str, Any] = {}
-    return execute(MeQuery, variables, rath=rath).me
-
-
-async def auser(id: IDCoercible, rath: UnlokRath | None = None) -> DetailUser:
-    """User
-
-
-    Args:
-        id (ID): No description
-        rath (unlok.rath.UnlokRath, optional): The client we want to use (defaults to the currently active client)
-
-    Returns:
-        DetailUser
-    """
-    variables: dict[str, Any] = {}
-    variables["id"] = id
-    return (await aexecute(UserQuery, variables, rath=rath)).user
-
-
-def user(id: IDCoercible, rath: UnlokRath | None = None) -> DetailUser:
-    """User
-
-
-    Args:
-        id (ID): No description
-        rath (unlok.rath.UnlokRath, optional): The client we want to use (defaults to the currently active client)
-
-    Returns:
-        DetailUser
-    """
-    variables: dict[str, Any] = {}
-    variables["id"] = id
-    return execute(UserQuery, variables, rath=rath).user
-
-
-async def adetail_user(id: IDCoercible, rath: UnlokRath | None = None) -> DetailUser:
-    """DetailUser
-
-
-    Args:
-        id (ID): No description
-        rath (unlok.rath.UnlokRath, optional): The client we want to use (defaults to the currently active client)
-
-    Returns:
-        DetailUser
-    """
-    variables: dict[str, Any] = {}
-    variables["id"] = id
-    return (await aexecute(DetailUserQuery, variables, rath=rath)).user
-
-
-def detail_user(id: IDCoercible, rath: UnlokRath | None = None) -> DetailUser:
-    """DetailUser
-
-
-    Args:
-        id (ID): No description
-        rath (unlok.rath.UnlokRath, optional): The client we want to use (defaults to the currently active client)
-
-    Returns:
-        DetailUser
-    """
-    variables: dict[str, Any] = {}
-    variables["id"] = id
-    return execute(DetailUserQuery, variables, rath=rath).user
-
-
-async def ausers(
-    filters: UserFilter | None | UnsetType = UNSET,
-    pagination: OffsetPaginationInput | None | UnsetType = UNSET,
-    rath: UnlokRath | None = None,
-) -> tuple[ListUser, ...]:
-    """Users
-
-
-    Args:
-        filters (UserFilter | None, optional): No description.
-        pagination (OffsetPaginationInput | None, optional): No description.
-        rath (unlok.rath.UnlokRath, optional): The client we want to use (defaults to the currently active client)
-
-    Returns:
-        list[ListUser]
-    """
-    variables: dict[str, Any] = {}
-    if filters is not UNSET:
-        variables["filters"] = filters
-    if pagination is not UNSET:
-        variables["pagination"] = pagination
-    return (await aexecute(UsersQuery, variables, rath=rath)).users
-
-
-def users(
-    filters: UserFilter | None | UnsetType = UNSET,
-    pagination: OffsetPaginationInput | None | UnsetType = UNSET,
-    rath: UnlokRath | None = None,
-) -> tuple[ListUser, ...]:
-    """Users
-
-
-    Args:
-        filters (UserFilter | None, optional): No description.
-        pagination (OffsetPaginationInput | None, optional): No description.
-        rath (unlok.rath.UnlokRath, optional): The client we want to use (defaults to the currently active client)
-
-    Returns:
-        list[ListUser]
-    """
-    variables: dict[str, Any] = {}
-    if filters is not UNSET:
-        variables["filters"] = filters
-    if pagination is not UNSET:
-        variables["pagination"] = pagination
-    return execute(UsersQuery, variables, rath=rath).users
-
-
-async def auser_options(
-    search: str | None | UnsetType = UNSET,
-    values: list[IDCoercible] | None | UnsetType = UNSET,
-    rath: UnlokRath | None = None,
-) -> tuple[UserOptionsQueryOptions, ...]:
-    """UserOptions
-
-
-    Args:
-        search (str | None, optional): No description.
-        values (list[ID] | None, optional): No description.
-        rath (unlok.rath.UnlokRath, optional): The client we want to use (defaults to the currently active client)
-
-    Returns:
-        list[UserOptionsQueryUsers]
-    """
-    variables: dict[str, Any] = {}
-    if search is not UNSET:
-        variables["search"] = search
-    if values is not UNSET:
-        variables["values"] = values
-    return (await aexecute(UserOptionsQuery, variables, rath=rath)).options
-
-
-def user_options(
-    search: str | None | UnsetType = UNSET,
-    values: list[IDCoercible] | None | UnsetType = UNSET,
-    rath: UnlokRath | None = None,
-) -> tuple[UserOptionsQueryOptions, ...]:
-    """UserOptions
-
-
-    Args:
-        search (str | None, optional): No description.
-        values (list[ID] | None, optional): No description.
-        rath (unlok.rath.UnlokRath, optional): The client we want to use (defaults to the currently active client)
-
-    Returns:
-        list[UserOptionsQueryUsers]
-    """
-    variables: dict[str, Any] = {}
-    if search is not UNSET:
-        variables["search"] = search
-    if values is not UNSET:
-        variables["values"] = values
-    return execute(UserOptionsQuery, variables, rath=rath).options
-
-
-async def aprofile(rath: UnlokRath | None = None) -> MeUser:
-    """Profile
-
-
-    Args:
-        rath (unlok.rath.UnlokRath, optional): The client we want to use (defaults to the currently active client)
-
-    Returns:
-        MeUser
-    """
-    variables: dict[str, Any] = {}
-    return (await aexecute(ProfileQuery, variables, rath=rath)).me
-
-
-def profile(rath: UnlokRath | None = None) -> MeUser:
-    """Profile
-
-
-    Args:
-        rath (unlok.rath.UnlokRath, optional): The client we want to use (defaults to the currently active client)
-
-    Returns:
-        MeUser
-    """
-    variables: dict[str, Any] = {}
-    return execute(ProfileQuery, variables, rath=rath).me
-
-
-async def awatch_mentions(
-    rath: UnlokRath | None = None,
-) -> AsyncIterator[MentionComment]:
-    """WatchMentions
-
-
-    Args:
-        rath (unlok.rath.UnlokRath, optional): The client we want to use (defaults to the currently active client)
-
-    Returns:
-        MentionComment
-    """
-    variables: dict[str, Any] = {}
-    async for event in asubscribe(WatchMentionsSubscription, variables, rath=rath):
-        yield event.mentions
-
-
-def watch_mentions(rath: UnlokRath | None = None) -> Iterator[MentionComment]:
-    """WatchMentions
-
-
-    Args:
-        rath (unlok.rath.UnlokRath, optional): The client we want to use (defaults to the currently active client)
-
-    Returns:
-        MentionComment
-    """
-    variables: dict[str, Any] = {}
-    for event in subscribe(WatchMentionsSubscription, variables, rath=rath):
-        yield event.mentions
+        return (await self.aexecute(ClientQuery, variables)).client
+
+    def client(self, client_id: IDCoercible) -> DetailClient:
+        """Client
+
+
+        Args:
+            client_id (ID): No description
+
+        Returns:
+            DetailClient"""
+        variables: dict[str, Any] = {}
+        variables["clientId"] = client_id
+        return self.execute(ClientQuery, variables).client
+
+    async def agroup_options(
+        self,
+        search: str | None | UnsetType = UNSET,
+        values: list[IDCoercible] | None | UnsetType = UNSET,
+    ) -> tuple[GroupOptionsQueryOptions, ...]:
+        """GroupOptions
+
+
+        Args:
+            search (str | None, optional): No description.
+            values (list[ID] | None, optional): No description.
+
+        Returns:
+            list[GroupOptionsQueryGroups]"""
+        variables: dict[str, Any] = {}
+        if search is not UNSET:
+            variables["search"] = search
+        if values is not UNSET:
+            variables["values"] = values
+        return (await self.aexecute(GroupOptionsQuery, variables)).options
+
+    def group_options(
+        self,
+        search: str | None | UnsetType = UNSET,
+        values: list[IDCoercible] | None | UnsetType = UNSET,
+    ) -> tuple[GroupOptionsQueryOptions, ...]:
+        """GroupOptions
+
+
+        Args:
+            search (str | None, optional): No description.
+            values (list[ID] | None, optional): No description.
+
+        Returns:
+            list[GroupOptionsQueryGroups]"""
+        variables: dict[str, Any] = {}
+        if search is not UNSET:
+            variables["search"] = search
+        if values is not UNSET:
+            variables["values"] = values
+        return self.execute(GroupOptionsQuery, variables).options
+
+    async def adetail_group(self, id: IDCoercible) -> DetailGroup:
+        """DetailGroup
+
+
+        Args:
+            id (ID): No description
+
+        Returns:
+            DetailGroup"""
+        variables: dict[str, Any] = {}
+        variables["id"] = id
+        return (await self.aexecute(DetailGroupQuery, variables)).group
+
+    def detail_group(self, id: IDCoercible) -> DetailGroup:
+        """DetailGroup
+
+
+        Args:
+            id (ID): No description
+
+        Returns:
+            DetailGroup"""
+        variables: dict[str, Any] = {}
+        variables["id"] = id
+        return self.execute(DetailGroupQuery, variables).group
+
+    async def agroups(
+        self,
+        filters: GroupFilter | None | UnsetType = UNSET,
+        pagination: OffsetPaginationInput | None | UnsetType = UNSET,
+    ) -> tuple[ListGroup, ...]:
+        """Groups
+
+
+        Args:
+            filters (GroupFilter | None, optional): No description.
+            pagination (OffsetPaginationInput | None, optional): No description.
+
+        Returns:
+            list[ListGroup]"""
+        variables: dict[str, Any] = {}
+        if filters is not UNSET:
+            variables["filters"] = filters
+        if pagination is not UNSET:
+            variables["pagination"] = pagination
+        return (await self.aexecute(GroupsQuery, variables)).groups
+
+    def groups(
+        self,
+        filters: GroupFilter | None | UnsetType = UNSET,
+        pagination: OffsetPaginationInput | None | UnsetType = UNSET,
+    ) -> tuple[ListGroup, ...]:
+        """Groups
+
+
+        Args:
+            filters (GroupFilter | None, optional): No description.
+            pagination (OffsetPaginationInput | None, optional): No description.
+
+        Returns:
+            list[ListGroup]"""
+        variables: dict[str, Any] = {}
+        if filters is not UNSET:
+            variables["filters"] = filters
+        if pagination is not UNSET:
+            variables["pagination"] = pagination
+        return self.execute(GroupsQuery, variables).groups
+
+    async def alayers(
+        self,
+        filters: LayerFilter | None | UnsetType = UNSET,
+        pagination: OffsetPaginationInput | None | UnsetType = UNSET,
+    ) -> tuple[ListLayer, ...]:
+        """Layers
+
+
+        Args:
+            filters (LayerFilter | None, optional): No description.
+            pagination (OffsetPaginationInput | None, optional): No description.
+
+        Returns:
+            list[ListLayer]"""
+        variables: dict[str, Any] = {}
+        if filters is not UNSET:
+            variables["filters"] = filters
+        if pagination is not UNSET:
+            variables["pagination"] = pagination
+        return (await self.aexecute(LayersQuery, variables)).layers
+
+    def layers(
+        self,
+        filters: LayerFilter | None | UnsetType = UNSET,
+        pagination: OffsetPaginationInput | None | UnsetType = UNSET,
+    ) -> tuple[ListLayer, ...]:
+        """Layers
+
+
+        Args:
+            filters (LayerFilter | None, optional): No description.
+            pagination (OffsetPaginationInput | None, optional): No description.
+
+        Returns:
+            list[ListLayer]"""
+        variables: dict[str, Any] = {}
+        if filters is not UNSET:
+            variables["filters"] = filters
+        if pagination is not UNSET:
+            variables["pagination"] = pagination
+        return self.execute(LayersQuery, variables).layers
+
+    async def adetail_layer(self, id: IDCoercible) -> Layer:
+        """DetailLayer
+
+
+        Args:
+            id (ID): No description
+
+        Returns:
+            Layer"""
+        variables: dict[str, Any] = {}
+        variables["id"] = id
+        return (await self.aexecute(DetailLayerQuery, variables)).layer
+
+    def detail_layer(self, id: IDCoercible) -> Layer:
+        """DetailLayer
+
+
+        Args:
+            id (ID): No description
+
+        Returns:
+            Layer"""
+        variables: dict[str, Any] = {}
+        variables["id"] = id
+        return self.execute(DetailLayerQuery, variables).layer
+
+    async def aredeem_token(self, id: IDCoercible) -> DetailRedeemToken:
+        """RedeemToken
+
+
+        Args:
+            id (ID): No description
+
+        Returns:
+            DetailRedeemToken"""
+        variables: dict[str, Any] = {}
+        variables["id"] = id
+        return (await self.aexecute(RedeemTokenQuery, variables)).redeem_token
+
+    def redeem_token(self, id: IDCoercible) -> DetailRedeemToken:
+        """RedeemToken
+
+
+        Args:
+            id (ID): No description
+
+        Returns:
+            DetailRedeemToken"""
+        variables: dict[str, Any] = {}
+        variables["id"] = id
+        return self.execute(RedeemTokenQuery, variables).redeem_token
+
+    async def aredeem_tokens(
+        self,
+        filters: RedeemTokenFilter | None | UnsetType = UNSET,
+        pagination: OffsetPaginationInput | None | UnsetType = UNSET,
+    ) -> tuple[ListRedeemToken, ...]:
+        """RedeemTokens
+
+
+        Args:
+            filters (RedeemTokenFilter | None, optional): No description.
+            pagination (OffsetPaginationInput | None, optional): No description.
+
+        Returns:
+            list[ListRedeemToken]"""
+        variables: dict[str, Any] = {}
+        if filters is not UNSET:
+            variables["filters"] = filters
+        if pagination is not UNSET:
+            variables["pagination"] = pagination
+        return (await self.aexecute(RedeemTokensQuery, variables)).redeem_tokens
+
+    def redeem_tokens(
+        self,
+        filters: RedeemTokenFilter | None | UnsetType = UNSET,
+        pagination: OffsetPaginationInput | None | UnsetType = UNSET,
+    ) -> tuple[ListRedeemToken, ...]:
+        """RedeemTokens
+
+
+        Args:
+            filters (RedeemTokenFilter | None, optional): No description.
+            pagination (OffsetPaginationInput | None, optional): No description.
+
+        Returns:
+            list[ListRedeemToken]"""
+        variables: dict[str, Any] = {}
+        if filters is not UNSET:
+            variables["filters"] = filters
+        if pagination is not UNSET:
+            variables["pagination"] = pagination
+        return self.execute(RedeemTokensQuery, variables).redeem_tokens
+
+    async def areleases(self) -> tuple[ListRelease, ...]:
+        """Releases
+
+
+        Args:
+
+        Returns:
+            list[ListRelease]"""
+        variables: dict[str, Any] = {}
+        return (await self.aexecute(ReleasesQuery, variables)).releases
+
+    def releases(self) -> tuple[ListRelease, ...]:
+        """Releases
+
+
+        Args:
+
+        Returns:
+            list[ListRelease]"""
+        variables: dict[str, Any] = {}
+        return self.execute(ReleasesQuery, variables).releases
+
+    async def arelease(
+        self,
+        identifier: str | None | UnsetType = UNSET,
+        version: str | None | UnsetType = UNSET,
+        id: IDCoercible | None | UnsetType = UNSET,
+        client_id: IDCoercible | None | UnsetType = UNSET,
+    ) -> DetailRelease:
+        """Release
+
+
+        Args:
+            identifier (str | None, optional): No description.
+            version (str | None, optional): No description.
+            id (ID | None, optional): No description.
+            client_id (ID | None, optional): No description.
+
+        Returns:
+            DetailRelease"""
+        variables: dict[str, Any] = {}
+        if identifier is not UNSET:
+            variables["identifier"] = identifier
+        if version is not UNSET:
+            variables["version"] = version
+        if id is not UNSET:
+            variables["id"] = id
+        if client_id is not UNSET:
+            variables["clientId"] = client_id
+        return (await self.aexecute(ReleaseQuery, variables)).release
+
+    def release(
+        self,
+        identifier: str | None | UnsetType = UNSET,
+        version: str | None | UnsetType = UNSET,
+        id: IDCoercible | None | UnsetType = UNSET,
+        client_id: IDCoercible | None | UnsetType = UNSET,
+    ) -> DetailRelease:
+        """Release
+
+
+        Args:
+            identifier (str | None, optional): No description.
+            version (str | None, optional): No description.
+            id (ID | None, optional): No description.
+            client_id (ID | None, optional): No description.
+
+        Returns:
+            DetailRelease"""
+        variables: dict[str, Any] = {}
+        if identifier is not UNSET:
+            variables["identifier"] = identifier
+        if version is not UNSET:
+            variables["version"] = version
+        if id is not UNSET:
+            variables["id"] = id
+        if client_id is not UNSET:
+            variables["clientId"] = client_id
+        return self.execute(ReleaseQuery, variables).release
+
+    async def adetail_release(self, id: IDCoercible) -> DetailRelease:
+        """DetailRelease
+
+
+        Args:
+            id (ID): No description
+
+        Returns:
+            DetailRelease"""
+        variables: dict[str, Any] = {}
+        variables["id"] = id
+        return (await self.aexecute(DetailReleaseQuery, variables)).release
+
+    def detail_release(self, id: IDCoercible) -> DetailRelease:
+        """DetailRelease
+
+
+        Args:
+            id (ID): No description
+
+        Returns:
+            DetailRelease"""
+        variables: dict[str, Any] = {}
+        variables["id"] = id
+        return self.execute(DetailReleaseQuery, variables).release
+
+    async def ascopes(self) -> tuple[ScopesQueryScopes, ...]:
+        """Scopes
+
+
+        Args:
+
+        Returns:
+            list[ScopesQueryScopes]"""
+        variables: dict[str, Any] = {}
+        return (await self.aexecute(ScopesQuery, variables)).scopes
+
+    def scopes(self) -> tuple[ScopesQueryScopes, ...]:
+        """Scopes
+
+
+        Args:
+
+        Returns:
+            list[ScopesQueryScopes]"""
+        variables: dict[str, Any] = {}
+        return self.execute(ScopesQuery, variables).scopes
+
+    async def ascopes_options(self) -> tuple[ScopesOptionsQueryOptions, ...]:
+        """ScopesOptions
+
+
+        Args:
+
+        Returns:
+            list[ScopesOptionsQueryScopes]"""
+        variables: dict[str, Any] = {}
+        return (await self.aexecute(ScopesOptionsQuery, variables)).options
+
+    def scopes_options(self) -> tuple[ScopesOptionsQueryOptions, ...]:
+        """ScopesOptions
+
+
+        Args:
+
+        Returns:
+            list[ScopesOptionsQueryScopes]"""
+        variables: dict[str, Any] = {}
+        return self.execute(ScopesOptionsQuery, variables).options
+
+    async def aglobal_search(
+        self,
+        no_users: bool,
+        no_groups: bool,
+        search: str | None | UnsetType = UNSET,
+        pagination: OffsetPaginationInput | None | UnsetType = UNSET,
+    ) -> GlobalSearchQuery:
+        """GlobalSearch
+
+
+        Args:
+            no_users (bool): No description
+            no_groups (bool): No description
+            search (str | None, optional): No description.
+            pagination (OffsetPaginationInput | None, optional): No description.
+
+        Returns:
+            GlobalSearchQuery"""
+        variables: dict[str, Any] = {}
+        if search is not UNSET:
+            variables["search"] = search
+        variables["noUsers"] = no_users
+        variables["noGroups"] = no_groups
+        if pagination is not UNSET:
+            variables["pagination"] = pagination
+        return await self.aexecute(GlobalSearchQuery, variables)
+
+    def global_search(
+        self,
+        no_users: bool,
+        no_groups: bool,
+        search: str | None | UnsetType = UNSET,
+        pagination: OffsetPaginationInput | None | UnsetType = UNSET,
+    ) -> GlobalSearchQuery:
+        """GlobalSearch
+
+
+        Args:
+            no_users (bool): No description
+            no_groups (bool): No description
+            search (str | None, optional): No description.
+            pagination (OffsetPaginationInput | None, optional): No description.
+
+        Returns:
+            GlobalSearchQuery"""
+        variables: dict[str, Any] = {}
+        if search is not UNSET:
+            variables["search"] = search
+        variables["noUsers"] = no_users
+        variables["noGroups"] = no_groups
+        if pagination is not UNSET:
+            variables["pagination"] = pagination
+        return self.execute(GlobalSearchQuery, variables)
+
+    async def alist_service_instances(
+        self,
+        pagination: OffsetPaginationInput | None | UnsetType = UNSET,
+        filters: ServiceInstanceFilter | None | UnsetType = UNSET,
+    ) -> tuple[ListServiceInstance, ...]:
+        """ListServiceInstances
+
+
+        Args:
+            pagination (OffsetPaginationInput | None, optional): No description.
+            filters (ServiceInstanceFilter | None, optional): No description.
+
+        Returns:
+            list[ListServiceInstance]"""
+        variables: dict[str, Any] = {}
+        if pagination is not UNSET:
+            variables["pagination"] = pagination
+        if filters is not UNSET:
+            variables["filters"] = filters
+        return (
+            await self.aexecute(ListServiceInstancesQuery, variables)
+        ).service_instances
+
+    def list_service_instances(
+        self,
+        pagination: OffsetPaginationInput | None | UnsetType = UNSET,
+        filters: ServiceInstanceFilter | None | UnsetType = UNSET,
+    ) -> tuple[ListServiceInstance, ...]:
+        """ListServiceInstances
+
+
+        Args:
+            pagination (OffsetPaginationInput | None, optional): No description.
+            filters (ServiceInstanceFilter | None, optional): No description.
+
+        Returns:
+            list[ListServiceInstance]"""
+        variables: dict[str, Any] = {}
+        if pagination is not UNSET:
+            variables["pagination"] = pagination
+        if filters is not UNSET:
+            variables["filters"] = filters
+        return self.execute(ListServiceInstancesQuery, variables).service_instances
+
+    async def aget_service_instance(self, id: IDCoercible) -> ServiceInstance:
+        """GetServiceInstance
+
+
+        Args:
+            id (ID): No description
+
+        Returns:
+            ServiceInstance"""
+        variables: dict[str, Any] = {}
+        variables["id"] = id
+        return (
+            await self.aexecute(GetServiceInstanceQuery, variables)
+        ).service_instance
+
+    def get_service_instance(self, id: IDCoercible) -> ServiceInstance:
+        """GetServiceInstance
+
+
+        Args:
+            id (ID): No description
+
+        Returns:
+            ServiceInstance"""
+        variables: dict[str, Any] = {}
+        variables["id"] = id
+        return self.execute(GetServiceInstanceQuery, variables).service_instance
+
+    async def alist_service_releases(
+        self,
+        pagination: OffsetPaginationInput | None | UnsetType = UNSET,
+        filters: ServiceReleaseFilter | None | UnsetType = UNSET,
+    ) -> tuple[ListServiceRelease, ...]:
+        """ListServiceReleases
+
+
+        Args:
+            pagination (OffsetPaginationInput | None, optional): No description.
+            filters (ServiceReleaseFilter | None, optional): No description.
+
+        Returns:
+            list[ListServiceRelease]"""
+        variables: dict[str, Any] = {}
+        if pagination is not UNSET:
+            variables["pagination"] = pagination
+        if filters is not UNSET:
+            variables["filters"] = filters
+        return (
+            await self.aexecute(ListServiceReleasesQuery, variables)
+        ).service_releases
+
+    def list_service_releases(
+        self,
+        pagination: OffsetPaginationInput | None | UnsetType = UNSET,
+        filters: ServiceReleaseFilter | None | UnsetType = UNSET,
+    ) -> tuple[ListServiceRelease, ...]:
+        """ListServiceReleases
+
+
+        Args:
+            pagination (OffsetPaginationInput | None, optional): No description.
+            filters (ServiceReleaseFilter | None, optional): No description.
+
+        Returns:
+            list[ListServiceRelease]"""
+        variables: dict[str, Any] = {}
+        if pagination is not UNSET:
+            variables["pagination"] = pagination
+        if filters is not UNSET:
+            variables["filters"] = filters
+        return self.execute(ListServiceReleasesQuery, variables).service_releases
+
+    async def aget_service_release(self, id: IDCoercible) -> ServiceRelease:
+        """GetServiceRelease
+
+
+        Args:
+            id (ID): No description
+
+        Returns:
+            ServiceRelease"""
+        variables: dict[str, Any] = {}
+        variables["id"] = id
+        return (await self.aexecute(GetServiceReleaseQuery, variables)).service_release
+
+    def get_service_release(self, id: IDCoercible) -> ServiceRelease:
+        """GetServiceRelease
+
+
+        Args:
+            id (ID): No description
+
+        Returns:
+            ServiceRelease"""
+        variables: dict[str, Any] = {}
+        variables["id"] = id
+        return self.execute(GetServiceReleaseQuery, variables).service_release
+
+    async def alist_services(
+        self,
+        pagination: OffsetPaginationInput | None | UnsetType = UNSET,
+        filters: ServiceFilter | None | UnsetType = UNSET,
+    ) -> tuple[ListService, ...]:
+        """ListServices
+
+
+        Args:
+            pagination (OffsetPaginationInput | None, optional): No description.
+            filters (ServiceFilter | None, optional): No description.
+
+        Returns:
+            list[ListService]"""
+        variables: dict[str, Any] = {}
+        if pagination is not UNSET:
+            variables["pagination"] = pagination
+        if filters is not UNSET:
+            variables["filters"] = filters
+        return (await self.aexecute(ListServicesQuery, variables)).services
+
+    def list_services(
+        self,
+        pagination: OffsetPaginationInput | None | UnsetType = UNSET,
+        filters: ServiceFilter | None | UnsetType = UNSET,
+    ) -> tuple[ListService, ...]:
+        """ListServices
+
+
+        Args:
+            pagination (OffsetPaginationInput | None, optional): No description.
+            filters (ServiceFilter | None, optional): No description.
+
+        Returns:
+            list[ListService]"""
+        variables: dict[str, Any] = {}
+        if pagination is not UNSET:
+            variables["pagination"] = pagination
+        if filters is not UNSET:
+            variables["filters"] = filters
+        return self.execute(ListServicesQuery, variables).services
+
+    async def aget_service(self, id: IDCoercible) -> Service:
+        """GetService
+
+
+        Args:
+            id (ID): No description
+
+        Returns:
+            Service"""
+        variables: dict[str, Any] = {}
+        variables["id"] = id
+        return (await self.aexecute(GetServiceQuery, variables)).service
+
+    def get_service(self, id: IDCoercible) -> Service:
+        """GetService
+
+
+        Args:
+            id (ID): No description
+
+        Returns:
+            Service"""
+        variables: dict[str, Any] = {}
+        variables["id"] = id
+        return self.execute(GetServiceQuery, variables).service
+
+    async def ame(self) -> DetailUser:
+        """Me
+
+
+        Args:
+
+        Returns:
+            DetailUser"""
+        variables: dict[str, Any] = {}
+        return (await self.aexecute(MeQuery, variables)).me
+
+    def me(self) -> DetailUser:
+        """Me
+
+
+        Args:
+
+        Returns:
+            DetailUser"""
+        variables: dict[str, Any] = {}
+        return self.execute(MeQuery, variables).me
+
+    async def auser(self, id: IDCoercible) -> DetailUser:
+        """User
+
+
+        Args:
+            id (ID): No description
+
+        Returns:
+            DetailUser"""
+        variables: dict[str, Any] = {}
+        variables["id"] = id
+        return (await self.aexecute(UserQuery, variables)).user
+
+    def user(self, id: IDCoercible) -> DetailUser:
+        """User
+
+
+        Args:
+            id (ID): No description
+
+        Returns:
+            DetailUser"""
+        variables: dict[str, Any] = {}
+        variables["id"] = id
+        return self.execute(UserQuery, variables).user
+
+    async def adetail_user(self, id: IDCoercible) -> DetailUser:
+        """DetailUser
+
+
+        Args:
+            id (ID): No description
+
+        Returns:
+            DetailUser"""
+        variables: dict[str, Any] = {}
+        variables["id"] = id
+        return (await self.aexecute(DetailUserQuery, variables)).user
+
+    def detail_user(self, id: IDCoercible) -> DetailUser:
+        """DetailUser
+
+
+        Args:
+            id (ID): No description
+
+        Returns:
+            DetailUser"""
+        variables: dict[str, Any] = {}
+        variables["id"] = id
+        return self.execute(DetailUserQuery, variables).user
+
+    async def ausers(
+        self,
+        filters: UserFilter | None | UnsetType = UNSET,
+        pagination: OffsetPaginationInput | None | UnsetType = UNSET,
+    ) -> tuple[ListUser, ...]:
+        """Users
+
+
+        Args:
+            filters (UserFilter | None, optional): No description.
+            pagination (OffsetPaginationInput | None, optional): No description.
+
+        Returns:
+            list[ListUser]"""
+        variables: dict[str, Any] = {}
+        if filters is not UNSET:
+            variables["filters"] = filters
+        if pagination is not UNSET:
+            variables["pagination"] = pagination
+        return (await self.aexecute(UsersQuery, variables)).users
+
+    def users(
+        self,
+        filters: UserFilter | None | UnsetType = UNSET,
+        pagination: OffsetPaginationInput | None | UnsetType = UNSET,
+    ) -> tuple[ListUser, ...]:
+        """Users
+
+
+        Args:
+            filters (UserFilter | None, optional): No description.
+            pagination (OffsetPaginationInput | None, optional): No description.
+
+        Returns:
+            list[ListUser]"""
+        variables: dict[str, Any] = {}
+        if filters is not UNSET:
+            variables["filters"] = filters
+        if pagination is not UNSET:
+            variables["pagination"] = pagination
+        return self.execute(UsersQuery, variables).users
+
+    async def auser_options(
+        self,
+        search: str | None | UnsetType = UNSET,
+        values: list[IDCoercible] | None | UnsetType = UNSET,
+    ) -> tuple[UserOptionsQueryOptions, ...]:
+        """UserOptions
+
+
+        Args:
+            search (str | None, optional): No description.
+            values (list[ID] | None, optional): No description.
+
+        Returns:
+            list[UserOptionsQueryUsers]"""
+        variables: dict[str, Any] = {}
+        if search is not UNSET:
+            variables["search"] = search
+        if values is not UNSET:
+            variables["values"] = values
+        return (await self.aexecute(UserOptionsQuery, variables)).options
+
+    def user_options(
+        self,
+        search: str | None | UnsetType = UNSET,
+        values: list[IDCoercible] | None | UnsetType = UNSET,
+    ) -> tuple[UserOptionsQueryOptions, ...]:
+        """UserOptions
+
+
+        Args:
+            search (str | None, optional): No description.
+            values (list[ID] | None, optional): No description.
+
+        Returns:
+            list[UserOptionsQueryUsers]"""
+        variables: dict[str, Any] = {}
+        if search is not UNSET:
+            variables["search"] = search
+        if values is not UNSET:
+            variables["values"] = values
+        return self.execute(UserOptionsQuery, variables).options
+
+    async def aprofile(self) -> MeUser:
+        """Profile
+
+
+        Args:
+
+        Returns:
+            MeUser"""
+        variables: dict[str, Any] = {}
+        return (await self.aexecute(ProfileQuery, variables)).me
+
+    def profile(self) -> MeUser:
+        """Profile
+
+
+        Args:
+
+        Returns:
+            MeUser"""
+        variables: dict[str, Any] = {}
+        return self.execute(ProfileQuery, variables).me
 
 
 AppFilter.model_rebuild()
 ClientFilter.model_rebuild()
-DescendantInput.model_rebuild()
 DevelopmentClientInput.model_rebuild()
 GroupFilter.model_rebuild()
 LayerFilter.model_rebuild()

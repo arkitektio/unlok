@@ -21,9 +21,9 @@ import pytest
 from dokker import Deployment, testing
 from dokker.log_watcher import LogWatcher
 from fakts import Fakts
-from fakts.contrib.rath.aiohttp import FaktsAIOHttpLink
+from rath.links.aiohttp import AIOHttpLink
 from fakts.contrib.rath.auth import FaktsAuthLink
-from fakts.contrib.rath.graphql_ws import FaktsGraphQLWSLink
+from rath.links.graphql_ws import GraphQLWSLink
 from fakts.grants.remote.authorizers.redeem import RedeemAuthorizer
 from fakts.grants.remote.base import RemoteGrant
 from fakts.grants.remote.discovery.well_known import WellKnownDiscovery
@@ -135,14 +135,21 @@ def build_redeeming_fakts(base_url: str, token: str, manifest: Manifest) -> Fakt
 
 
 def build_unlok(fakts: Fakts) -> Unlok:
-    """The unlok client over a fakts session, composed like ``unlok.arkitekt.UnlokService``."""
+    """The unlok client over a fakts session, composed like ``unlok.arkitekt.unlok``.
+
+    Resolved once, here, exactly as a run resolves it: the service talks to the
+    app's own fakts server, so the address is the self alias. Kept in sync with
+    the service by hand because this is the sync path and the service builds
+    asynchronously.
+    """
+    own = fakts.get_self_alias()
     return Unlok(
         rath=UnlokRath(
             link=UnlokLinkComposition(
-                auth=FaktsAuthLink(fakts=fakts),
+                auth=FaktsAuthLink(token_loader=fakts),
                 split=SplitLink(
-                    left=FaktsAIOHttpLink(fakts_group="self", fakts=fakts, endpoint_url="FAKE_URL"),
-                    right=FaktsGraphQLWSLink(fakts_group="self", fakts=fakts, ws_endpoint_url="FAKE_URL"),
+                    left=AIOHttpLink(endpoint_url=own.to_http_path("graphql")),
+                    right=GraphQLWSLink(ws_endpoint_url=own.to_ws_path("graphql")),
                     split=lambda o: o.node.operation != OperationType.SUBSCRIPTION,
                 ),
             )
@@ -206,3 +213,9 @@ def deployed_app(integration_ports: dict[str, int]) -> Generator[DeployedUnlok, 
                     fakts=fakts,
                     unlok=unlok,
                 )
+
+
+@pytest.fixture(scope="session")
+def unlok(deployed_app: DeployedUnlok) -> Unlok:
+    """The deployment's client: API calls are its methods, nothing is ambient."""
+    return deployed_app.unlok

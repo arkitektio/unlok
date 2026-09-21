@@ -9,11 +9,6 @@ input AcknowledgeMessageInput {
   acknowledged: Boolean!
 }
 
-input AddItemToStashInput {
-  stash: ID!
-  items: [StashItemInput!]!
-}
-
 input AddUserToOrganizationInput {
   user: ID!
   organization: ID!
@@ -210,58 +205,6 @@ input ComChannelOrdering @oneOf {
   name: Ordering
 }
 
-"""
-Comments represent the comments of a user on a specific data item
-tart are identified by the unique combination of `identifier` and `object`.
-E.g a comment for an Image on the Mikro services would be serverd as
-`@mikro/image:imageID`.
-
-Comments always belong to the user that created it. Comments in threads
-get a parent attribute set, that points to the immediate parent.
-
-Each comment contains multiple descendents, that make up a *rich* representation
-of the underlying comment data including potential mentions, or links, or
-paragraphs.
-"""
-type Comment {
-  id: ID!
-
-  """The object id of the object, on its associated service"""
-  object: String!
-
-  """The identifier of the object. Consult the documentation for the format"""
-  identifier: Identifier!
-
-  """The children of this comment"""
-  children(ordering: [CommentOrdering!]! = []): [Comment!]!
-
-  """The parent of this comment. Think Thread"""
-  parent: Comment
-
-  """The time this comment got created"""
-  createdAt: DateTime!
-
-  """The users that got mentioned in this comment"""
-  mentions(filters: UserFilter, ordering: [UserOrdering!]! = [], pagination: OffsetPaginationInput): [User!]!
-
-  """The user that resolved this comment"""
-  resolvedBy: User
-
-  """The user that created this comment"""
-  user: User!
-
-  """
-  The immediate descendends of the comments. Think typed Rich Representation
-  """
-  descendants: [Descendant!]!
-  resolved: Boolean!
-}
-
-input CommentOrdering @oneOf {
-  id: Ordering
-  createdAt: Ordering
-}
-
 """A Communication"""
 type Communication {
   channel: ID!
@@ -282,14 +225,6 @@ type Context {
 
   """Are we acting in the active organization of the user?"""
   fitsActiveOrganization: Boolean!
-}
-
-input CreateCommentInput {
-  descendants: [DescendantInput!]!
-  identifier: Identifier!
-  object: ID!
-  parent: ID = null
-  notify: Boolean = false
 }
 
 input CreateGroupProfileInput {
@@ -323,11 +258,6 @@ input CreateServiceInstanceInput {
   deniedUsers: [ID!] = null
 }
 
-input CreateStashInput {
-  name: String = null
-  description: String = null
-}
-
 """Date with time (isoformat)"""
 scalar DateTime
 
@@ -337,43 +267,6 @@ input DeclineInviteInput {
 
 input DeleteRedeemTokenInput {
   id: ID!
-}
-
-input DeleteStashInput {
-  stash: ID!
-}
-
-input DeleteStashItems {
-  items: [ID!]!
-}
-
-"""
-A descendant of a comment. Descendend are used to render rich text in the frontend.
-"""
-interface Descendant {
-  """
-  Unsafe children are not typed and fall back to json. This is a workaround if queries get too complex.
-  """
-  unsafeChildren: [UnsafeChild!]
-  kind: DescendantKind!
-  children: [Descendant!]
-}
-
-input DescendantInput {
-  kind: DescendantKind!
-  children: [DescendantInput!] = null
-  user: String = null
-  bold: Boolean = null
-  italic: Boolean = null
-  code: Boolean = null
-  text: String = null
-}
-
-"""The Kind of a Descendant"""
-enum DescendantKind {
-  LEAF
-  MENTION
-  PARAGRAPH
 }
 
 input DevelopmentClientInput {
@@ -488,11 +381,6 @@ type GroupProfile {
   """The avatar of the group"""
   avatar: MediaStore
 }
-
-"""
-The `Identifier` scalasr typsse represents a reference to a store previously created by the user n a datalayer
-"""
-scalar Identifier
 
 """
 An alias for a service instance. This is used to provide a more user-friendly name for the instance.
@@ -637,23 +525,6 @@ input LayerOrdering @oneOf {
   name: Ordering
 }
 
-"""
-A leaf of text. This is the most basic descendant and always ends a tree.
-"""
-type LeafDescendant implements Descendant {
-  """
-  Unsafe children are not typed and fall back to json. This is a workaround if queries get too complex.
-  """
-  unsafeChildren: [UnsafeChild!]
-  kind: DescendantKind!
-  children: [Descendant!]
-  bold: Boolean
-  italic: Boolean
-  underline: Boolean
-  text: String
-  code: Boolean
-}
-
 input LinkingRequestInput {
   host: String!
   port: String!
@@ -727,43 +598,16 @@ input MembershipOrdering @oneOf {
   id: Ordering
 }
 
-"""A mention of a user"""
-type MentionDescendant implements Descendant {
-  """
-  Unsafe children are not typed and fall back to json. This is a workaround if queries get too complex.
-  """
-  unsafeChildren: [UnsafeChild!]
-  kind: DescendantKind!
-  children: [Descendant!]
-  user: User
-}
-
 type Mutation {
   addUserToOrganization(input: AddUserToOrganizationInput!): Membership!
   createOrganization(input: CreateOrganizationInput!): Organization!
-  createComment(input: CreateCommentInput!): Comment!
   registerComChannel(input: RegisterComChannelInput!): ComChannel!
   notifyUser(input: NotifyUserInput!): Boolean!
   createRedeemToken(input: RedeemTokenInput!): RedeemToken!
   deleteRedeemToken(input: DeleteRedeemTokenInput!): ID!
-  replyTo(input: ReplyToCommentInput!): Comment!
-  resolveComment(input: ResolveCommentInput!): Comment!
   createDevelopmentalClient(input: DevelopmentClientInput!): Client!
   render(input: RenderInput!): Fakt!
   acknowledgeMessage(input: AcknowledgeMessageInput!): SystemMessage!
-
-  """Create a new stash"""
-  createStash(input: CreateStashInput!): Stash!
-
-  """Update a stash"""
-  updateStash(input: UpdateStashInput!): Stash!
-
-  """Add items to a stash"""
-  addItemsToStash(input: AddItemToStashInput!): [StashItem!]!
-
-  """Delete items from a stash"""
-  deleteStashItems(input: DeleteStashItems!): [ID!]!
-  deleteStash(input: DeleteStashInput!): ID!
   createServiceInstance(input: CreateServiceInstanceInput!): ServiceInstance!
   updateServiceInstance(input: UpdateServiceInstanceInput!): ServiceInstance!
   requestMediaUpload(input: RequestMediaUploadInput!): PresignedPostCredentials!
@@ -873,17 +717,6 @@ type OrganizationProfile {
   avatar: MediaStore
 }
 
-"""A Paragraph of text"""
-type ParagraphDescendant implements Descendant {
-  """
-  Unsafe children are not typed and fall back to json. This is a workaround if queries get too complex.
-  """
-  unsafeChildren: [UnsafeChild!]
-  kind: DescendantKind!
-  children: [Descendant!]
-  size: String
-}
-
 """
 Temporary Credentials for a file upload that can be used by a Client (e.g. in a python datalayer)
 """
@@ -933,8 +766,6 @@ enum PublicSourceKind {
 
 type Query {
   _service: _Service!
-  stashes(filters: StashFilter, ordering: [StashOrdering!]! = [], pagination: OffsetPaginationInput): [Stash!]!
-  stashItems(filters: StashItemFilter, ordering: [StashItemOrdering!]! = [], pagination: OffsetPaginationInput): [StashItem!]!
   organizations(filters: OrganizationFilter, ordering: [OrganizationOrdering!]! = [], pagination: OffsetPaginationInput): [Organization!]!
   devices(filters: DeviceFilter, ordering: [DeviceOrdering!]! = [], pagination: OffsetPaginationInput): [Device!]!
   apps(filters: AppFilter, ordering: [AppOrdering!]! = [], pagination: OffsetPaginationInput): [App!]!
@@ -943,7 +774,6 @@ type Query {
   users(filters: UserFilter, ordering: [UserOrdering!]! = [], pagination: OffsetPaginationInput): [User!]!
   roles(filters: RoleFilter, ordering: [RoleOrdering!]! = [], pagination: OffsetPaginationInput): [Role!]!
   groups(filters: GroupFilter, ordering: [GroupOrdering!]! = [], pagination: OffsetPaginationInput): [Group!]!
-  comments(ordering: [CommentOrdering!]! = []): [Comment!]!
   services(filters: ServiceFilter, ordering: [ServiceOrdering!]! = [], pagination: OffsetPaginationInput): [Service!]!
   deviceGroups(filters: DeviceGroupFilter, ordering: [DeviceGroupOrdering!]! = [], pagination: OffsetPaginationInput): [DeviceGroup!]!
   serviceInstances(filters: ServiceInstanceFilter, ordering: [ServiceInstanceOrdering!]! = [], pagination: OffsetPaginationInput): [ServiceInstance!]!
@@ -951,10 +781,7 @@ type Query {
   invites(filters: InviteFilter, ordering: [InviteOrdering!]! = [], pagination: OffsetPaginationInput): [Invite!]!
   layers(filters: LayerFilter, ordering: [LayerOrdering!]! = [], pagination: OffsetPaginationInput): [Layer!]!
   redeemTokens(filters: RedeemTokenFilter, ordering: [RedeemTokenOrdering!]! = [], pagination: OffsetPaginationInput): [RedeemToken!]!
-  stash(id: ID!): Stash!
-  stashItem(id: ID!): StashItem!
   userStats(filters: UserFilter = null): UserStats!
-  myStashes: [Stash!]!
   mycontext: Context!
   user(id: ID!): User!
   me: User!
@@ -965,9 +792,6 @@ type Query {
   client(id: ID = null, clientId: ID = null): Client!
   myManagedClients(kind: ClientKind!): [Client!]!
   scopes: [Scope!]!
-  comment(id: ID!): Comment!
-  commentsFor(identifier: Identifier!, object: ID!): [Comment!]!
-  myMentions: [Comment!]!
   myActiveMessages: [SystemMessage!]!
   message(id: ID!): SystemMessage!
   hallo: String!
@@ -1104,12 +928,6 @@ input RenderInput {
   manifest: ManifestInput = null
 }
 
-input ReplyToCommentInput {
-  descendants: [DescendantInput!]!
-  parent: ID
-  notify: Boolean
-}
-
 input RequestMediaUploadInput {
   key: String!
   datalayer: String!
@@ -1120,11 +938,6 @@ input RequirementInput {
   optional: Boolean! = false
   description: String = null
   key: String!
-}
-
-input ResolveCommentInput {
-  id: ID!
-  notify: Boolean
 }
 
 """
@@ -1344,71 +1157,6 @@ input ServiceReleaseOrdering @oneOf {
   id: Ordering
 }
 
-"\nA Stash\n"
-type Stash {
-  id: ID!
-  name: String!
-  description: String
-  createdAt: DateTime!
-  updatedAt: DateTime!
-  isActive: Boolean!
-  items(filters: StashItemFilter, ordering: [StashItemOrdering!]! = [], pagination: OffsetPaginationInput): [StashItem!]!
-
-  """The owner of the stash"""
-  owner: User!
-}
-
-"""__doc__"""
-input StashFilter {
-  AND: StashFilter
-  OR: StashFilter
-  NOT: StashFilter
-  DISTINCT: Boolean
-  ids: [ID!]
-  search: String
-}
-
-"\nA stashed item\n"
-type StashItem {
-  id: ID!
-  identifier: String!
-  object: String!
-  addedAt: DateTime!
-  updatedAt: DateTime!
-}
-
-"""
-StashItem(id, stash, identifier, object, added_by, added_at, updated_at)
-"""
-input StashItemFilter {
-  identifier: StrFilterLookup
-  AND: StashItemFilter
-  OR: StashItemFilter
-  NOT: StashItemFilter
-  DISTINCT: Boolean
-  ids: [ID!]
-  search: String
-  stashes: [ID!]
-}
-
-input StashItemInput {
-  identifier: String!
-  description: String = null
-  object: String!
-}
-
-input StashItemOrdering @oneOf {
-  id: Ordering
-  updatedAt: Ordering
-}
-
-input StashOrdering @oneOf {
-  id: Ordering
-  name: Ordering
-  createdAt: Ordering
-  updatedAt: Ordering
-}
-
 input StrFilterLookup {
   exact: String
   iExact: String
@@ -1431,7 +1179,6 @@ input StrFilterLookup {
 
 type Subscription {
   communications(channels: [ID!]!): Communication!
-  mentions: Comment!
 }
 
 "\nA System Message is a message that is sent to a user. \nIt can be used to notify the user of important events or to request their attention.\nSystem messages can use Rekuest Hooks as actions to allow the user to interact with the message.\n\n\n"
@@ -1454,11 +1201,6 @@ type TimeBucket {
   avg: Float
   sum: Float
 }
-
-"""
-The `Identifier` scalasr typsse represents a reference to a store previously created by the user n a datalayer
-"""
-scalar UnsafeChild
 
 input UpdateDeviceInput {
   id: ID!
@@ -1496,12 +1238,6 @@ input UpdateServiceInstanceInput {
   deniedGroups: [ID!] = null
   deniedUsers: [ID!] = null
   id: ID!
-}
-
-input UpdateStashInput {
-  stash: ID!
-  name: String!
-  description: String = null
 }
 
 "\nA User is a person that can log in to the system. They are uniquely identified by their username.\nAnd can have an email address associated with them (but don't have to).\n\nA user can be assigned to groups and has a profile that can be used to display information about them.\nDetail information about a user can be found in the profile.\n\nAll users can have social accounts associated with them. These are used to authenticate the user with external services,\nsuch as ORCID or GitHub.\n\n"
