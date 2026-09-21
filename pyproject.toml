@@ -6,9 +6,9 @@ authors = [{ name = "jhnnsrs", email = "jhnnsrs@gmail.com" }]
 requires-python = ">=3.11"
 readme = "README.md"
 dependencies = [
-    "rath>=3.7",
+    "rath>=4",
 
-    "rekuest>=3",
+    "rekuest>=4",
     "websockets>=15.0.1",
 ]
 
@@ -30,7 +30,7 @@ dev-dependencies =  [
     # The integration session authenticates the way a deployed app does -- by
     # redeeming the stack's provisioned token through fakts' redeem grant -- and
     # `unlok.arkitekt` composes its links from `fakts.contrib.rath`.
-    "fakts>=2",
+    "fakts>=3",
 ]
 
 [tool.hatch.build.targets.sdist]
