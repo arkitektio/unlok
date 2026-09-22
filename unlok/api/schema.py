@@ -1,3 +1,4 @@
+import builtins
 from datetime import datetime
 from enum import Enum
 from pydantic import AliasChoices, BaseModel, ConfigDict, Field
@@ -2517,8 +2518,8 @@ class UnlokApi:
 
         Returns:
             DetailClient"""
-        variables: dict[str, Any] = {}
-        _input: dict[str, Any] = {}
+        variables: dict[str, builtins.object] = {}
+        _input: dict[str, builtins.object] = {}
         _input["manifest"] = manifest
         if hub is not UNSET:
             _input["hub"] = hub
@@ -2549,8 +2550,8 @@ class UnlokApi:
 
         Returns:
             DetailClient"""
-        variables: dict[str, Any] = {}
-        _input: dict[str, Any] = {}
+        variables: dict[str, builtins.object] = {}
+        _input: dict[str, builtins.object] = {}
         _input["manifest"] = manifest
         if hub is not UNSET:
             _input["hub"] = hub
@@ -2574,8 +2575,8 @@ class UnlokApi:
 
         Returns:
             GroupProfile"""
-        variables: dict[str, Any] = {}
-        _input: dict[str, Any] = {}
+        variables: dict[str, builtins.object] = {}
+        _input: dict[str, builtins.object] = {}
         _input["group"] = group
         _input["name"] = name
         _input["avatar"] = avatar
@@ -2597,8 +2598,8 @@ class UnlokApi:
 
         Returns:
             GroupProfile"""
-        variables: dict[str, Any] = {}
-        _input: dict[str, Any] = {}
+        variables: dict[str, builtins.object] = {}
+        _input: dict[str, builtins.object] = {}
         _input["group"] = group
         _input["name"] = name
         _input["avatar"] = avatar
@@ -2618,8 +2619,8 @@ class UnlokApi:
 
         Returns:
             GroupProfile"""
-        variables: dict[str, Any] = {}
-        _input: dict[str, Any] = {}
+        variables: dict[str, builtins.object] = {}
+        _input: dict[str, builtins.object] = {}
         _input["id"] = id
         _input["name"] = name
         _input["avatar"] = avatar
@@ -2641,8 +2642,8 @@ class UnlokApi:
 
         Returns:
             GroupProfile"""
-        variables: dict[str, Any] = {}
-        _input: dict[str, Any] = {}
+        variables: dict[str, builtins.object] = {}
+        _input: dict[str, builtins.object] = {}
         _input["id"] = id
         _input["name"] = name
         _input["avatar"] = avatar
@@ -2669,8 +2670,8 @@ class UnlokApi:
 
         Returns:
             ServiceInstance"""
-        variables: dict[str, Any] = {}
-        _input: dict[str, Any] = {}
+        variables: dict[str, builtins.object] = {}
+        _input: dict[str, builtins.object] = {}
         if allowed_users is not UNSET:
             _input["allowedUsers"] = allowed_users
         if allowed_groups is not UNSET:
@@ -2705,8 +2706,8 @@ class UnlokApi:
 
         Returns:
             ServiceInstance"""
-        variables: dict[str, Any] = {}
-        _input: dict[str, Any] = {}
+        variables: dict[str, builtins.object] = {}
+        _input: dict[str, builtins.object] = {}
         if allowed_users is not UNSET:
             _input["allowedUsers"] = allowed_users
         if allowed_groups is not UNSET:
@@ -2743,8 +2744,8 @@ class UnlokApi:
 
         Returns:
             ServiceInstance"""
-        variables: dict[str, Any] = {}
-        _input: dict[str, Any] = {}
+        variables: dict[str, builtins.object] = {}
+        _input: dict[str, builtins.object] = {}
         _input["identifier"] = identifier
         _input["service"] = service
         if allowed_users is not UNSET:
@@ -2782,8 +2783,8 @@ class UnlokApi:
 
         Returns:
             ServiceInstance"""
-        variables: dict[str, Any] = {}
-        _input: dict[str, Any] = {}
+        variables: dict[str, builtins.object] = {}
+        _input: dict[str, builtins.object] = {}
         _input["identifier"] = identifier
         _input["service"] = service
         if allowed_users is not UNSET:
@@ -2809,8 +2810,8 @@ class UnlokApi:
 
         Returns:
             Profile"""
-        variables: dict[str, Any] = {}
-        _input: dict[str, Any] = {}
+        variables: dict[str, builtins.object] = {}
+        _input: dict[str, builtins.object] = {}
         _input["user"] = user
         _input["name"] = name
         variables["input"] = _input
@@ -2828,8 +2829,8 @@ class UnlokApi:
 
         Returns:
             Profile"""
-        variables: dict[str, Any] = {}
-        _input: dict[str, Any] = {}
+        variables: dict[str, builtins.object] = {}
+        _input: dict[str, builtins.object] = {}
         _input["user"] = user
         _input["name"] = name
         variables["input"] = _input
@@ -2848,8 +2849,8 @@ class UnlokApi:
 
         Returns:
             Profile"""
-        variables: dict[str, Any] = {}
-        _input: dict[str, Any] = {}
+        variables: dict[str, builtins.object] = {}
+        _input: dict[str, builtins.object] = {}
         _input["id"] = id
         _input["name"] = name
         _input["avatar"] = avatar
@@ -2871,8 +2872,8 @@ class UnlokApi:
 
         Returns:
             Profile"""
-        variables: dict[str, Any] = {}
-        _input: dict[str, Any] = {}
+        variables: dict[str, builtins.object] = {}
+        _input: dict[str, builtins.object] = {}
         _input["id"] = id
         _input["name"] = name
         _input["avatar"] = avatar
@@ -2897,8 +2898,8 @@ class UnlokApi:
 
         Returns:
             DetailRedeemToken"""
-        variables: dict[str, Any] = {}
-        _input: dict[str, Any] = {}
+        variables: dict[str, builtins.object] = {}
+        _input: dict[str, builtins.object] = {}
         _input["manifest"] = manifest
         if token is not UNSET:
             _input["token"] = token
@@ -2929,8 +2930,8 @@ class UnlokApi:
 
         Returns:
             DetailRedeemToken"""
-        variables: dict[str, Any] = {}
-        _input: dict[str, Any] = {}
+        variables: dict[str, builtins.object] = {}
+        _input: dict[str, builtins.object] = {}
         _input["manifest"] = manifest
         if token is not UNSET:
             _input["token"] = token
@@ -2950,7 +2951,7 @@ class UnlokApi:
 
         Returns:
             ID"""
-        variables: dict[str, Any] = {}
+        variables: dict[str, builtins.object] = {}
         variables["id"] = id
         return (
             await self.aexecute(DeleteRedeemTokenMutation, variables)
@@ -2965,7 +2966,7 @@ class UnlokApi:
 
         Returns:
             ID"""
-        variables: dict[str, Any] = {}
+        variables: dict[str, builtins.object] = {}
         variables["id"] = id
         return self.execute(DeleteRedeemTokenMutation, variables).delete_redeem_token
 
@@ -2981,7 +2982,7 @@ class UnlokApi:
 
         Returns:
             PresignedPostCredentials"""
-        variables: dict[str, Any] = {}
+        variables: dict[str, builtins.object] = {}
         variables["key"] = key
         variables["datalayer"] = datalayer
         return (
@@ -3000,7 +3001,7 @@ class UnlokApi:
 
         Returns:
             PresignedPostCredentials"""
-        variables: dict[str, Any] = {}
+        variables: dict[str, builtins.object] = {}
         variables["key"] = key
         variables["datalayer"] = datalayer
         return self.execute(RequestMediaUploadMutation, variables).request_media_upload
@@ -3019,7 +3020,7 @@ class UnlokApi:
 
         Returns:
             list[ListApp]"""
-        variables: dict[str, Any] = {}
+        variables: dict[str, builtins.object] = {}
         if filters is not UNSET:
             variables["filters"] = filters
         if pagination is not UNSET:
@@ -3040,7 +3041,7 @@ class UnlokApi:
 
         Returns:
             list[ListApp]"""
-        variables: dict[str, Any] = {}
+        variables: dict[str, builtins.object] = {}
         if filters is not UNSET:
             variables["filters"] = filters
         if pagination is not UNSET:
@@ -3063,7 +3064,7 @@ class UnlokApi:
 
         Returns:
             DetailApp"""
-        variables: dict[str, Any] = {}
+        variables: dict[str, builtins.object] = {}
         if identifier is not UNSET:
             variables["identifier"] = identifier
         if id is not UNSET:
@@ -3088,7 +3089,7 @@ class UnlokApi:
 
         Returns:
             DetailApp"""
-        variables: dict[str, Any] = {}
+        variables: dict[str, builtins.object] = {}
         if identifier is not UNSET:
             variables["identifier"] = identifier
         if id is not UNSET:
@@ -3106,7 +3107,7 @@ class UnlokApi:
 
         Returns:
             DetailApp"""
-        variables: dict[str, Any] = {}
+        variables: dict[str, builtins.object] = {}
         variables["id"] = id
         return (await self.aexecute(DetailAppQuery, variables)).app
 
@@ -3119,7 +3120,7 @@ class UnlokApi:
 
         Returns:
             DetailApp"""
-        variables: dict[str, Any] = {}
+        variables: dict[str, builtins.object] = {}
         variables["id"] = id
         return self.execute(DetailAppQuery, variables).app
 
@@ -3137,7 +3138,7 @@ class UnlokApi:
 
         Returns:
             list[ListClient]"""
-        variables: dict[str, Any] = {}
+        variables: dict[str, builtins.object] = {}
         if filters is not UNSET:
             variables["filters"] = filters
         if pagination is not UNSET:
@@ -3158,7 +3159,7 @@ class UnlokApi:
 
         Returns:
             list[ListClient]"""
-        variables: dict[str, Any] = {}
+        variables: dict[str, builtins.object] = {}
         if filters is not UNSET:
             variables["filters"] = filters
         if pagination is not UNSET:
@@ -3174,7 +3175,7 @@ class UnlokApi:
 
         Returns:
             DetailClient"""
-        variables: dict[str, Any] = {}
+        variables: dict[str, builtins.object] = {}
         variables["id"] = id
         return (await self.aexecute(DetailClientQuery, variables)).client
 
@@ -3187,7 +3188,7 @@ class UnlokApi:
 
         Returns:
             DetailClient"""
-        variables: dict[str, Any] = {}
+        variables: dict[str, builtins.object] = {}
         variables["id"] = id
         return self.execute(DetailClientQuery, variables).client
 
@@ -3200,7 +3201,7 @@ class UnlokApi:
 
         Returns:
             list[ListClient]"""
-        variables: dict[str, Any] = {}
+        variables: dict[str, builtins.object] = {}
         variables["kind"] = kind
         return (
             await self.aexecute(MyManagedClientsQuery, variables)
@@ -3215,7 +3216,7 @@ class UnlokApi:
 
         Returns:
             list[ListClient]"""
-        variables: dict[str, Any] = {}
+        variables: dict[str, builtins.object] = {}
         variables["kind"] = kind
         return self.execute(MyManagedClientsQuery, variables).my_managed_clients
 
@@ -3228,7 +3229,7 @@ class UnlokApi:
 
         Returns:
             DetailClient"""
-        variables: dict[str, Any] = {}
+        variables: dict[str, builtins.object] = {}
         variables["clientId"] = client_id
         return (await self.aexecute(ClientQuery, variables)).client
 
@@ -3241,7 +3242,7 @@ class UnlokApi:
 
         Returns:
             DetailClient"""
-        variables: dict[str, Any] = {}
+        variables: dict[str, builtins.object] = {}
         variables["clientId"] = client_id
         return self.execute(ClientQuery, variables).client
 
@@ -3259,7 +3260,7 @@ class UnlokApi:
 
         Returns:
             list[GroupOptionsQueryGroups]"""
-        variables: dict[str, Any] = {}
+        variables: dict[str, builtins.object] = {}
         if search is not UNSET:
             variables["search"] = search
         if values is not UNSET:
@@ -3280,7 +3281,7 @@ class UnlokApi:
 
         Returns:
             list[GroupOptionsQueryGroups]"""
-        variables: dict[str, Any] = {}
+        variables: dict[str, builtins.object] = {}
         if search is not UNSET:
             variables["search"] = search
         if values is not UNSET:
@@ -3296,7 +3297,7 @@ class UnlokApi:
 
         Returns:
             DetailGroup"""
-        variables: dict[str, Any] = {}
+        variables: dict[str, builtins.object] = {}
         variables["id"] = id
         return (await self.aexecute(DetailGroupQuery, variables)).group
 
@@ -3309,7 +3310,7 @@ class UnlokApi:
 
         Returns:
             DetailGroup"""
-        variables: dict[str, Any] = {}
+        variables: dict[str, builtins.object] = {}
         variables["id"] = id
         return self.execute(DetailGroupQuery, variables).group
 
@@ -3327,7 +3328,7 @@ class UnlokApi:
 
         Returns:
             list[ListGroup]"""
-        variables: dict[str, Any] = {}
+        variables: dict[str, builtins.object] = {}
         if filters is not UNSET:
             variables["filters"] = filters
         if pagination is not UNSET:
@@ -3348,7 +3349,7 @@ class UnlokApi:
 
         Returns:
             list[ListGroup]"""
-        variables: dict[str, Any] = {}
+        variables: dict[str, builtins.object] = {}
         if filters is not UNSET:
             variables["filters"] = filters
         if pagination is not UNSET:
@@ -3369,7 +3370,7 @@ class UnlokApi:
 
         Returns:
             list[ListLayer]"""
-        variables: dict[str, Any] = {}
+        variables: dict[str, builtins.object] = {}
         if filters is not UNSET:
             variables["filters"] = filters
         if pagination is not UNSET:
@@ -3390,7 +3391,7 @@ class UnlokApi:
 
         Returns:
             list[ListLayer]"""
-        variables: dict[str, Any] = {}
+        variables: dict[str, builtins.object] = {}
         if filters is not UNSET:
             variables["filters"] = filters
         if pagination is not UNSET:
@@ -3406,7 +3407,7 @@ class UnlokApi:
 
         Returns:
             Layer"""
-        variables: dict[str, Any] = {}
+        variables: dict[str, builtins.object] = {}
         variables["id"] = id
         return (await self.aexecute(DetailLayerQuery, variables)).layer
 
@@ -3419,7 +3420,7 @@ class UnlokApi:
 
         Returns:
             Layer"""
-        variables: dict[str, Any] = {}
+        variables: dict[str, builtins.object] = {}
         variables["id"] = id
         return self.execute(DetailLayerQuery, variables).layer
 
@@ -3432,7 +3433,7 @@ class UnlokApi:
 
         Returns:
             DetailRedeemToken"""
-        variables: dict[str, Any] = {}
+        variables: dict[str, builtins.object] = {}
         variables["id"] = id
         return (await self.aexecute(RedeemTokenQuery, variables)).redeem_token
 
@@ -3445,7 +3446,7 @@ class UnlokApi:
 
         Returns:
             DetailRedeemToken"""
-        variables: dict[str, Any] = {}
+        variables: dict[str, builtins.object] = {}
         variables["id"] = id
         return self.execute(RedeemTokenQuery, variables).redeem_token
 
@@ -3463,7 +3464,7 @@ class UnlokApi:
 
         Returns:
             list[ListRedeemToken]"""
-        variables: dict[str, Any] = {}
+        variables: dict[str, builtins.object] = {}
         if filters is not UNSET:
             variables["filters"] = filters
         if pagination is not UNSET:
@@ -3484,7 +3485,7 @@ class UnlokApi:
 
         Returns:
             list[ListRedeemToken]"""
-        variables: dict[str, Any] = {}
+        variables: dict[str, builtins.object] = {}
         if filters is not UNSET:
             variables["filters"] = filters
         if pagination is not UNSET:
@@ -3499,7 +3500,7 @@ class UnlokApi:
 
         Returns:
             list[ListRelease]"""
-        variables: dict[str, Any] = {}
+        variables: dict[str, builtins.object] = {}
         return (await self.aexecute(ReleasesQuery, variables)).releases
 
     def releases(self) -> tuple[ListRelease, ...]:
@@ -3510,7 +3511,7 @@ class UnlokApi:
 
         Returns:
             list[ListRelease]"""
-        variables: dict[str, Any] = {}
+        variables: dict[str, builtins.object] = {}
         return self.execute(ReleasesQuery, variables).releases
 
     async def arelease(
@@ -3531,7 +3532,7 @@ class UnlokApi:
 
         Returns:
             DetailRelease"""
-        variables: dict[str, Any] = {}
+        variables: dict[str, builtins.object] = {}
         if identifier is not UNSET:
             variables["identifier"] = identifier
         if version is not UNSET:
@@ -3560,7 +3561,7 @@ class UnlokApi:
 
         Returns:
             DetailRelease"""
-        variables: dict[str, Any] = {}
+        variables: dict[str, builtins.object] = {}
         if identifier is not UNSET:
             variables["identifier"] = identifier
         if version is not UNSET:
@@ -3580,7 +3581,7 @@ class UnlokApi:
 
         Returns:
             DetailRelease"""
-        variables: dict[str, Any] = {}
+        variables: dict[str, builtins.object] = {}
         variables["id"] = id
         return (await self.aexecute(DetailReleaseQuery, variables)).release
 
@@ -3593,7 +3594,7 @@ class UnlokApi:
 
         Returns:
             DetailRelease"""
-        variables: dict[str, Any] = {}
+        variables: dict[str, builtins.object] = {}
         variables["id"] = id
         return self.execute(DetailReleaseQuery, variables).release
 
@@ -3605,7 +3606,7 @@ class UnlokApi:
 
         Returns:
             list[ScopesQueryScopes]"""
-        variables: dict[str, Any] = {}
+        variables: dict[str, builtins.object] = {}
         return (await self.aexecute(ScopesQuery, variables)).scopes
 
     def scopes(self) -> tuple[ScopesQueryScopes, ...]:
@@ -3616,7 +3617,7 @@ class UnlokApi:
 
         Returns:
             list[ScopesQueryScopes]"""
-        variables: dict[str, Any] = {}
+        variables: dict[str, builtins.object] = {}
         return self.execute(ScopesQuery, variables).scopes
 
     async def ascopes_options(self) -> tuple[ScopesOptionsQueryOptions, ...]:
@@ -3627,7 +3628,7 @@ class UnlokApi:
 
         Returns:
             list[ScopesOptionsQueryScopes]"""
-        variables: dict[str, Any] = {}
+        variables: dict[str, builtins.object] = {}
         return (await self.aexecute(ScopesOptionsQuery, variables)).options
 
     def scopes_options(self) -> tuple[ScopesOptionsQueryOptions, ...]:
@@ -3638,7 +3639,7 @@ class UnlokApi:
 
         Returns:
             list[ScopesOptionsQueryScopes]"""
-        variables: dict[str, Any] = {}
+        variables: dict[str, builtins.object] = {}
         return self.execute(ScopesOptionsQuery, variables).options
 
     async def aglobal_search(
@@ -3659,7 +3660,7 @@ class UnlokApi:
 
         Returns:
             GlobalSearchQuery"""
-        variables: dict[str, Any] = {}
+        variables: dict[str, builtins.object] = {}
         if search is not UNSET:
             variables["search"] = search
         variables["noUsers"] = no_users
@@ -3686,7 +3687,7 @@ class UnlokApi:
 
         Returns:
             GlobalSearchQuery"""
-        variables: dict[str, Any] = {}
+        variables: dict[str, builtins.object] = {}
         if search is not UNSET:
             variables["search"] = search
         variables["noUsers"] = no_users
@@ -3709,7 +3710,7 @@ class UnlokApi:
 
         Returns:
             list[ListServiceInstance]"""
-        variables: dict[str, Any] = {}
+        variables: dict[str, builtins.object] = {}
         if pagination is not UNSET:
             variables["pagination"] = pagination
         if filters is not UNSET:
@@ -3732,7 +3733,7 @@ class UnlokApi:
 
         Returns:
             list[ListServiceInstance]"""
-        variables: dict[str, Any] = {}
+        variables: dict[str, builtins.object] = {}
         if pagination is not UNSET:
             variables["pagination"] = pagination
         if filters is not UNSET:
@@ -3748,7 +3749,7 @@ class UnlokApi:
 
         Returns:
             ServiceInstance"""
-        variables: dict[str, Any] = {}
+        variables: dict[str, builtins.object] = {}
         variables["id"] = id
         return (
             await self.aexecute(GetServiceInstanceQuery, variables)
@@ -3763,7 +3764,7 @@ class UnlokApi:
 
         Returns:
             ServiceInstance"""
-        variables: dict[str, Any] = {}
+        variables: dict[str, builtins.object] = {}
         variables["id"] = id
         return self.execute(GetServiceInstanceQuery, variables).service_instance
 
@@ -3781,7 +3782,7 @@ class UnlokApi:
 
         Returns:
             list[ListServiceRelease]"""
-        variables: dict[str, Any] = {}
+        variables: dict[str, builtins.object] = {}
         if pagination is not UNSET:
             variables["pagination"] = pagination
         if filters is not UNSET:
@@ -3804,7 +3805,7 @@ class UnlokApi:
 
         Returns:
             list[ListServiceRelease]"""
-        variables: dict[str, Any] = {}
+        variables: dict[str, builtins.object] = {}
         if pagination is not UNSET:
             variables["pagination"] = pagination
         if filters is not UNSET:
@@ -3820,7 +3821,7 @@ class UnlokApi:
 
         Returns:
             ServiceRelease"""
-        variables: dict[str, Any] = {}
+        variables: dict[str, builtins.object] = {}
         variables["id"] = id
         return (await self.aexecute(GetServiceReleaseQuery, variables)).service_release
 
@@ -3833,7 +3834,7 @@ class UnlokApi:
 
         Returns:
             ServiceRelease"""
-        variables: dict[str, Any] = {}
+        variables: dict[str, builtins.object] = {}
         variables["id"] = id
         return self.execute(GetServiceReleaseQuery, variables).service_release
 
@@ -3851,7 +3852,7 @@ class UnlokApi:
 
         Returns:
             list[ListService]"""
-        variables: dict[str, Any] = {}
+        variables: dict[str, builtins.object] = {}
         if pagination is not UNSET:
             variables["pagination"] = pagination
         if filters is not UNSET:
@@ -3872,7 +3873,7 @@ class UnlokApi:
 
         Returns:
             list[ListService]"""
-        variables: dict[str, Any] = {}
+        variables: dict[str, builtins.object] = {}
         if pagination is not UNSET:
             variables["pagination"] = pagination
         if filters is not UNSET:
@@ -3888,7 +3889,7 @@ class UnlokApi:
 
         Returns:
             Service"""
-        variables: dict[str, Any] = {}
+        variables: dict[str, builtins.object] = {}
         variables["id"] = id
         return (await self.aexecute(GetServiceQuery, variables)).service
 
@@ -3901,7 +3902,7 @@ class UnlokApi:
 
         Returns:
             Service"""
-        variables: dict[str, Any] = {}
+        variables: dict[str, builtins.object] = {}
         variables["id"] = id
         return self.execute(GetServiceQuery, variables).service
 
@@ -3913,7 +3914,7 @@ class UnlokApi:
 
         Returns:
             DetailUser"""
-        variables: dict[str, Any] = {}
+        variables: dict[str, builtins.object] = {}
         return (await self.aexecute(MeQuery, variables)).me
 
     def me(self) -> DetailUser:
@@ -3924,7 +3925,7 @@ class UnlokApi:
 
         Returns:
             DetailUser"""
-        variables: dict[str, Any] = {}
+        variables: dict[str, builtins.object] = {}
         return self.execute(MeQuery, variables).me
 
     async def auser(self, id: IDCoercible) -> DetailUser:
@@ -3936,7 +3937,7 @@ class UnlokApi:
 
         Returns:
             DetailUser"""
-        variables: dict[str, Any] = {}
+        variables: dict[str, builtins.object] = {}
         variables["id"] = id
         return (await self.aexecute(UserQuery, variables)).user
 
@@ -3949,7 +3950,7 @@ class UnlokApi:
 
         Returns:
             DetailUser"""
-        variables: dict[str, Any] = {}
+        variables: dict[str, builtins.object] = {}
         variables["id"] = id
         return self.execute(UserQuery, variables).user
 
@@ -3962,7 +3963,7 @@ class UnlokApi:
 
         Returns:
             DetailUser"""
-        variables: dict[str, Any] = {}
+        variables: dict[str, builtins.object] = {}
         variables["id"] = id
         return (await self.aexecute(DetailUserQuery, variables)).user
 
@@ -3975,7 +3976,7 @@ class UnlokApi:
 
         Returns:
             DetailUser"""
-        variables: dict[str, Any] = {}
+        variables: dict[str, builtins.object] = {}
         variables["id"] = id
         return self.execute(DetailUserQuery, variables).user
 
@@ -3993,7 +3994,7 @@ class UnlokApi:
 
         Returns:
             list[ListUser]"""
-        variables: dict[str, Any] = {}
+        variables: dict[str, builtins.object] = {}
         if filters is not UNSET:
             variables["filters"] = filters
         if pagination is not UNSET:
@@ -4014,7 +4015,7 @@ class UnlokApi:
 
         Returns:
             list[ListUser]"""
-        variables: dict[str, Any] = {}
+        variables: dict[str, builtins.object] = {}
         if filters is not UNSET:
             variables["filters"] = filters
         if pagination is not UNSET:
@@ -4035,7 +4036,7 @@ class UnlokApi:
 
         Returns:
             list[UserOptionsQueryUsers]"""
-        variables: dict[str, Any] = {}
+        variables: dict[str, builtins.object] = {}
         if search is not UNSET:
             variables["search"] = search
         if values is not UNSET:
@@ -4056,7 +4057,7 @@ class UnlokApi:
 
         Returns:
             list[UserOptionsQueryUsers]"""
-        variables: dict[str, Any] = {}
+        variables: dict[str, builtins.object] = {}
         if search is not UNSET:
             variables["search"] = search
         if values is not UNSET:
@@ -4071,7 +4072,7 @@ class UnlokApi:
 
         Returns:
             MeUser"""
-        variables: dict[str, Any] = {}
+        variables: dict[str, builtins.object] = {}
         return (await self.aexecute(ProfileQuery, variables)).me
 
     def profile(self) -> MeUser:
@@ -4082,7 +4083,7 @@ class UnlokApi:
 
         Returns:
             MeUser"""
-        variables: dict[str, Any] = {}
+        variables: dict[str, builtins.object] = {}
         return self.execute(ProfileQuery, variables).me
 
 
