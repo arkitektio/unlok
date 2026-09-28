@@ -15,7 +15,7 @@ from rath.links.aiohttp import AIOHttpLink
 from rath.links.graphql_ws import GraphQLWSLink
 from rath.links.split import SplitLink
 
-from rekuest.app import AppRegistry
+from arkitekt_spec.declare.app import AppRegistry
 
 from unlok.api.schema import Service
 from unlok.rath import UnlokLinkComposition, UnlokRath
