@@ -6,6 +6,16 @@ from rath.scalars import ID, IDCoercible
 from typing import Annotated, Any, Iterable, Literal
 
 
+class Deprecated:
+    """Marks a field as deprecated, carrying the GraphQL deprecation reason."""
+
+    def __init__(self, reason=None):
+        self.reason = reason
+
+    def __repr__(self):
+        return "Deprecated(" + repr(self.reason) + ")"
+
+
 class GraphQLDefault:
     """Records a GraphQL field schema default value. The client omits the field so the server applies its own default; this preserves the value for introspection."""
 
@@ -151,6 +161,52 @@ class CreateGroupProfileInput(BaseModel):
     )
 
 
+class CreateMandateInput(BaseModel):
+    """Pre-authorize an agent app to provision clients of a subject app that act as you."""
+
+    agent: str = Field(
+        description="Identifier of the app allowed to provision (e.g. a deployer)."
+    )
+    manifest: "ManifestInput" = Field(
+        description="The subject app. Its scopes and requirements are the ceiling for every provisioned client; deviceId is ignored."
+    )
+    hub: ID | None = Field(
+        default=None,
+        description="The hub provisioned clients compose against. Defaults to the calling client's hub.",
+    )
+    attestation: str | None = Field(
+        default=None,
+        description="Opaque binding for the approving service (e.g. a release digest).",
+    )
+    agent_device_id: str | None = Field(
+        validation_alias=AliasChoices("agent_device_id", "agentDeviceId"),
+        serialization_alias="agentDeviceId",
+        default=None,
+        description="Only an agent running on this device may provision.",
+    )
+    agent_user: ID | None = Field(
+        validation_alias=AliasChoices("agent_user", "agentUser"),
+        serialization_alias="agentUser",
+        default=None,
+        description="Only an agent acting as this user may provision.",
+    )
+    max_clients: int | None = Field(
+        validation_alias=AliasChoices("max_clients", "maxClients"),
+        serialization_alias="maxClients",
+        default=None,
+        description="How many clients may exist under the mandate at once.",
+    )
+    expires_in_days: int | None = Field(
+        validation_alias=AliasChoices("expires_in_days", "expiresInDays"),
+        serialization_alias="expiresInDays",
+        default=None,
+        description="Stop new provisioning after this many days (1–365). Null means until revoked.",
+    )
+    model_config = ConfigDict(
+        frozen=True, extra="forbid", populate_by_name=True, use_enum_values=True
+    )
+
+
 class CreateProfileInput(BaseModel):
     """No documentation"""
 
@@ -268,6 +324,12 @@ class LayerFilter(BaseModel):
 class ManifestInput(BaseModel):
     """No documentation"""
 
+    node_id: Annotated[str | None, Deprecated("Use deviceId.")] = Field(
+        validation_alias=AliasChoices("node_id", "nodeId"),
+        serialization_alias="nodeId",
+        default=None,
+    )
+    "DEPRECATED: Use deviceId."
     identifier: str
     version: str
     title: str | None = None
@@ -279,9 +341,9 @@ class ManifestInput(BaseModel):
         tuple["RequirementInput", ...] | None, GraphQLDefault("[]")
     ] = None
     "Default: []"
-    node_id: str | None = Field(
-        validation_alias=AliasChoices("node_id", "nodeId"),
-        serialization_alias="nodeId",
+    device_id: str | None = Field(
+        validation_alias=AliasChoices("device_id", "deviceId"),
+        serialization_alias="deviceId",
         default=None,
     )
     authors: Annotated[tuple[str, ...] | None, GraphQLDefault("[]")] = None
@@ -953,6 +1015,167 @@ class ListLayer(BaseModel):
         type = "Layer"
 
 
+class MandateGrantor(BaseModel):
+    """
+    A User is a person that can log in to the system. They are uniquely identified by their username.
+    And can have an email address associated with them (but don't have to).
+
+    A user can be assigned to groups and has a profile that can be used to display information about them.
+    Detail information about a user can be found in the profile.
+
+    All users can have social accounts associated with them. These are used to authenticate the user with external services,
+    such as ORCID or GitHub.
+    """
+
+    typename: Literal["User"] = Field(alias="__typename", default="User", exclude=True)
+    id: ID
+    model_config = ConfigDict(frozen=True)
+
+
+class MandateHub(BaseModel):
+    """A Hub is a specific configuration of a Service. It contains the configuration for a particular version of the service."""
+
+    typename: Literal["Hub"] = Field(alias="__typename", default="Hub", exclude=True)
+    id: ID
+    model_config = ConfigDict(frozen=True)
+
+
+class MandateClients(BaseModel):
+    """A client is a way of authenticating users with a release.
+    The strategy of authentication is defined by the kind of client. And allows for different authentication flow.
+    E.g a client can be a DESKTOP app, that might be used by multiple users, or a WEBSITE that wants to connect to a user's account,
+    but also a DEVELOPMENT client that is used by a developer to test the app. The client model thinly wraps the oauth2 client model, which is used to authenticate users.
+    """
+
+    typename: Literal["Client"] = Field(
+        alias="__typename", default="Client", exclude=True
+    )
+    id: ID
+    client_id: str = Field(alias="clientId")
+    "The OAuth2 client id this client authenticates as."
+    model_config = ConfigDict(frozen=True)
+
+
+class Mandate(BaseModel):
+    """A standing authorization: the grantor lets an agent app provision clients of a subject app that act as the grantor."""
+
+    typename: Literal["Mandate"] = Field(
+        alias="__typename", default="Mandate", exclude=True
+    )
+    id: ID
+    agent_identifier: str = Field(alias="agentIdentifier")
+    "The app allowed to provision under this mandate."
+    subject_manifest: Any = Field(alias="subjectManifest")
+    "The approved subject: identifier, version, and the scope/requirement ceilings."
+    attestation: str
+    "Opaque binding set by the approving service (e.g. a release digest)."
+    max_clients: int | None = Field(default=None, alias="maxClients")
+    "How many clients may be provisioned at once. Null means unlimited."
+    created_at: datetime = Field(alias="createdAt")
+    expires_at: datetime | None = Field(default=None, alias="expiresAt")
+    "After this, no new clients may be provisioned."
+    revoked_at: datetime | None = Field(default=None, alias="revokedAt")
+    "When the grantor withdrew the mandate; its clients were deleted then."
+    is_live: bool = Field(alias="isLive")
+    "Whether the agent may still provision under this mandate."
+    grantor: MandateGrantor
+    "The user the provisioned clients act as."
+    hub: MandateHub
+    "The hub provisioned clients compose against."
+    clients: tuple[MandateClients, ...]
+    "The clients currently provisioned under this mandate."
+    model_config = ConfigDict(frozen=True)
+
+    class Meta:
+        """Meta class for Mandate"""
+
+        document = "fragment Mandate on Mandate {\n  id\n  agentIdentifier\n  subjectManifest\n  attestation\n  maxClients\n  createdAt\n  expiresAt\n  revokedAt\n  isLive\n  grantor {\n    id\n    __typename\n  }\n  hub {\n    id\n    __typename\n  }\n  clients {\n    id\n    clientId\n    __typename\n  }\n  __typename\n}"
+        name = "Mandate"
+        type = "Mandate"
+
+
+class ProvisionedTokenMandate(BaseModel):
+    """A standing authorization: the grantor lets an agent app provision clients of a subject app that act as the grantor."""
+
+    typename: Literal["Mandate"] = Field(
+        alias="__typename", default="Mandate", exclude=True
+    )
+    id: ID
+    model_config = ConfigDict(frozen=True)
+
+
+class ProvisionedTokenClientReleaseApp(BaseModel):
+    """An App is the Arkitekt equivalent of a Software Application. It is a collection of `Releases` that can be all part of the same application. E.g the App `Napari` could have the releases `0.1.0` and `0.2.0`."""
+
+    typename: Literal["App"] = Field(alias="__typename", default="App", exclude=True)
+    identifier: str
+    "The identifier of the app. This should be a globally unique string that identifies the app. We encourage you to use the reverse domain name notation. E.g. `com.example.myapp`"
+    model_config = ConfigDict(frozen=True)
+
+
+class ProvisionedTokenClientRelease(BaseModel):
+    """A Release is a version of an app. Releases might change over time. E.g. a release might be updated to fix a bug, and the release might be updated to add a new feature. This is why they are the home for `scopes` and `requirements`, which might change over the release cycle."""
+
+    typename: Literal["Release"] = Field(
+        alias="__typename", default="Release", exclude=True
+    )
+    version: str
+    "The version of the release. This should be a string that identifies the version of the release. We enforce semantic versioning notation. E.g. `0.1.0`. The version is unique per app."
+    app: ProvisionedTokenClientReleaseApp
+    "The app that this release belongs to."
+    model_config = ConfigDict(frozen=True)
+
+
+class ProvisionedTokenClient(BaseModel):
+    """A client is a way of authenticating users with a release.
+    The strategy of authentication is defined by the kind of client. And allows for different authentication flow.
+    E.g a client can be a DESKTOP app, that might be used by multiple users, or a WEBSITE that wants to connect to a user's account,
+    but also a DEVELOPMENT client that is used by a developer to test the app. The client model thinly wraps the oauth2 client model, which is used to authenticate users.
+    """
+
+    typename: Literal["Client"] = Field(
+        alias="__typename", default="Client", exclude=True
+    )
+    id: ID
+    client_id: str = Field(alias="clientId")
+    "The OAuth2 client id this client authenticates as."
+    release: ProvisionedTokenClientRelease | None = Field(default=None)
+    "The release that this client belongs to. Null for clients that are not bound to an app release (hub identities, relying parties, pending registrations)."
+    model_config = ConfigDict(frozen=True)
+
+
+class ProvisionedToken(BaseModel):
+    """A redeem token is a token that can be used to redeem the rights to create
+    a client. It is used to give the recipient the right to create a client.
+
+    If the token is not redeemed within the expires_at time, it will be invalid.
+    If the token has been redeemed, but the manifest has changed, the token will be invalid.
+    """
+
+    typename: Literal["RedeemToken"] = Field(
+        alias="__typename", default="RedeemToken", exclude=True
+    )
+    id: ID
+    token: str
+    "The token of the redeem token"
+    expires_at: datetime | None = Field(default=None, alias="expiresAt")
+    "When this token stops being redeemable. Null means never."
+    pinned_manifest: Any | None = Field(default=None, alias="pinnedManifest")
+    "The manifest this token was pre-authorized for at mint time, or null for an unpinned token. A redeem must match its identifier, version and device_id exactly and may only request a subset of its scopes and requirements."
+    mandate: ProvisionedTokenMandate | None = Field(default=None)
+    "The mandate this token was provisioned under, if any."
+    client: ProvisionedTokenClient | None = Field(default=None)
+    "The client that this redeem token belongs to."
+    model_config = ConfigDict(frozen=True)
+
+    class Meta:
+        """Meta class for ProvisionedToken"""
+
+        document = "fragment ProvisionedToken on RedeemToken {\n  id\n  token\n  expiresAt\n  pinnedManifest\n  mandate {\n    id\n    __typename\n  }\n  client {\n    id\n    clientId\n    release {\n      version\n      app {\n        identifier\n        __typename\n      }\n      __typename\n    }\n    __typename\n  }\n  __typename\n}"
+        name = "ProvisionedToken"
+        type = "RedeemToken"
+
+
 class ProfileAvatar(BaseModel):
     """Small helper around S3-backed stored objects.
 
@@ -1152,7 +1375,7 @@ class DetailRedeemToken(BaseModel):
     redemption_count: int = Field(alias="redemptionCount")
     "How many times this token has been redeemed so far."
     pinned_manifest: Any | None = Field(default=None, alias="pinnedManifest")
-    "The manifest this token was pre-authorized for at mint time, or null for an unpinned token. A redeem must match its identifier, version and node_id exactly and may only request a subset of its scopes and requirements."
+    "The manifest this token was pre-authorized for at mint time, or null for an unpinned token. A redeem must match its identifier, version and device_id exactly and may only request a subset of its scopes and requirements."
     user: DetailRedeemTokenUser
     "The user that this redeem token belongs to."
     client: DetailRedeemTokenClient | None = Field(default=None)
@@ -1257,6 +1480,7 @@ class ListUser(BaseModel):
     last_name: str | None = Field(default=None, alias="lastName")
     email: str | None = Field(default=None)
     avatar: str | None = Field(default=None)
+    "A short-lived URL of the user's avatar (`profile.avatar`), if they have one."
     id: ID
     model_config = ConfigDict(frozen=True)
 
@@ -1288,6 +1512,7 @@ class MeUser(BaseModel):
     first_name: str | None = Field(default=None, alias="firstName")
     last_name: str | None = Field(default=None, alias="lastName")
     avatar: str | None = Field(default=None)
+    "A short-lived URL of the user's avatar (`profile.avatar`), if they have one."
     model_config = ConfigDict(frozen=True)
 
     class Meta:
@@ -1406,6 +1631,7 @@ class DetailUser(BaseModel):
     first_name: str | None = Field(default=None, alias="firstName")
     last_name: str | None = Field(default=None, alias="lastName")
     avatar: str | None = Field(default=None)
+    "A short-lived URL of the user's avatar (`profile.avatar`), if they have one."
     groups: tuple[DetailUserGroups, ...]
     "The groups this user belongs to. A user will get all permissions granted to each of their groups."
     profile: Profile
@@ -1803,6 +2029,82 @@ class CreateServiceInstanceMutation(BaseModel):
         document = "fragment ListClient on Client {\n  id\n  user {\n    id\n    username\n    __typename\n  }\n  name\n  kind\n  release {\n    version\n    logo {\n      presignedUrl\n      __typename\n    }\n    app {\n      id\n      identifier\n      logo {\n        presignedUrl\n        __typename\n      }\n      __typename\n    }\n    __typename\n  }\n  __typename\n}\n\nfragment ListServiceInstance on ServiceInstance {\n  id\n  instanceId\n  allowedUsers {\n    ...ListUser\n    __typename\n  }\n  deniedUsers {\n    ...ListUser\n    __typename\n  }\n  __typename\n}\n\nfragment ListGroup on Group {\n  id\n  name\n  profile {\n    id\n    bio\n    avatar {\n      presignedUrl\n      __typename\n    }\n    __typename\n  }\n  __typename\n}\n\nfragment ListServiceInstanceMapping on ServiceInstanceMapping {\n  id\n  key\n  instance {\n    ...ListServiceInstance\n    __typename\n  }\n  client {\n    ...ListClient\n    __typename\n  }\n  optional\n  __typename\n}\n\nfragment ListUser on User {\n  username\n  firstName\n  lastName\n  email\n  avatar\n  id\n  __typename\n}\n\nfragment ServiceInstance on ServiceInstance {\n  id\n  instanceId\n  release {\n    version\n    service {\n      id\n      identifier\n      __typename\n    }\n    __typename\n  }\n  allowedUsers {\n    ...ListUser\n    __typename\n  }\n  deniedUsers {\n    ...ListUser\n    __typename\n  }\n  allowedGroups {\n    ...ListGroup\n    __typename\n  }\n  deniedGroups {\n    ...ListGroup\n    __typename\n  }\n  mappings {\n    ...ListServiceInstanceMapping\n    __typename\n  }\n  logo {\n    presignedUrl\n    __typename\n  }\n  __typename\n}\n\nmutation CreateServiceInstance($input: CreateServiceInstanceInput!) {\n  createServiceInstance(input: $input) {\n    ...ServiceInstance\n    __typename\n  }\n}"
 
 
+class CreateMandateMutation(BaseModel):
+    """No documentation found for this operation."""
+
+    create_mandate: Mandate = Field(alias="createMandate")
+
+    class Arguments(BaseModel):
+        """Arguments for CreateMandate"""
+
+        input: CreateMandateInput
+
+    class Meta:
+        """Meta class for CreateMandate"""
+
+        document = "fragment Mandate on Mandate {\n  id\n  agentIdentifier\n  subjectManifest\n  attestation\n  maxClients\n  createdAt\n  expiresAt\n  revokedAt\n  isLive\n  grantor {\n    id\n    __typename\n  }\n  hub {\n    id\n    __typename\n  }\n  clients {\n    id\n    clientId\n    __typename\n  }\n  __typename\n}\n\nmutation CreateMandate($input: CreateMandateInput!) {\n  createMandate(input: $input) {\n    ...Mandate\n    __typename\n  }\n}"
+
+
+class ProvisionMutation(BaseModel):
+    """No documentation found for this operation."""
+
+    provision: ProvisionedToken
+
+    class Arguments(BaseModel):
+        """Arguments for Provision"""
+
+        mandate: ID
+        device_id: str = Field(
+            validation_alias=AliasChoices("device_id", "deviceId"),
+            serialization_alias="deviceId",
+        )
+        ttl_minutes: int | None = Field(
+            validation_alias=AliasChoices("ttl_minutes", "ttlMinutes"),
+            serialization_alias="ttlMinutes",
+            default=None,
+        )
+
+    class Meta:
+        """Meta class for Provision"""
+
+        document = "fragment ProvisionedToken on RedeemToken {\n  id\n  token\n  expiresAt\n  pinnedManifest\n  mandate {\n    id\n    __typename\n  }\n  client {\n    id\n    clientId\n    release {\n      version\n      app {\n        identifier\n        __typename\n      }\n      __typename\n    }\n    __typename\n  }\n  __typename\n}\n\nmutation Provision($mandate: ID!, $deviceId: String!, $ttlMinutes: Int) {\n  provision(\n    input: {mandate: $mandate, deviceId: $deviceId, ttlMinutes: $ttlMinutes}\n  ) {\n    ...ProvisionedToken\n    __typename\n  }\n}"
+
+
+class ReleaseMandateClientMutation(BaseModel):
+    """No documentation found for this operation."""
+
+    release_mandate_client: str = Field(alias="releaseMandateClient")
+
+    class Arguments(BaseModel):
+        """Arguments for ReleaseMandateClient"""
+
+        client_id: str = Field(
+            validation_alias=AliasChoices("client_id", "clientId"),
+            serialization_alias="clientId",
+        )
+
+    class Meta:
+        """Meta class for ReleaseMandateClient"""
+
+        document = "mutation ReleaseMandateClient($clientId: String!) {\n  releaseMandateClient(input: {clientId: $clientId})\n}"
+
+
+class RevokeMandateMutation(BaseModel):
+    """No documentation found for this operation."""
+
+    revoke_mandate: Mandate = Field(alias="revokeMandate")
+
+    class Arguments(BaseModel):
+        """Arguments for RevokeMandate"""
+
+        id: ID
+
+    class Meta:
+        """Meta class for RevokeMandate"""
+
+        document = "fragment Mandate on Mandate {\n  id\n  agentIdentifier\n  subjectManifest\n  attestation\n  maxClients\n  createdAt\n  expiresAt\n  revokedAt\n  isLive\n  grantor {\n    id\n    __typename\n  }\n  hub {\n    id\n    __typename\n  }\n  clients {\n    id\n    clientId\n    __typename\n  }\n  __typename\n}\n\nmutation RevokeMandate($id: ID!) {\n  revokeMandate(input: {id: $id}) {\n    ...Mandate\n    __typename\n  }\n}"
+
+
 class CreateUserProfileMutation(BaseModel):
     """No documentation found for this operation."""
 
@@ -2102,6 +2404,55 @@ class DetailLayerQuery(BaseModel):
         """Meta class for DetailLayer"""
 
         document = "fragment Layer on Layer {\n  id\n  name\n  identifier\n  description\n  logo {\n    presignedUrl\n    __typename\n  }\n  __typename\n}\n\nquery DetailLayer($id: ID!) {\n  layer(id: $id) {\n    ...Layer\n    __typename\n  }\n}"
+
+
+class GetMandateQuery(BaseModel):
+    """No documentation found for this operation."""
+
+    mandate: Mandate
+
+    class Arguments(BaseModel):
+        """Arguments for GetMandate"""
+
+        id: ID
+
+    class Meta:
+        """Meta class for GetMandate"""
+
+        document = "fragment Mandate on Mandate {\n  id\n  agentIdentifier\n  subjectManifest\n  attestation\n  maxClients\n  createdAt\n  expiresAt\n  revokedAt\n  isLive\n  grantor {\n    id\n    __typename\n  }\n  hub {\n    id\n    __typename\n  }\n  clients {\n    id\n    clientId\n    __typename\n  }\n  __typename\n}\n\nquery GetMandate($id: ID!) {\n  mandate(id: $id) {\n    ...Mandate\n    __typename\n  }\n}"
+
+
+class ListMandatesQuery(BaseModel):
+    """No documentation found for this operation."""
+
+    mandates: tuple[Mandate, ...]
+    "Mandates you granted, or (as an agent app) may provision under. Org admins see all."
+
+    class Arguments(BaseModel):
+        """Arguments for ListMandates"""
+
+        pass
+
+    class Meta:
+        """Meta class for ListMandates"""
+
+        document = "fragment Mandate on Mandate {\n  id\n  agentIdentifier\n  subjectManifest\n  attestation\n  maxClients\n  createdAt\n  expiresAt\n  revokedAt\n  isLive\n  grantor {\n    id\n    __typename\n  }\n  hub {\n    id\n    __typename\n  }\n  clients {\n    id\n    clientId\n    __typename\n  }\n  __typename\n}\n\nquery ListMandates {\n  mandates {\n    ...Mandate\n    __typename\n  }\n}"
+
+
+class MandateTokenQuery(BaseModel):
+    """No documentation found for this operation."""
+
+    mandate_token: ProvisionedToken = Field(alias="mandateToken")
+
+    class Arguments(BaseModel):
+        """Arguments for MandateToken"""
+
+        id: ID
+
+    class Meta:
+        """Meta class for MandateToken"""
+
+        document = "fragment ProvisionedToken on RedeemToken {\n  id\n  token\n  expiresAt\n  pinnedManifest\n  mandate {\n    id\n    __typename\n  }\n  client {\n    id\n    clientId\n    release {\n      version\n      app {\n        identifier\n        __typename\n      }\n      __typename\n    }\n    __typename\n  }\n  __typename\n}\n\nquery MandateToken($id: ID!) {\n  mandateToken(id: $id) {\n    ...ProvisionedToken\n    __typename\n  }\n}"
 
 
 class RedeemTokenQuery(BaseModel):
@@ -2800,6 +3151,198 @@ class UnlokApi:
             CreateServiceInstanceMutation, variables
         ).create_service_instance
 
+    async def acreate_mandate(
+        self,
+        agent: str,
+        manifest: ManifestInput,
+        hub: IDCoercible | None | UnsetType = UNSET,
+        attestation: str | None | UnsetType = UNSET,
+        agent_device_id: str | None | UnsetType = UNSET,
+        agent_user: IDCoercible | None | UnsetType = UNSET,
+        max_clients: int | None | UnsetType = UNSET,
+        expires_in_days: int | None | UnsetType = UNSET,
+    ) -> Mandate:
+        """CreateMandate
+
+
+        Args:
+            agent: Identifier of the app allowed to provision (e.g. a deployer).
+            manifest: The subject app. Its scopes and requirements are the ceiling for every provisioned client; deviceId is ignored.
+            hub: The hub provisioned clients compose against. Defaults to the calling client's hub.
+            attestation: Opaque binding for the approving service (e.g. a release digest).
+            agent_device_id: Only an agent running on this device may provision.
+            agent_user: Only an agent acting as this user may provision.
+            max_clients: How many clients may exist under the mandate at once.
+            expires_in_days: Stop new provisioning after this many days (1–365). Null means until revoked.
+
+        Returns:
+            Mandate"""
+        variables: dict[str, builtins.object] = {}
+        _input: dict[str, builtins.object] = {}
+        _input["agent"] = agent
+        _input["manifest"] = manifest
+        if hub is not UNSET:
+            _input["hub"] = hub
+        if attestation is not UNSET:
+            _input["attestation"] = attestation
+        if agent_device_id is not UNSET:
+            _input["agentDeviceId"] = agent_device_id
+        if agent_user is not UNSET:
+            _input["agentUser"] = agent_user
+        if max_clients is not UNSET:
+            _input["maxClients"] = max_clients
+        if expires_in_days is not UNSET:
+            _input["expiresInDays"] = expires_in_days
+        variables["input"] = _input
+        return (await self.aexecute(CreateMandateMutation, variables)).create_mandate
+
+    def create_mandate(
+        self,
+        agent: str,
+        manifest: ManifestInput,
+        hub: IDCoercible | None | UnsetType = UNSET,
+        attestation: str | None | UnsetType = UNSET,
+        agent_device_id: str | None | UnsetType = UNSET,
+        agent_user: IDCoercible | None | UnsetType = UNSET,
+        max_clients: int | None | UnsetType = UNSET,
+        expires_in_days: int | None | UnsetType = UNSET,
+    ) -> Mandate:
+        """CreateMandate
+
+
+        Args:
+            agent: Identifier of the app allowed to provision (e.g. a deployer).
+            manifest: The subject app. Its scopes and requirements are the ceiling for every provisioned client; deviceId is ignored.
+            hub: The hub provisioned clients compose against. Defaults to the calling client's hub.
+            attestation: Opaque binding for the approving service (e.g. a release digest).
+            agent_device_id: Only an agent running on this device may provision.
+            agent_user: Only an agent acting as this user may provision.
+            max_clients: How many clients may exist under the mandate at once.
+            expires_in_days: Stop new provisioning after this many days (1–365). Null means until revoked.
+
+        Returns:
+            Mandate"""
+        variables: dict[str, builtins.object] = {}
+        _input: dict[str, builtins.object] = {}
+        _input["agent"] = agent
+        _input["manifest"] = manifest
+        if hub is not UNSET:
+            _input["hub"] = hub
+        if attestation is not UNSET:
+            _input["attestation"] = attestation
+        if agent_device_id is not UNSET:
+            _input["agentDeviceId"] = agent_device_id
+        if agent_user is not UNSET:
+            _input["agentUser"] = agent_user
+        if max_clients is not UNSET:
+            _input["maxClients"] = max_clients
+        if expires_in_days is not UNSET:
+            _input["expiresInDays"] = expires_in_days
+        variables["input"] = _input
+        return self.execute(CreateMandateMutation, variables).create_mandate
+
+    async def aprovision(
+        self,
+        mandate: IDCoercible,
+        device_id: str,
+        ttl_minutes: int | None | UnsetType = UNSET,
+    ) -> ProvisionedToken:
+        """Provision
+
+
+        Args:
+            mandate (ID): No description
+            device_id (str): No description
+            ttl_minutes (int | None, optional): No description.
+
+        Returns:
+            ProvisionedToken"""
+        variables: dict[str, builtins.object] = {}
+        variables["mandate"] = mandate
+        variables["deviceId"] = device_id
+        if ttl_minutes is not UNSET:
+            variables["ttlMinutes"] = ttl_minutes
+        return (await self.aexecute(ProvisionMutation, variables)).provision
+
+    def provision(
+        self,
+        mandate: IDCoercible,
+        device_id: str,
+        ttl_minutes: int | None | UnsetType = UNSET,
+    ) -> ProvisionedToken:
+        """Provision
+
+
+        Args:
+            mandate (ID): No description
+            device_id (str): No description
+            ttl_minutes (int | None, optional): No description.
+
+        Returns:
+            ProvisionedToken"""
+        variables: dict[str, builtins.object] = {}
+        variables["mandate"] = mandate
+        variables["deviceId"] = device_id
+        if ttl_minutes is not UNSET:
+            variables["ttlMinutes"] = ttl_minutes
+        return self.execute(ProvisionMutation, variables).provision
+
+    async def arelease_mandate_client(self, client_id: str) -> str:
+        """ReleaseMandateClient
+
+
+        Args:
+            client_id (str): No description
+
+        Returns:
+            str"""
+        variables: dict[str, builtins.object] = {}
+        variables["clientId"] = client_id
+        return (
+            await self.aexecute(ReleaseMandateClientMutation, variables)
+        ).release_mandate_client
+
+    def release_mandate_client(self, client_id: str) -> str:
+        """ReleaseMandateClient
+
+
+        Args:
+            client_id (str): No description
+
+        Returns:
+            str"""
+        variables: dict[str, builtins.object] = {}
+        variables["clientId"] = client_id
+        return self.execute(
+            ReleaseMandateClientMutation, variables
+        ).release_mandate_client
+
+    async def arevoke_mandate(self, id: IDCoercible) -> Mandate:
+        """RevokeMandate
+
+
+        Args:
+            id (ID): No description
+
+        Returns:
+            Mandate"""
+        variables: dict[str, builtins.object] = {}
+        variables["id"] = id
+        return (await self.aexecute(RevokeMandateMutation, variables)).revoke_mandate
+
+    def revoke_mandate(self, id: IDCoercible) -> Mandate:
+        """RevokeMandate
+
+
+        Args:
+            id (ID): No description
+
+        Returns:
+            Mandate"""
+        variables: dict[str, builtins.object] = {}
+        variables["id"] = id
+        return self.execute(RevokeMandateMutation, variables).revoke_mandate
+
     async def acreate_user_profile(self, user: IDCoercible, name: str) -> Profile:
         """CreateUserProfile
 
@@ -3423,6 +3966,82 @@ class UnlokApi:
         variables: dict[str, builtins.object] = {}
         variables["id"] = id
         return self.execute(DetailLayerQuery, variables).layer
+
+    async def aget_mandate(self, id: IDCoercible) -> Mandate:
+        """GetMandate
+
+
+        Args:
+            id (ID): No description
+
+        Returns:
+            Mandate"""
+        variables: dict[str, builtins.object] = {}
+        variables["id"] = id
+        return (await self.aexecute(GetMandateQuery, variables)).mandate
+
+    def get_mandate(self, id: IDCoercible) -> Mandate:
+        """GetMandate
+
+
+        Args:
+            id (ID): No description
+
+        Returns:
+            Mandate"""
+        variables: dict[str, builtins.object] = {}
+        variables["id"] = id
+        return self.execute(GetMandateQuery, variables).mandate
+
+    async def alist_mandates(self) -> tuple[Mandate, ...]:
+        """ListMandates
+
+        Mandates you granted, or (as an agent app) may provision under. Org admins see all.
+
+        Args:
+
+        Returns:
+            list[Mandate]"""
+        variables: dict[str, builtins.object] = {}
+        return (await self.aexecute(ListMandatesQuery, variables)).mandates
+
+    def list_mandates(self) -> tuple[Mandate, ...]:
+        """ListMandates
+
+        Mandates you granted, or (as an agent app) may provision under. Org admins see all.
+
+        Args:
+
+        Returns:
+            list[Mandate]"""
+        variables: dict[str, builtins.object] = {}
+        return self.execute(ListMandatesQuery, variables).mandates
+
+    async def amandate_token(self, id: IDCoercible) -> ProvisionedToken:
+        """MandateToken
+
+
+        Args:
+            id (ID): No description
+
+        Returns:
+            ProvisionedToken"""
+        variables: dict[str, builtins.object] = {}
+        variables["id"] = id
+        return (await self.aexecute(MandateTokenQuery, variables)).mandate_token
+
+    def mandate_token(self, id: IDCoercible) -> ProvisionedToken:
+        """MandateToken
+
+
+        Args:
+            id (ID): No description
+
+        Returns:
+            ProvisionedToken"""
+        variables: dict[str, builtins.object] = {}
+        variables["id"] = id
+        return self.execute(MandateTokenQuery, variables).mandate_token
 
     async def aredeem_token(self, id: IDCoercible) -> DetailRedeemToken:
         """RedeemToken
@@ -4089,6 +4708,7 @@ class UnlokApi:
 
 AppFilter.model_rebuild()
 ClientFilter.model_rebuild()
+CreateMandateInput.model_rebuild()
 DevelopmentClientInput.model_rebuild()
 GroupFilter.model_rebuild()
 LayerFilter.model_rebuild()

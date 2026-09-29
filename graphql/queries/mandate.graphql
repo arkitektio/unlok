@@ -1,0 +1,17 @@
+query GetMandate($id: ID!) {
+  mandate(id: $id) {
+    ...Mandate
+  }
+}
+
+query ListMandates {
+  mandates {
+    ...Mandate
+  }
+}
+
+query MandateToken($id: ID!) {
+  mandateToken(id: $id) {
+    ...ProvisionedToken
+  }
+}

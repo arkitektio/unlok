@@ -1,0 +1,21 @@
+mutation CreateMandate($input: CreateMandateInput!) {
+  createMandate(input: $input) {
+    ...Mandate
+  }
+}
+
+mutation Provision($mandate: ID!, $deviceId: String!, $ttlMinutes: Int) {
+  provision(input: { mandate: $mandate, deviceId: $deviceId, ttlMinutes: $ttlMinutes }) {
+    ...ProvisionedToken
+  }
+}
+
+mutation ReleaseMandateClient($clientId: String!) {
+  releaseMandateClient(input: { clientId: $clientId })
+}
+
+mutation RevokeMandate($id: ID!) {
+  revokeMandate(input: { id: $id }) {
+    ...Mandate
+  }
+}

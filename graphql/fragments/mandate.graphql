@@ -1,0 +1,41 @@
+fragment Mandate on Mandate {
+  id
+  agentIdentifier
+  subjectManifest
+  attestation
+  maxClients
+  createdAt
+  expiresAt
+  revokedAt
+  isLive
+  grantor {
+    id
+  }
+  hub {
+    id
+  }
+  clients {
+    id
+    clientId
+  }
+}
+
+fragment ProvisionedToken on RedeemToken {
+  id
+  token
+  expiresAt
+  pinnedManifest
+  mandate {
+    id
+  }
+  client {
+    id
+    clientId
+    release {
+      version
+      app {
+        identifier
+      }
+    }
+  }
+}

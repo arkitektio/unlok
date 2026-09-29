@@ -223,6 +223,11 @@ type Context {
   """The scope of the app within in the organization"""
   scope: [String!]!
 
+  """
+  The hub this client was approved into (for an app client) or is the identity of (for a hub client). Null for clients bound to no hub, e.g. plain OIDC relying parties. Apps can pass its id back as `?hub=` on a later configure link to preselect it.
+  """
+  hub: Hub
+
   """Are we acting in the active organization of the user?"""
   fitsActiveOrganization: Boolean!
 }
@@ -237,6 +242,41 @@ input CreateInviteInput {
   organization: ID
   expiresInDays: Int = 7
   roles: [String!] = null
+}
+
+"""
+Pre-authorize an agent app to provision clients of a subject app that act as you.
+"""
+input CreateMandateInput {
+  """Identifier of the app allowed to provision (e.g. a deployer)."""
+  agent: String!
+
+  """
+  The subject app. Its scopes and requirements are the ceiling for every provisioned client; deviceId is ignored.
+  """
+  manifest: ManifestInput!
+
+  """
+  The hub provisioned clients compose against. Defaults to the calling client's hub.
+  """
+  hub: ID = null
+
+  """Opaque binding for the approving service (e.g. a release digest)."""
+  attestation: String = null
+
+  """Only an agent running on this device may provision."""
+  agentDeviceId: String = null
+
+  """Only an agent acting as this user may provision."""
+  agentUser: ID = null
+
+  """How many clients may exist under the mandate at once."""
+  maxClients: Int = null
+
+  """
+  Stop new provisioning after this many days (1–365). Null means until revoked.
+  """
+  expiresInDays: Int = null
 }
 
 input CreateOrganizationInput {
@@ -280,11 +320,14 @@ input DevelopmentClientInput {
 type Device {
   id: ID!
   name: String
-  nodeId: ID!
+  nodeId: ID! @deprecated(reason: "Use deviceId.")
   clients(filters: ClientFilter, ordering: [ClientOrdering!]! = [], pagination: OffsetPaginationInput): [Client!]!
 
   """The device groups that belong to this device."""
   deviceGroups(filters: DeviceGroupFilter, ordering: [DeviceGroupOrdering!]! = [], pagination: OffsetPaginationInput): [DeviceGroup!]!
+
+  """The (per-organization hashed) id of the device."""
+  deviceId: ID!
 }
 
 """Device(id, node_id, name, organization)"""
@@ -383,6 +426,91 @@ type GroupProfile {
 }
 
 """
+A Hub is a specific configuration of a Service. It contains the configuration for a particular version of the service.
+"""
+type Hub {
+  id: ID!
+
+  """The organization that this hub belongs to."""
+  organization: Organization!
+
+  """
+  The identifier of the hub. This should be a globally unique string that identifies the hub. We encourage you to use the reverse domain name notation. E.g. `com.example.myhub`
+  """
+  identifier: ServiceIdentifier!
+
+  """
+  The description of the service. This should be a human readable description of the service.
+  """
+  description: String
+
+  """The name of the hub. This should be a human readable name of the hub."""
+  name: String!
+
+  """When the hub last reported its health. Null if it never has."""
+  lastSeenAt: DateTime
+
+  """
+  Whether the hub's last health report said it was healthy. Null if it never reported.
+  """
+  lastHealthy: Boolean
+
+  """The hub software version, as last reported (empty if never reported)."""
+  version: String!
+
+  """
+  Whether the hub's last health report said its node is on the mesh. Null if it never reported mesh state.
+  """
+  meshConnected: Boolean
+
+  """
+  The hub node's MagicDNS name (or mesh IP), as last reported by the hub. Empty when unknown or off the mesh.
+  """
+  meshHost: String!
+
+  """
+  Whether the hub reported its health within the last three reporting intervals.
+  """
+  online: Boolean!
+
+  """The hub's most recent health report, or null if it never reported."""
+  latestHealth: HubHealthReport
+}
+
+"""
+Hub(id, name, organization, identifier, description, creator, client, token, auth_key, last_seen_at, last_healthy, version, mesh_connected, mesh_host)
+"""
+input HubFilter {
+  AND: HubFilter
+  OR: HubFilter
+  NOT: HubFilter
+  DISTINCT: Boolean
+  ids: [ID!]
+  search: String
+}
+
+"""One health report a hub posted to lok."""
+type HubHealthReport {
+  id: ID!
+
+  """Did the hub report itself healthy?"""
+  healthy: Boolean!
+
+  """When the hub reported."""
+  createdAt: DateTime!
+
+  """
+  The per-instance health in this report. Only instances of the hub are listed.
+  """
+  instances: [InstanceHealth!]!
+}
+
+input HubOrdering @oneOf {
+  id: Ordering
+  name: Ordering
+}
+
+"""
 An alias for a service instance. This is used to provide a more user-friendly name for the instance.
 """
 type InstanceAlias {
@@ -433,6 +561,18 @@ type InstanceAlias {
 input InstanceAliasOrdering @oneOf {
   id: Ordering
   name: Ordering
+}
+
+"""The health a hub reported for one of its service instances."""
+type InstanceHealth {
+  """The service instance this entry is about."""
+  instance: ServiceInstance!
+
+  """Did the hub report the instance healthy?"""
+  healthy: Boolean!
+
+  """Why the instance is unhealthy, if the hub said."""
+  reason: String
 }
 
 """
@@ -531,7 +671,54 @@ input LinkingRequestInput {
   isSecure: Boolean! = false
 }
 
+"""
+A standing authorization: the grantor lets an agent app provision clients of a subject app that act as the grantor.
+"""
+type Mandate {
+  id: ID!
+
+  """The hub provisioned clients compose against."""
+  hub: Hub!
+
+  """The app allowed to provision under this mandate."""
+  agentIdentifier: String!
+
+  """If set, only an agent running on this device may provision."""
+  agentDevice: Device
+
+  """
+  The approved subject: identifier, version, and the scope/requirement ceilings.
+  """
+  subjectManifest: JSON!
+
+  """Opaque binding set by the approving service (e.g. a release digest)."""
+  attestation: String!
+
+  """How many clients may be provisioned at once. Null means unlimited."""
+  maxClients: Int
+  createdAt: DateTime!
+
+  """After this, no new clients may be provisioned."""
+  expiresAt: DateTime
+
+  """When the grantor withdrew the mandate; its clients were deleted then."""
+  revokedAt: DateTime
+
+  """The clients currently provisioned under this mandate."""
+  clients(filters: ClientFilter, ordering: [ClientOrdering!]! = [], pagination: OffsetPaginationInput): [Client!]!
+
+  """The user the provisioned clients act as."""
+  grantor: User!
+
+  """If set, only an agent acting as this user may provision."""
+  agentUser: User
+
+  """Whether the agent may still provision under this mandate."""
+  isLive: Boolean!
+}
+
 input ManifestInput {
+  nodeId: String = null @deprecated(reason: "Use deviceId.")
   identifier: String!
   version: String!
   title: String = null
@@ -539,7 +726,7 @@ input ManifestInput {
   logo: String = null
   scopes: [String!]! = []
   requirements: [RequirementInput!]! = []
-  nodeId: String = null
+  deviceId: String = null
   authors: [String!]! = []
   keywords: [String!]! = []
   license: String = null
@@ -605,6 +792,10 @@ type Mutation {
   notifyUser(input: NotifyUserInput!): Boolean!
   createRedeemToken(input: RedeemTokenInput!): RedeemToken!
   deleteRedeemToken(input: DeleteRedeemTokenInput!): ID!
+  createMandate(input: CreateMandateInput!): Mandate!
+  provision(input: ProvisionInput!): RedeemToken!
+  releaseMandateClient(input: ReleaseMandateClientInput!): String!
+  revokeMandate(input: RevokeMandateInput!): Mandate!
   createDevelopmentalClient(input: DevelopmentClientInput!): Client!
   render(input: RenderInput!): Fakt!
   acknowledgeMessage(input: AcknowledgeMessageInput!): SystemMessage!
@@ -664,9 +855,6 @@ type Organization {
   """
   brandChroma: Float
 
-  """The logo of the organization"""
-  avatar: MediaStore
-
   """The users that are currently active in the organization"""
   activeUsers(filters: UserFilter, ordering: [UserOrdering!]! = [], pagination: OffsetPaginationInput): [User!]!
   profile: OrganizationProfile!
@@ -676,6 +864,11 @@ type Organization {
 
   """the invites for this organization"""
   invites(filters: InviteFilter, ordering: [InviteOrdering!]! = [], pagination: OffsetPaginationInput): [Invite!]!
+
+  """
+  The logo of the organization. Mirrors `profile.avatar`; prefer that field.
+  """
+  avatar: MediaStore
 
   """The roles that are available in the organization"""
   roles: [Role!]!
@@ -730,6 +923,11 @@ type PresignedPostCredentials {
   datalayer: String!
   bucket: String!
   store: String!
+
+  """
+  The Content-Type the upload form must send; the policy pins it exactly.
+  """
+  contentType: String!
 }
 
 "\nA Profile of a User. A Profile can be used to display personalised information about a user,\nsuch as a display name, a short bio and an avatar.\n"
@@ -744,6 +942,19 @@ type Profile {
 
   """The avatar of the user"""
   avatar: MediaStore
+}
+
+"""Mint a single-use credential for one instance of a mandate's subject."""
+input ProvisionInput {
+  mandate: ID!
+
+  """
+  Unique per provisioned instance: a client's identity includes its device, so instances sharing one would replace each other.
+  """
+  deviceId: String!
+
+  """How long the token stays redeemable (default 60, at most 1440)."""
+  ttlMinutes: Int = null
 }
 
 type PublicSource {
@@ -775,12 +986,18 @@ type Query {
   roles(filters: RoleFilter, ordering: [RoleOrdering!]! = [], pagination: OffsetPaginationInput): [Role!]!
   groups(filters: GroupFilter, ordering: [GroupOrdering!]! = [], pagination: OffsetPaginationInput): [Group!]!
   services(filters: ServiceFilter, ordering: [ServiceOrdering!]! = [], pagination: OffsetPaginationInput): [Service!]!
+  hubs(filters: HubFilter, ordering: [HubOrdering!]! = [], pagination: OffsetPaginationInput): [Hub!]!
   deviceGroups(filters: DeviceGroupFilter, ordering: [DeviceGroupOrdering!]! = [], pagination: OffsetPaginationInput): [DeviceGroup!]!
   serviceInstances(filters: ServiceInstanceFilter, ordering: [ServiceInstanceOrdering!]! = [], pagination: OffsetPaginationInput): [ServiceInstance!]!
   serviceReleases(filters: ServiceReleaseFilter, ordering: [ServiceReleaseOrdering!]! = [], pagination: OffsetPaginationInput): [ServiceRelease!]!
   invites(filters: InviteFilter, ordering: [InviteOrdering!]! = [], pagination: OffsetPaginationInput): [Invite!]!
   layers(filters: LayerFilter, ordering: [LayerOrdering!]! = [], pagination: OffsetPaginationInput): [Layer!]!
   redeemTokens(filters: RedeemTokenFilter, ordering: [RedeemTokenOrdering!]! = [], pagination: OffsetPaginationInput): [RedeemToken!]!
+
+  """
+  Mandates you granted, or (as an agent app) may provision under. Org admins see all.
+  """
+  mandates(pagination: OffsetPaginationInput): [Mandate!]!
   userStats(filters: UserFilter = null): UserStats!
   mycontext: Context!
   user(id: ID!): User!
@@ -792,6 +1009,8 @@ type Query {
   client(id: ID = null, clientId: ID = null): Client!
   myManagedClients(kind: ClientKind!): [Client!]!
   scopes: [Scope!]!
+  mandate(id: ID!): Mandate!
+  mandateToken(id: ID!): RedeemToken!
   myActiveMessages: [SystemMessage!]!
   message(id: ID!): SystemMessage!
   hallo: String!
@@ -810,6 +1029,11 @@ type Query {
   myRedeemTokens: [RedeemToken!]!
   layer(id: ID!): Layer!
   serviceInstance(id: ID!): ServiceInstance!
+
+  """
+  A hub of the caller's organization, including its last reported health. The caller's own hub is also reachable as `mycontext { hub }`.
+  """
+  hub(id: ID!): Hub!
 }
 
 """
@@ -840,8 +1064,11 @@ type RedeemToken {
   """How many times this token has been redeemed so far."""
   redemptionCount: Int!
 
+  """The mandate this token was provisioned under, if any."""
+  mandate: Mandate
+
   """
-  The manifest this token was pre-authorized for at mint time, or null for an unpinned token. A redeem must match its identifier, version and node_id exactly and may only request a subset of its scopes and requirements.
+  The manifest this token was pre-authorized for at mint time, or null for an unpinned token. A redeem must match its identifier, version and device_id exactly and may only request a subset of its scopes and requirements.
   """
   pinnedManifest: JSON
 }
@@ -916,6 +1143,11 @@ type Release {
   requirements: [JSON!]!
 }
 
+input ReleaseMandateClientInput {
+  """The OAuth client id of a client provisioned under a mandate."""
+  clientId: String!
+}
+
 input ReleaseOrdering @oneOf {
   id: Ordering
   name: Ordering
@@ -931,6 +1163,11 @@ input RenderInput {
 input RequestMediaUploadInput {
   key: String!
   datalayer: String!
+
+  """
+  MIME type of the file. The upload must send the same Content-Type. Guessed from `key` when omitted.
+  """
+  contentType: String = null
 }
 
 input RequirementInput {
@@ -938,6 +1175,10 @@ input RequirementInput {
   optional: Boolean! = false
   description: String = null
   key: String!
+}
+
+input RevokeMandateInput {
+  id: ID!
 }
 
 """
@@ -1257,11 +1498,15 @@ type User {
 
   """The memberships of the user in organizations"""
   memberships(filters: MembershipFilter, ordering: [MembershipOrdering!]! = [], pagination: OffsetPaginationInput): [Membership!]!
-  avatar: String
   profile: Profile!
 
   """The communication channels that the user has"""
   comChannels(filters: ComChannelFilter, ordering: [ComChannelOrdering!]! = [], pagination: OffsetPaginationInput): [ComChannel!]!
+
+  """
+  A short-lived URL of the user's avatar (`profile.avatar`), if they have one.
+  """
+  avatar: String
 }
 
 """Numeric/aggregatable fields of User"""
