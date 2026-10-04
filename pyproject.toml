@@ -9,9 +9,9 @@ dependencies = [
     "rath>=4.1.1",
     "websockets>=15.0.1",
     # The service and structures are declared with arkitekt-spec.
-    "arkitekt-spec>=1.4",
+    "arkitekt-spec>=3.4",
     # The service wiring (Alias, Require, FaktsAuthLink); it came through rekuest before.
-    "fakts>=4",
+    "fakts>=5.4",
 ]
 
 [tool.uv]
@@ -32,7 +32,7 @@ dev-dependencies =  [
     # The integration session authenticates the way a deployed app does -- by
     # redeeming the stack's provisioned token through fakts' redeem grant -- and
     # `unlok.arkitekt` composes its links from `fakts.contrib.rath`.
-    "fakts>=4",
+    "fakts>=5.4",
 ]
 
 [tool.hatch.build.targets.sdist]
