@@ -8,14 +8,40 @@ services:
       POSTGRES_MULTIPLE_DATABASES: lok
       POSTGRES_PASSWORD: hello_django
       POSTGRES_USER: hello_django
+  # Brings the database to the image's release, once, before the server is started: a
+  # service's own start only serves.
+  lok-migrate:
+    depends_on:
+    - db
+    image: jhnnsrs/lok:${LOK_SERVICE_TAG:-latest}
+    command: arkitekt-service run migrate
+    environment:
+      # lok anchors every endpoint in its discovery document (and the `iss` claim
+      # of the tokens it mints) to this URL rather than to the request host, so it
+      # must be where the tests reach the service from the host: the published
+      # port of this run. The origin only -- the `/lok` script prefix is already
+      # part of every reversed path.
+      OIDC_ISSUER: http://localhost:${LOK_HOST_PORT:-6888}
+      # authentikate looks the verifying key up by the token's `iss`, so the
+      # trusted-issuer entry must name the same URL; the key is the public half
+      # of the throwaway signing key in configs/lok.yaml.
+      AUTHENTIKATE__ISSUERS: '[{"kind": "rsa", "iss": "http://localhost:${LOK_HOST_PORT:-6888}", "kid": "lok-key-1", "public_key": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCvSUtg4u9vuwFs4XXx8yeQ17VjhndNNky08WlFfgjPbrP3hrZzWK8dphE7ogtH1zzLMFIjsw8vQLUeDoJSfYi4MXzcU4F23ojBXrq71CT1esoz23WvPnObIldqBlE6FoTb2OotVX5QjJhVqdHLwGdCClwkBRH4kFjuv3tjzdSUwzHI9M/WK6OMuyaLru2QIT2b+fqLKuARNBl8u4iLJQsioM+OyvKW4DoQK1zA0IM4OW7l0JsRkAV5hgjHepn8wsb9u5ShipGkAj6JEtRtPAm9ZmrqduYhRnejevaXY5tdWlh+dXVNhwegV5CdcqiFkjaCzFa13gjpHoFsFhHs9pkl"}]'
+    volumes:
+    - ./configs/lok.yaml:/workspace/config.yaml
   lok:
     depends_on:
-    - redis
-    - db
-    - rustfs
-    - initc
+      redis:
+        condition: service_started
+      db:
+        condition: service_started
+      rustfs:
+        condition: service_started
+      initc:
+        condition: service_started
+      lok-migrate:
+        condition: service_completed_successfully
     image: jhnnsrs/lok:${LOK_SERVICE_TAG:-latest}
-    command: bash run-debug.sh
+    command: arkitekt-service debug
     stop_grace_period: 1s
     ports:
     - "${LOK_HOST_PORT:-6888}:80"
