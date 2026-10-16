@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 5
 requires-python = ">=3.11"
 
 [[package]]
@@ -366,7 +366,7 @@ wheels = [
 
 [[package]]
 name = "fakts"
-version = "5.4.0"
+version = "6.0.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aiohttp" },
@@ -375,9 +375,9 @@ dependencies = [
     { name = "koil" },
     { name = "pydantic" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/d5/2b/2f2f3227b5506e4aabaffeec79013d30c52a52f49a5be6819c35307a14cb/fakts-5.4.0.tar.gz", hash = "sha256:74c1c362445beef25f6dd4c80978b6cca68e5208b601083a28607e92805a8886", size = 96243, upload-time = "2026-10-04T18:56:42.049Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/dd/d5/585e77c0aa598a336473809610eca25601c25099750c9772ff58080856ea/fakts-6.0.0.tar.gz", hash = "sha256:db5c5a932d63bf1f46d9cf55a24107f4ea15aedb931c5dd0a3f133ff29c7c528", size = 106854, upload-time = "2026-10-16T13:42:24.725Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/f8/99/f2db152f4abec81305cea8dd91ba18a6337572352e46165e821531239f37/fakts-5.4.0-py3-none-any.whl", hash = "sha256:39886ee6302ff216ae48b25805084add0eac14e1b782158cd62e97e1f53fc31f", size = 103382, upload-time = "2026-10-04T18:56:40.528Z" },
+    { url = "https://files.pythonhosted.org/packages/e5/ec/086fd2c53a422d15d5ef0e49199f1a8f0079013e152acfa336e58fe6e64a/fakts-6.0.0-py3-none-any.whl", hash = "sha256:402ad6b2bc14a64599df1ccd333c4a8f95a6206db8b2a111c13da539922ed6a1", size = 113729, upload-time = "2026-10-16T13:42:23.286Z" },
 ]
 
 [[package]]
@@ -1283,7 +1283,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "arkitekt-spec", specifier = ">=3.4" },
-    { name = "fakts", specifier = ">=5.4" },
+    { name = "fakts", specifier = ">=6.0" },
     { name = "rath", specifier = ">=4.1.1" },
     { name = "websockets", specifier = ">=15.0.1" },
 ]
@@ -1295,7 +1295,7 @@ dev = [
     { name = "basedpyright", specifier = ">=1.21" },
     { name = "black", specifier = ">=23.1.0,<24" },
     { name = "dokker", specifier = ">=2.8" },
-    { name = "fakts", specifier = ">=5.4" },
+    { name = "fakts", specifier = ">=6.0" },
     { name = "pytest", specifier = ">=8.3.5" },
     { name = "pytest-aiohttp", specifier = ">=1.0.4,<2" },
     { name = "pytest-asyncio", specifier = ">=0.26.0" },
