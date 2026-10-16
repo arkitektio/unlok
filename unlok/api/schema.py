@@ -1905,7 +1905,7 @@ class IssueChildMandateKeyMutation(BaseModel):
     class Meta:
         """Meta class for IssueChildMandateKey"""
 
-        document = "fragment MandatePin on MandatePin {\n  identifier\n  version\n  deviceId\n  scopes\n  requirements {\n    key\n    service\n    __typename\n  }\n  __typename\n}\n\nfragment Mandate on Mandate {\n  id\n  claimant\n  origin\n  label\n  keyPrefix\n  agentIdentifier\n  subject {\n    ...MandatePin\n    __typename\n  }\n  attestation\n  maxClients\n  allowMesh\n  createdAt\n  expiresAt\n  revokedAt\n  revocationReason\n  lastUsedAt\n  isLive\n  grantor {\n    id\n    __typename\n  }\n  hub {\n    id\n    __typename\n  }\n  parent {\n    id\n    __typename\n  }\n  clients {\n    id\n    clientId\n    __typename\n  }\n  __typename\n}\n\nfragment IssuedMandateKey on IssuedMandateKey {\n  key\n  mandate {\n    ...Mandate\n    __typename\n  }\n  __typename\n}\n\nmutation IssueChildMandateKey($mandate: ID!, $deviceId: String!, $expiresInDays: Int, $label: String) {\n  issueChildMandateKey(\n    input: {mandate: $mandate, deviceId: $deviceId, expiresInDays: $expiresInDays, label: $label}\n  ) {\n    ...IssuedMandateKey\n    __typename\n  }\n}"
+        document = "fragment MandatePin on MandatePin {\n  identifier\n  version\n  deviceId\n  scopes\n  requirements {\n    key\n    service\n    __typename\n  }\n  __typename\n}\n\nfragment Mandate on Mandate {\n  id\n  claimant\n  origin\n  label\n  keyPrefix\n  agentIdentifier\n  subject {\n    ...MandatePin\n    __typename\n  }\n  attestation\n  maxClients\n  allowMesh\n  createdAt\n  expiresAt\n  revokedAt\n  revocationReason\n  lastUsedAt\n  isLive\n  grantor {\n    id\n    __typename\n  }\n  hub {\n    id\n    __typename\n  }\n  parent {\n    id\n    __typename\n  }\n  clients {\n    id\n    clientId\n    __typename\n  }\n  __typename\n}\n\nfragment IssuedMandateKey on IssuedMandateKey {\n  key\n  mandate {\n    ...Mandate\n    __typename\n  }\n  __typename\n}\n\nmutation IssueChildMandateKey($mandate: ID!, $deviceId: String!, $expiresInDays: Int, $label: String) {\n  issueChildMandateKey(\n    input: {\n      mandate: $mandate\n      deviceId: $deviceId\n      expiresInDays: $expiresInDays\n      label: $label\n    }\n  ) {\n    ...IssuedMandateKey\n    __typename\n  }\n}"
 
 
 class RevokeMandateMutation(BaseModel):
@@ -1921,7 +1921,7 @@ class RevokeMandateMutation(BaseModel):
     class Meta:
         """Meta class for RevokeMandate"""
 
-        document = "fragment MandatePin on MandatePin {\n  identifier\n  version\n  deviceId\n  scopes\n  requirements {\n    key\n    service\n    __typename\n  }\n  __typename\n}\n\nfragment Mandate on Mandate {\n  id\n  claimant\n  origin\n  label\n  keyPrefix\n  agentIdentifier\n  subject {\n    ...MandatePin\n    __typename\n  }\n  attestation\n  maxClients\n  allowMesh\n  createdAt\n  expiresAt\n  revokedAt\n  revocationReason\n  lastUsedAt\n  isLive\n  grantor {\n    id\n    __typename\n  }\n  hub {\n    id\n    __typename\n  }\n  parent {\n    id\n    __typename\n  }\n  clients {\n    id\n    clientId\n    __typename\n  }\n  __typename\n}\n\nmutation RevokeMandate($id: ID!) {\n  revokeMandate(input: {id: $id}) {\n    ...Mandate\n    __typename\n  }\n}"
+        document = "fragment MandatePin on MandatePin {\n  identifier\n  version\n  deviceId\n  scopes\n  requirements {\n    key\n    service\n    __typename\n  }\n  __typename\n}\n\nfragment Mandate on Mandate {\n  id\n  claimant\n  origin\n  label\n  keyPrefix\n  agentIdentifier\n  subject {\n    ...MandatePin\n    __typename\n  }\n  attestation\n  maxClients\n  allowMesh\n  createdAt\n  expiresAt\n  revokedAt\n  revocationReason\n  lastUsedAt\n  isLive\n  grantor {\n    id\n    __typename\n  }\n  hub {\n    id\n    __typename\n  }\n  parent {\n    id\n    __typename\n  }\n  clients {\n    id\n    clientId\n    __typename\n  }\n  __typename\n}\n\nmutation RevokeMandate($id: ID!) {\n  revokeMandate(input: { id: $id }) {\n    ...Mandate\n    __typename\n  }\n}"
 
 
 class CreateUserProfileMutation(BaseModel):
@@ -1970,7 +1970,7 @@ class RequestMediaUploadMutation(BaseModel):
     class Meta:
         """Meta class for RequestMediaUpload"""
 
-        document = "fragment PresignedPostCredentials on PresignedPostCredentials {\n  xAmzAlgorithm\n  xAmzCredential\n  xAmzDate\n  xAmzSignature\n  key\n  bucket\n  datalayer\n  policy\n  store\n  __typename\n}\n\nmutation RequestMediaUpload($key: String!, $datalayer: String!) {\n  requestMediaUpload(input: {key: $key, datalayer: $datalayer}) {\n    ...PresignedPostCredentials\n    __typename\n  }\n}"
+        document = "fragment PresignedPostCredentials on PresignedPostCredentials {\n  xAmzAlgorithm\n  xAmzCredential\n  xAmzDate\n  xAmzSignature\n  key\n  bucket\n  datalayer\n  policy\n  store\n  __typename\n}\n\nmutation RequestMediaUpload($key: String!, $datalayer: String!) {\n  requestMediaUpload(input: { key: $key, datalayer: $datalayer }) {\n    ...PresignedPostCredentials\n    __typename\n  }\n}"
 
 
 class AppsQuery(BaseModel):
@@ -2124,7 +2124,7 @@ class GroupOptionsQuery(BaseModel):
     class Meta:
         """Meta class for GroupOptions"""
 
-        document = "query GroupOptions($search: String, $values: [ID!]) {\n  options: groups(filters: {search: $search, ids: $values}) {\n    value: id\n    label: name\n    __typename\n  }\n}"
+        document = "query GroupOptions($search: String, $values: [ID!]) {\n  options: groups(filters: { search: $search, ids: $values }) {\n    value: id\n    label: name\n    __typename\n  }\n}"
 
 
 class DetailGroupQuery(BaseModel):
@@ -2364,7 +2364,7 @@ class GlobalSearchQuery(BaseModel):
     class Meta:
         """Meta class for GlobalSearch"""
 
-        document = "fragment ListGroup on Group {\n  id\n  name\n  profile {\n    id\n    bio\n    avatar {\n      presignedUrl\n      __typename\n    }\n    __typename\n  }\n  __typename\n}\n\nfragment ListUser on User {\n  username\n  firstName\n  lastName\n  email\n  avatar\n  id\n  __typename\n}\n\nquery GlobalSearch($search: String, $noUsers: Boolean!, $noGroups: Boolean!, $pagination: OffsetPaginationInput) {\n  users: users(filters: {search: $search}, pagination: $pagination) @skip(if: $noUsers) {\n    ...ListUser\n    __typename\n  }\n  groups: groups(filters: {search: $search}, pagination: $pagination) @skip(if: $noGroups) {\n    ...ListGroup\n    __typename\n  }\n}"
+        document = "fragment ListGroup on Group {\n  id\n  name\n  profile {\n    id\n    bio\n    avatar {\n      presignedUrl\n      __typename\n    }\n    __typename\n  }\n  __typename\n}\n\nfragment ListUser on User {\n  username\n  firstName\n  lastName\n  email\n  avatar\n  id\n  __typename\n}\n\nquery GlobalSearch($search: String, $noUsers: Boolean!, $noGroups: Boolean!, $pagination: OffsetPaginationInput) {\n  users: users(filters: { search: $search }, pagination: $pagination) @skip(if: $noUsers) {\n    ...ListUser\n    __typename\n  }\n  groups: groups(filters: { search: $search }, pagination: $pagination) @skip(if: $noGroups) {\n    ...ListGroup\n    __typename\n  }\n}"
 
 
 class ListServiceInstancesQuery(BaseModel):
@@ -2565,7 +2565,7 @@ class UserOptionsQuery(BaseModel):
     class Meta:
         """Meta class for UserOptions"""
 
-        document = "query UserOptions($search: String, $values: [ID!]) {\n  options: users(filters: {search: $search, ids: $values}) {\n    value: id\n    label: username\n    __typename\n  }\n}"
+        document = "query UserOptions($search: String, $values: [ID!]) {\n  options: users(filters: { search: $search, ids: $values }) {\n    value: id\n    label: username\n    __typename\n  }\n}"
 
 
 class ProfileQuery(BaseModel):
