@@ -1,12 +1,12 @@
 """Test fixtures.
 
 The integration fixtures start a real lok server (plus its database, redis and
-object store) with docker compose through dokker, and authenticate the way a
-deployed app does: the session *redeems* the token provisioned in the stack's
-config through the fakts redeem grant, which enrols it as a development client
-of the ``demo`` organisation. Everything the tests then do goes through that
-client, so the whole path a container takes on start is under test, not just
-the GraphQL layer.
+object store) with docker compose through dokker. The session the tests act
+through logs in the way a person's app does: a device code, approved out of band
+with lok's ``validatecode`` command, enrols it as a development client of the
+``demo`` organisation. What it hands out (mandate keys) is then used by further
+fakts sessions standing in for started containers, through the real
+mandate-key grant.
 """
 
 from __future__ import annotations
@@ -24,11 +24,13 @@ from fakts import Fakts
 from rath.links.aiohttp import AIOHttpLink
 from fakts.contrib.rath.auth import FaktsAuthLink
 from rath.links.graphql_ws import GraphQLWSLink
-from fakts.grants.remote.authorizers.redeem import RedeemAuthorizer
+from fakts.grants.remote.authorizers.device_code import ClientKind, DeviceCodeAuthorizer, DeviceCodeChallenge
+from fakts.grants.remote.authorizers.mandate_key import MandateKeyAuthorizer
 from fakts.grants.remote.base import RemoteGrant
 from fakts.grants.remote.discovery.well_known import WellKnownDiscovery
 from fakts.models import Manifest
 from graphql import OperationType
+from pydantic import SecretStr
 from rath.links.split import SplitLink
 
 from unlok.rath import UnlokLinkComposition, UnlokRath
@@ -59,10 +61,9 @@ docker_compose_file = os.path.join(project_path, "docker-compose.yml")
 _local_override = os.path.join(project_path, "docker-compose.local.yml")
 compose_files = [docker_compose_file] + ([_local_override] if os.path.exists(_local_override) else [])
 
-# What tests/integration/configs/lok.yaml provisions: the token is issued for the
-# `localhost` hub of the `demo` organisation, never expires and may be redeemed any
-# number of times, so every test session (and every retry) can enrol with it.
-STACK_REDEEM_TOKEN = "unlok-integration-tests-redeem-token"
+# What tests/integration/configs/lok.yaml provides: a mandate key for the `localhost`
+# hub of the `demo` organisation, acting as `demo`, open to the first app that logs in.
+STACK_MANDATE_KEY = "unlok-integration-tests-mandate-key-0123456789"
 
 TEST_MANIFEST = Manifest(
     identifier="live.arkitekt.unlok_tests",
@@ -117,16 +118,38 @@ def integration_ports() -> Generator[dict[str, int], None, None]:
                 os.environ[key] = value
 
 
-def build_redeeming_fakts(base_url: str, token: str, manifest: Manifest) -> Fakts:
-    """A fakts client that authenticates by redeeming ``token`` for ``manifest``.
+def build_key_fakts(base_url: str, key: str, manifest: Manifest) -> Fakts:
+    """A fakts client that logs in with the mandate key ``key`` as ``manifest``.
 
     This is what a deployed container does on start (``arkitekt run prod`` with
-    ``FAKTS_REDEEM_TOKEN``), minus the on-disk cache: the tests want every
-    session to go through the grant.
+    ``FAKTS_MANDATE_KEY``), minus the on-disk cache: the tests want every session
+    to go through the grant.
     """
     return Fakts(
         grant=RemoteGrant(
-            authorizer=RedeemAuthorizer(token=token, manifest=manifest, allow_insecure_transport=True),
+            authorizer=MandateKeyAuthorizer(key=SecretStr(key), manifest=manifest, allow_insecure_transport=True),
+            discovery=WellKnownDiscovery(url=base_url, allow_insecure_transport=True),
+        ),
+        manifest=manifest,
+        allow_insecure_transport=True,
+    )
+
+
+def build_approved_fakts(setup: Deployment, base_url: str, manifest: Manifest) -> Fakts:
+    """A fakts client that logs in by device code, approved as ``demo`` into the ``localhost`` hub."""
+
+    async def approve(challenge: DeviceCodeChallenge) -> None:
+        await setup.arun("lok", f"python manage.py validatecode --code {challenge.user_code} --user demo --org demo --hub localhost")
+
+    return Fakts(
+        grant=RemoteGrant(
+            authorizer=DeviceCodeAuthorizer(
+                device_code_hook=approve,
+                manifest=manifest,
+                requested_client_kind=ClientKind.DEVELOPMENT,
+                open_browser=False,
+                allow_insecure_transport=True,
+            ),
             discovery=WellKnownDiscovery(url=base_url, allow_insecure_transport=True),
         ),
         manifest=manifest,
@@ -203,7 +226,7 @@ def deployed_app(integration_ports: dict[str, int]) -> Generator[DeployedUnlok, 
         setup.up()
         setup.check_health()
 
-        fakts = build_redeeming_fakts(base_url, STACK_REDEEM_TOKEN, TEST_MANIFEST)
+        fakts = build_approved_fakts(setup, base_url, TEST_MANIFEST)
         with fakts:
             with build_unlok(fakts) as unlok:
                 yield DeployedUnlok(

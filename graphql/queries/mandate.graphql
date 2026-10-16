@@ -9,9 +9,3 @@ query ListMandates {
     ...Mandate
   }
 }
-
-query MandateToken($id: ID!) {
-  mandateToken(id: $id) {
-    ...ProvisionedToken
-  }
-}

@@ -1,5 +1,0 @@
-mutation CreateClient($input: DevelopmentClientInput!) {
-  createDevelopmentalClient(input: $input) {
-    ...DetailClient
-  }
-}

@@ -1,9 +1,0 @@
-mutation CreateRedeemToken($input: RedeemTokenInput!) {
-  createRedeemToken(input: $input) {
-    ...DetailRedeemToken
-  }
-}
-
-mutation DeleteRedeemToken($id: ID!) {
-  deleteRedeemToken(input: { id: $id })
-}

@@ -4,10 +4,9 @@
 # and `debug: true` is what permits the empty `static_tokens` block.
 #
 # The organisation `demo` auto-configures the `localhost` hub from the
-# `localhost` kommunity partner, and the redeem token below is issued for that
-# hub: the test session redeems it (tests/conftest.py) to become a real,
-# development client of the `demo` organisation, exactly the way a deployed
-# container authenticates.
+# `localhost` kommunity partner. The test session logs into that hub by device
+# code (approved with `validatecode`, tests/conftest.py); the mandate key below
+# logs a container in there as `demo`, the way a deployed app authenticates.
 deployment:
   name: unlok-tests
 django:
@@ -107,13 +106,12 @@ users:
 memberships:
   - user: demo
     organization: demo
-redeem_tokens:
-  - token: unlok-integration-tests-redeem-token
+mandate_keys:
+  - name: unlok-tests
+    key: unlok-integration-tests-mandate-key-0123456789
     user: demo
     organization: demo
     hub: localhost
-    expires_in_days: null
-    max_redemptions: null
 account:
   email_verification: none
   login_methods: [username]

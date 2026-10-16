@@ -5,7 +5,7 @@
 
 The python client for lok, the authentication and identity server of an
 [Arkitekt](https://arkitekt.live) deployment: users and groups, apps, releases and their clients,
-the services a deployment composes, and the redeem tokens deployed apps enrol with.
+the services a deployment composes, and the mandates whose keys log deployed apps in.
 
 ## Installation
 
@@ -69,10 +69,9 @@ uv run pytest -k "not integration"
 
 The integration tests start a real lok (plus postgres, redis and minio) with
 docker compose through [dokker](https://github.com/jhnnsrs/dokker), enrol into
-it the way a deployed app does — by redeeming the token provisioned in
-`tests/integration/configs/lok.yaml` through the fakts redeem grant — and then
-exercise the client against it, including the pinned redeem-token flow a
-deployer drives:
+it by device code (approved with lok's `validatecode`), and then exercise the
+client against it, including the mandate-key flow a deployer drives: issuing a
+key and logging a second session in with it through the fakts mandate-key grant:
 
 ```bash
 uv run pytest -m integration

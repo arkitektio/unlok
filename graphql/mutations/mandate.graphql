@@ -4,14 +4,16 @@ mutation CreateMandate($input: CreateMandateInput!) {
   }
 }
 
-mutation Provision($mandate: ID!, $deviceId: String!, $ttlMinutes: Int) {
-  provision(input: { mandate: $mandate, deviceId: $deviceId, ttlMinutes: $ttlMinutes }) {
-    ...ProvisionedToken
+mutation IssueMandateKey($input: IssueMandateKeyInput!) {
+  issueMandateKey(input: $input) {
+    ...IssuedMandateKey
   }
 }
 
-mutation ReleaseMandateClient($clientId: String!) {
-  releaseMandateClient(input: { clientId: $clientId })
+mutation IssueChildMandateKey($mandate: ID!, $deviceId: String!, $expiresInDays: Int, $label: String) {
+  issueChildMandateKey(input: { mandate: $mandate, deviceId: $deviceId, expiresInDays: $expiresInDays, label: $label }) {
+    ...IssuedMandateKey
+  }
 }
 
 mutation RevokeMandate($id: ID!) {

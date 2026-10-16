@@ -1,17 +1,40 @@
+fragment MandatePin on MandatePin {
+  identifier
+  version
+  deviceId
+  scopes
+  requirements {
+    key
+    service
+  }
+}
+
 fragment Mandate on Mandate {
   id
+  claimant
+  origin
+  label
+  keyPrefix
   agentIdentifier
-  subjectManifest
+  subject {
+    ...MandatePin
+  }
   attestation
   maxClients
+  allowMesh
   createdAt
   expiresAt
   revokedAt
+  revocationReason
+  lastUsedAt
   isLive
   grantor {
     id
   }
   hub {
+    id
+  }
+  parent {
     id
   }
   clients {
@@ -20,22 +43,9 @@ fragment Mandate on Mandate {
   }
 }
 
-fragment ProvisionedToken on RedeemToken {
-  id
-  token
-  expiresAt
-  pinnedManifest
+fragment IssuedMandateKey on IssuedMandateKey {
+  key
   mandate {
-    id
-  }
-  client {
-    id
-    clientId
-    release {
-      version
-      app {
-        identifier
-      }
-    }
+    ...Mandate
   }
 }
