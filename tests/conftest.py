@@ -24,7 +24,11 @@ from fakts import Fakts
 from rath.links.aiohttp import AIOHttpLink
 from fakts.contrib.rath.auth import FaktsAuthLink
 from rath.links.graphql_ws import GraphQLWSLink
-from fakts.grants.remote.authorizers.device_code import ClientKind, DeviceCodeAuthorizer, DeviceCodeChallenge
+from fakts.grants.remote.authorizers.device_code import (
+    ClientKind,
+    DeviceCodeAuthorizer,
+    DeviceCodeChallenge,
+)
 from fakts.grants.remote.authorizers.mandate_key import MandateKeyAuthorizer
 from fakts.grants.remote.base import RemoteGrant
 from fakts.grants.remote.discovery.well_known import WellKnownDiscovery
@@ -59,7 +63,9 @@ docker_compose_file = os.path.join(project_path, "docker-compose.yml")
 # published one, so the tests see the current schema rather than the last-pushed one.
 # Absent (CI, anyone else), the published image is the schema under test.
 _local_override = os.path.join(project_path, "docker-compose.local.yml")
-compose_files = [docker_compose_file] + ([_local_override] if os.path.exists(_local_override) else [])
+compose_files = [docker_compose_file] + (
+    [_local_override] if os.path.exists(_local_override) else []
+)
 
 # What tests/integration/configs/lok.yaml provides: a mandate key for the `localhost`
 # hub of the `demo` organisation, acting as `demo`, open to the first app that logs in.
@@ -127,7 +133,9 @@ def build_key_fakts(base_url: str, key: str, manifest: Manifest) -> Fakts:
     """
     return Fakts(
         grant=RemoteGrant(
-            authorizer=MandateKeyAuthorizer(key=SecretStr(key), manifest=manifest, allow_insecure_transport=True),
+            authorizer=MandateKeyAuthorizer(
+                key=SecretStr(key), manifest=manifest, allow_insecure_transport=True
+            ),
             discovery=WellKnownDiscovery(url=base_url, allow_insecure_transport=True),
         ),
         manifest=manifest,
@@ -139,7 +147,10 @@ def build_approved_fakts(setup: Deployment, base_url: str, manifest: Manifest) -
     """A fakts client that logs in by device code, approved as ``demo`` into the ``localhost`` hub."""
 
     async def approve(challenge: DeviceCodeChallenge) -> None:
-        await setup.arun("lok", f"python manage.py validatecode --code {challenge.user_code} --user demo --org demo --hub localhost")
+        await setup.arun(
+            "lok",
+            f"python manage.py validatecode --code {challenge.user_code} --user demo --org demo --hub localhost",
+        )
 
     return Fakts(
         grant=RemoteGrant(

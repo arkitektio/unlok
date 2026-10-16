@@ -22,11 +22,19 @@ SUBJECT = ManifestInput(identifier="com.example.mandated", version="1.0.0", scop
 
 
 def _subject(device_id: str) -> Manifest:
-    return Manifest(identifier="com.example.mandated", version="1.0.0", scopes=[], requirements=[], device_id=device_id)
+    return Manifest(
+        identifier="com.example.mandated",
+        version="1.0.0",
+        scopes=[],
+        requirements=[],
+        device_id=device_id,
+    )
 
 
 def _mandate(unlok: Unlok, max_clients: int = 1):
-    return unlok.create_mandate(agent=TEST_MANIFEST.identifier, manifest=SUBJECT, max_clients=max_clients, expires_in_days=1)
+    return unlok.create_mandate(
+        agent=TEST_MANIFEST.identifier, manifest=SUBJECT, max_clients=max_clients, expires_in_days=1
+    )
 
 
 def _device() -> str:
@@ -65,7 +73,9 @@ def test_a_child_key_logs_the_subject_in(deployed_app: DeployedUnlok, unlok: Unl
 
 
 @pytest.mark.integration
-def test_max_clients_counts_live_children_and_revoking_one_frees_a_slot(deployed_app: DeployedUnlok, unlok: Unlok) -> None:
+def test_max_clients_counts_live_children_and_revoking_one_frees_a_slot(
+    deployed_app: DeployedUnlok, unlok: Unlok
+) -> None:
     mandate = _mandate(unlok, max_clients=1)
     first = unlok.issue_child_mandate_key(mandate.id, device_id=_device())
 
@@ -77,7 +87,9 @@ def test_max_clients_counts_live_children_and_revoking_one_frees_a_slot(deployed
 
 
 @pytest.mark.integration
-def test_revoking_the_mandate_kills_every_key_issued_under_it(deployed_app: DeployedUnlok, unlok: Unlok) -> None:
+def test_revoking_the_mandate_kills_every_key_issued_under_it(
+    deployed_app: DeployedUnlok, unlok: Unlok
+) -> None:
     mandate = _mandate(unlok)
     device = _device()
     child = unlok.issue_child_mandate_key(mandate.id, device_id=device)
