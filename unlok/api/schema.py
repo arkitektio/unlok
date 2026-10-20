@@ -487,7 +487,12 @@ class ServiceFilter(BaseModel):
 
 
 class ServiceInstanceFilter(BaseModel):
-    """ServiceInstance(id, hub, release, logo, instance_id, private_key, steward, organization, device, template, public_key, token)"""
+    """One service running in a hub, named by its name there (``instance_id``: ``mikro``).
+
+    The hub names its services itself: the name is unique within the hub, and with the hub's own
+    uuid (``Hub.uid``) it is what a token composed for the service says (``aud: [mikro]``,
+    ``hub: <uid>``) and what a guest's collaborations are listed under. Authorized again, by
+    another admin or with another release, it is the same instance, updated in place."""
 
     and_: "ServiceInstanceFilter | None" = Field(
         validation_alias=AliasChoices("and_", "AND"),
@@ -736,7 +741,6 @@ class ListClientUser(BaseModel):
 
     All users can have social accounts associated with them. These are used to authenticate the user with external services,
     such as ORCID or GitHub.
-
     """
 
     typename: Literal["User"] = Field(alias="__typename", default="User", exclude=True)
@@ -859,8 +863,7 @@ class ListGroupProfileAvatar(BaseModel):
 class ListGroupProfile(BaseModel):
     """
     A Profile of a Group. A GroupProfile can be used to display information about a group,
-    such as a display name, a short bio and an avatar.
-    """
+    such as a display name, a short bio and an avatar."""
 
     typename: Literal["GroupProfile"] = Field(
         alias="__typename", default="GroupProfile", exclude=True
@@ -907,8 +910,7 @@ class GroupProfileAvatar(BaseModel):
 class GroupProfile(BaseModel):
     """
     A Profile of a Group. A GroupProfile can be used to display information about a group,
-    such as a display name, a short bio and an avatar.
-    """
+    such as a display name, a short bio and an avatar."""
 
     typename: Literal["GroupProfile"] = Field(
         alias="__typename", default="GroupProfile", exclude=True
@@ -1043,8 +1045,7 @@ class ProfileAvatar(BaseModel):
 class Profile(BaseModel):
     """
     A Profile of a User. A Profile can be used to display personalised information about a user,
-    such as a display name, a short bio and an avatar.
-    """
+    such as a display name, a short bio and an avatar."""
 
     typename: Literal["Profile"] = Field(alias="__typename", default="Profile", exclude=True)
     id: ID
@@ -1137,7 +1138,6 @@ class ListUser(BaseModel):
 
     All users can have social accounts associated with them. These are used to authenticate the user with external services,
     such as ORCID or GitHub.
-
     """
 
     typename: Literal["User"] = Field(alias="__typename", default="User", exclude=True)
@@ -1169,7 +1169,6 @@ class MeUser(BaseModel):
 
     All users can have social accounts associated with them. These are used to authenticate the user with external services,
     such as ORCID or GitHub.
-
     """
 
     typename: Literal["User"] = Field(alias="__typename", default="User", exclude=True)
@@ -1267,7 +1266,6 @@ class MandateGrantor(BaseModel):
 
     All users can have social accounts associated with them. These are used to authenticate the user with external services,
     such as ORCID or GitHub.
-
     """
 
     typename: Literal["User"] = Field(alias="__typename", default="User", exclude=True)
@@ -1379,7 +1377,6 @@ class DetailUser(BaseModel):
 
     All users can have social accounts associated with them. These are used to authenticate the user with external services,
     such as ORCID or GitHub.
-
     """
 
     typename: Literal["User"] = Field(alias="__typename", default="User", exclude=True)
@@ -1589,7 +1586,6 @@ class DetailClientUser(BaseModel):
 
     All users can have social accounts associated with them. These are used to authenticate the user with external services,
     such as ORCID or GitHub.
-
     """
 
     typename: Literal["User"] = Field(alias="__typename", default="User", exclude=True)
@@ -2461,7 +2457,6 @@ class UserOptionsQueryOptions(BaseModel):
 
     All users can have social accounts associated with them. These are used to authenticate the user with external services,
     such as ORCID or GitHub.
-
     """
 
     typename: Literal["User"] = Field(alias="__typename", default="User", exclude=True)
@@ -2522,8 +2517,7 @@ class UnlokApi:
             avatar: The `ID` scalar type represents a unique identifier, often used to refetch an object or as key for a cache. The ID type appears in a JSON response as a String; however, it is not intended to be human-readable. When expected as an input type, any string (such as `"4"`) or integer (such as `4`) input value will be accepted as an ID. (required)
 
         Returns:
-            GroupProfile
-        """
+            GroupProfile"""
         variables: dict[str, builtins.object] = {}
         _input: dict[str, builtins.object] = {}
         _input["group"] = group
@@ -2544,8 +2538,7 @@ class UnlokApi:
             avatar: The `ID` scalar type represents a unique identifier, often used to refetch an object or as key for a cache. The ID type appears in a JSON response as a String; however, it is not intended to be human-readable. When expected as an input type, any string (such as `"4"`) or integer (such as `4`) input value will be accepted as an ID. (required)
 
         Returns:
-            GroupProfile
-        """
+            GroupProfile"""
         variables: dict[str, builtins.object] = {}
         _input: dict[str, builtins.object] = {}
         _input["group"] = group
@@ -2566,8 +2559,7 @@ class UnlokApi:
             avatar: The `ID` scalar type represents a unique identifier, often used to refetch an object or as key for a cache. The ID type appears in a JSON response as a String; however, it is not intended to be human-readable. When expected as an input type, any string (such as `"4"`) or integer (such as `4`) input value will be accepted as an ID. (required)
 
         Returns:
-            GroupProfile
-        """
+            GroupProfile"""
         variables: dict[str, builtins.object] = {}
         _input: dict[str, builtins.object] = {}
         _input["id"] = id
@@ -2586,8 +2578,7 @@ class UnlokApi:
             avatar: The `ID` scalar type represents a unique identifier, often used to refetch an object or as key for a cache. The ID type appears in a JSON response as a String; however, it is not intended to be human-readable. When expected as an input type, any string (such as `"4"`) or integer (such as `4`) input value will be accepted as an ID. (required)
 
         Returns:
-            GroupProfile
-        """
+            GroupProfile"""
         variables: dict[str, builtins.object] = {}
         _input: dict[str, builtins.object] = {}
         _input["id"] = id
@@ -2615,8 +2606,7 @@ class UnlokApi:
             id: The `ID` scalar type represents a unique identifier, often used to refetch an object or as key for a cache. The ID type appears in a JSON response as a String; however, it is not intended to be human-readable. When expected as an input type, any string (such as `"4"`) or integer (such as `4`) input value will be accepted as an ID. (required)
 
         Returns:
-            ServiceInstance
-        """
+            ServiceInstance"""
         variables: dict[str, builtins.object] = {}
         _input: dict[str, builtins.object] = {}
         if allowed_users is not UNSET:
@@ -2652,8 +2642,7 @@ class UnlokApi:
             id: The `ID` scalar type represents a unique identifier, often used to refetch an object or as key for a cache. The ID type appears in a JSON response as a String; however, it is not intended to be human-readable. When expected as an input type, any string (such as `"4"`) or integer (such as `4`) input value will be accepted as an ID. (required)
 
         Returns:
-            ServiceInstance
-        """
+            ServiceInstance"""
         variables: dict[str, builtins.object] = {}
         _input: dict[str, builtins.object] = {}
         if allowed_users is not UNSET:
@@ -2689,8 +2678,7 @@ class UnlokApi:
             denied_users: The `ID` scalar type represents a unique identifier, often used to refetch an object or as key for a cache. The ID type appears in a JSON response as a String; however, it is not intended to be human-readable. When expected as an input type, any string (such as `"4"`) or integer (such as `4`) input value will be accepted as an ID. (required) (list)
 
         Returns:
-            ServiceInstance
-        """
+            ServiceInstance"""
         variables: dict[str, builtins.object] = {}
         _input: dict[str, builtins.object] = {}
         _input["identifier"] = identifier
@@ -2729,8 +2717,7 @@ class UnlokApi:
             denied_users: The `ID` scalar type represents a unique identifier, often used to refetch an object or as key for a cache. The ID type appears in a JSON response as a String; however, it is not intended to be human-readable. When expected as an input type, any string (such as `"4"`) or integer (such as `4`) input value will be accepted as an ID. (required) (list)
 
         Returns:
-            ServiceInstance
-        """
+            ServiceInstance"""
         variables: dict[str, builtins.object] = {}
         _input: dict[str, builtins.object] = {}
         _input["identifier"] = identifier
@@ -2771,8 +2758,7 @@ class UnlokApi:
             expires_in_days: The mandate (and every key issued under it) stops working after this many days (1–365). Null: as long as your app.
 
         Returns:
-            Mandate
-        """
+            Mandate"""
         variables: dict[str, builtins.object] = {}
         _input: dict[str, builtins.object] = {}
         _input["agent"] = agent
@@ -2817,8 +2803,7 @@ class UnlokApi:
             expires_in_days: The mandate (and every key issued under it) stops working after this many days (1–365). Null: as long as your app.
 
         Returns:
-            Mandate
-        """
+            Mandate"""
         variables: dict[str, builtins.object] = {}
         _input: dict[str, builtins.object] = {}
         _input["agent"] = agent
@@ -2861,8 +2846,7 @@ class UnlokApi:
             label: The `String` scalar type represents textual data, represented as UTF-8 character sequences. The String type is most often used by GraphQL to represent free-form human-readable text.
 
         Returns:
-            IssuedMandateKey
-        """
+            IssuedMandateKey"""
         variables: dict[str, builtins.object] = {}
         _input: dict[str, builtins.object] = {}
         _input["manifest"] = manifest
@@ -2901,8 +2885,7 @@ class UnlokApi:
             label: The `String` scalar type represents textual data, represented as UTF-8 character sequences. The String type is most often used by GraphQL to represent free-form human-readable text.
 
         Returns:
-            IssuedMandateKey
-        """
+            IssuedMandateKey"""
         variables: dict[str, builtins.object] = {}
         _input: dict[str, builtins.object] = {}
         _input["manifest"] = manifest
@@ -2935,8 +2918,7 @@ class UnlokApi:
             label (str | None, optional): No description.
 
         Returns:
-            IssuedMandateKey
-        """
+            IssuedMandateKey"""
         variables: dict[str, builtins.object] = {}
         variables["mandate"] = mandate
         variables["deviceId"] = device_id
@@ -2965,8 +2947,7 @@ class UnlokApi:
             label (str | None, optional): No description.
 
         Returns:
-            IssuedMandateKey
-        """
+            IssuedMandateKey"""
         variables: dict[str, builtins.object] = {}
         variables["mandate"] = mandate
         variables["deviceId"] = device_id
@@ -2984,8 +2965,7 @@ class UnlokApi:
             id (ID): No description
 
         Returns:
-            Mandate
-        """
+            Mandate"""
         variables: dict[str, builtins.object] = {}
         variables["id"] = id
         return (await self.aexecute(RevokeMandateMutation, variables)).revoke_mandate
@@ -2998,8 +2978,7 @@ class UnlokApi:
             id (ID): No description
 
         Returns:
-            Mandate
-        """
+            Mandate"""
         variables: dict[str, builtins.object] = {}
         variables["id"] = id
         return self.execute(RevokeMandateMutation, variables).revoke_mandate
@@ -3013,8 +2992,7 @@ class UnlokApi:
             name: The `String` scalar type represents textual data, represented as UTF-8 character sequences. The String type is most often used by GraphQL to represent free-form human-readable text. (required)
 
         Returns:
-            Profile
-        """
+            Profile"""
         variables: dict[str, builtins.object] = {}
         _input: dict[str, builtins.object] = {}
         _input["user"] = user
@@ -3031,8 +3009,7 @@ class UnlokApi:
             name: The `String` scalar type represents textual data, represented as UTF-8 character sequences. The String type is most often used by GraphQL to represent free-form human-readable text. (required)
 
         Returns:
-            Profile
-        """
+            Profile"""
         variables: dict[str, builtins.object] = {}
         _input: dict[str, builtins.object] = {}
         _input["user"] = user
@@ -3052,8 +3029,7 @@ class UnlokApi:
             avatar: The `ID` scalar type represents a unique identifier, often used to refetch an object or as key for a cache. The ID type appears in a JSON response as a String; however, it is not intended to be human-readable. When expected as an input type, any string (such as `"4"`) or integer (such as `4`) input value will be accepted as an ID. (required)
 
         Returns:
-            Profile
-        """
+            Profile"""
         variables: dict[str, builtins.object] = {}
         _input: dict[str, builtins.object] = {}
         _input["id"] = id
@@ -3072,8 +3048,7 @@ class UnlokApi:
             avatar: The `ID` scalar type represents a unique identifier, often used to refetch an object or as key for a cache. The ID type appears in a JSON response as a String; however, it is not intended to be human-readable. When expected as an input type, any string (such as `"4"`) or integer (such as `4`) input value will be accepted as an ID. (required)
 
         Returns:
-            Profile
-        """
+            Profile"""
         variables: dict[str, builtins.object] = {}
         _input: dict[str, builtins.object] = {}
         _input["id"] = id
@@ -3091,8 +3066,7 @@ class UnlokApi:
             datalayer (str): No description
 
         Returns:
-            PresignedPostCredentials
-        """
+            PresignedPostCredentials"""
         variables: dict[str, builtins.object] = {}
         variables["key"] = key
         variables["datalayer"] = datalayer
@@ -3107,8 +3081,7 @@ class UnlokApi:
             datalayer (str): No description
 
         Returns:
-            PresignedPostCredentials
-        """
+            PresignedPostCredentials"""
         variables: dict[str, builtins.object] = {}
         variables["key"] = key
         variables["datalayer"] = datalayer
@@ -3127,8 +3100,7 @@ class UnlokApi:
             pagination (OffsetPaginationInput | None, optional): No description.
 
         Returns:
-            list[ListApp]
-        """
+            list[ListApp]"""
         variables: dict[str, builtins.object] = {}
         if filters is not UNSET:
             variables["filters"] = filters
@@ -3149,8 +3121,7 @@ class UnlokApi:
             pagination (OffsetPaginationInput | None, optional): No description.
 
         Returns:
-            list[ListApp]
-        """
+            list[ListApp]"""
         variables: dict[str, builtins.object] = {}
         if filters is not UNSET:
             variables["filters"] = filters
@@ -3173,8 +3144,7 @@ class UnlokApi:
             client_id (ID | None, optional): No description.
 
         Returns:
-            DetailApp
-        """
+            DetailApp"""
         variables: dict[str, builtins.object] = {}
         if identifier is not UNSET:
             variables["identifier"] = identifier
@@ -3199,8 +3169,7 @@ class UnlokApi:
             client_id (ID | None, optional): No description.
 
         Returns:
-            DetailApp
-        """
+            DetailApp"""
         variables: dict[str, builtins.object] = {}
         if identifier is not UNSET:
             variables["identifier"] = identifier
@@ -3218,8 +3187,7 @@ class UnlokApi:
             id (ID): No description
 
         Returns:
-            DetailApp
-        """
+            DetailApp"""
         variables: dict[str, builtins.object] = {}
         variables["id"] = id
         return (await self.aexecute(DetailAppQuery, variables)).app
@@ -3232,8 +3200,7 @@ class UnlokApi:
             id (ID): No description
 
         Returns:
-            DetailApp
-        """
+            DetailApp"""
         variables: dict[str, builtins.object] = {}
         variables["id"] = id
         return self.execute(DetailAppQuery, variables).app
@@ -3251,8 +3218,7 @@ class UnlokApi:
             pagination (OffsetPaginationInput | None, optional): No description.
 
         Returns:
-            list[ListClient]
-        """
+            list[ListClient]"""
         variables: dict[str, builtins.object] = {}
         if filters is not UNSET:
             variables["filters"] = filters
@@ -3273,8 +3239,7 @@ class UnlokApi:
             pagination (OffsetPaginationInput | None, optional): No description.
 
         Returns:
-            list[ListClient]
-        """
+            list[ListClient]"""
         variables: dict[str, builtins.object] = {}
         if filters is not UNSET:
             variables["filters"] = filters
@@ -3290,8 +3255,7 @@ class UnlokApi:
             id (ID): No description
 
         Returns:
-            DetailClient
-        """
+            DetailClient"""
         variables: dict[str, builtins.object] = {}
         variables["id"] = id
         return (await self.aexecute(DetailClientQuery, variables)).client
@@ -3304,8 +3268,7 @@ class UnlokApi:
             id (ID): No description
 
         Returns:
-            DetailClient
-        """
+            DetailClient"""
         variables: dict[str, builtins.object] = {}
         variables["id"] = id
         return self.execute(DetailClientQuery, variables).client
@@ -3318,8 +3281,7 @@ class UnlokApi:
             kind (ClientKind): No description
 
         Returns:
-            list[ListClient]
-        """
+            list[ListClient]"""
         variables: dict[str, builtins.object] = {}
         variables["kind"] = kind
         return (await self.aexecute(MyManagedClientsQuery, variables)).my_managed_clients
@@ -3332,8 +3294,7 @@ class UnlokApi:
             kind (ClientKind): No description
 
         Returns:
-            list[ListClient]
-        """
+            list[ListClient]"""
         variables: dict[str, builtins.object] = {}
         variables["kind"] = kind
         return self.execute(MyManagedClientsQuery, variables).my_managed_clients
@@ -3346,8 +3307,7 @@ class UnlokApi:
             client_id (ID): No description
 
         Returns:
-            DetailClient
-        """
+            DetailClient"""
         variables: dict[str, builtins.object] = {}
         variables["clientId"] = client_id
         return (await self.aexecute(ClientQuery, variables)).client
@@ -3360,8 +3320,7 @@ class UnlokApi:
             client_id (ID): No description
 
         Returns:
-            DetailClient
-        """
+            DetailClient"""
         variables: dict[str, builtins.object] = {}
         variables["clientId"] = client_id
         return self.execute(ClientQuery, variables).client
@@ -3379,8 +3338,7 @@ class UnlokApi:
             values (list[ID] | None, optional): No description.
 
         Returns:
-            list[GroupOptionsQueryGroups]
-        """
+            list[GroupOptionsQueryGroups]"""
         variables: dict[str, builtins.object] = {}
         if search is not UNSET:
             variables["search"] = search
@@ -3401,8 +3359,7 @@ class UnlokApi:
             values (list[ID] | None, optional): No description.
 
         Returns:
-            list[GroupOptionsQueryGroups]
-        """
+            list[GroupOptionsQueryGroups]"""
         variables: dict[str, builtins.object] = {}
         if search is not UNSET:
             variables["search"] = search
@@ -3418,8 +3375,7 @@ class UnlokApi:
             id (ID): No description
 
         Returns:
-            DetailGroup
-        """
+            DetailGroup"""
         variables: dict[str, builtins.object] = {}
         variables["id"] = id
         return (await self.aexecute(DetailGroupQuery, variables)).group
@@ -3432,8 +3388,7 @@ class UnlokApi:
             id (ID): No description
 
         Returns:
-            DetailGroup
-        """
+            DetailGroup"""
         variables: dict[str, builtins.object] = {}
         variables["id"] = id
         return self.execute(DetailGroupQuery, variables).group
@@ -3451,8 +3406,7 @@ class UnlokApi:
             pagination (OffsetPaginationInput | None, optional): No description.
 
         Returns:
-            list[ListGroup]
-        """
+            list[ListGroup]"""
         variables: dict[str, builtins.object] = {}
         if filters is not UNSET:
             variables["filters"] = filters
@@ -3473,8 +3427,7 @@ class UnlokApi:
             pagination (OffsetPaginationInput | None, optional): No description.
 
         Returns:
-            list[ListGroup]
-        """
+            list[ListGroup]"""
         variables: dict[str, builtins.object] = {}
         if filters is not UNSET:
             variables["filters"] = filters
@@ -3495,8 +3448,7 @@ class UnlokApi:
             pagination (OffsetPaginationInput | None, optional): No description.
 
         Returns:
-            list[ListLayer]
-        """
+            list[ListLayer]"""
         variables: dict[str, builtins.object] = {}
         if filters is not UNSET:
             variables["filters"] = filters
@@ -3517,8 +3469,7 @@ class UnlokApi:
             pagination (OffsetPaginationInput | None, optional): No description.
 
         Returns:
-            list[ListLayer]
-        """
+            list[ListLayer]"""
         variables: dict[str, builtins.object] = {}
         if filters is not UNSET:
             variables["filters"] = filters
@@ -3534,8 +3485,7 @@ class UnlokApi:
             id (ID): No description
 
         Returns:
-            Layer
-        """
+            Layer"""
         variables: dict[str, builtins.object] = {}
         variables["id"] = id
         return (await self.aexecute(DetailLayerQuery, variables)).layer
@@ -3548,8 +3498,7 @@ class UnlokApi:
             id (ID): No description
 
         Returns:
-            Layer
-        """
+            Layer"""
         variables: dict[str, builtins.object] = {}
         variables["id"] = id
         return self.execute(DetailLayerQuery, variables).layer
@@ -3562,8 +3511,7 @@ class UnlokApi:
             id (ID): No description
 
         Returns:
-            Mandate
-        """
+            Mandate"""
         variables: dict[str, builtins.object] = {}
         variables["id"] = id
         return (await self.aexecute(GetMandateQuery, variables)).mandate
@@ -3576,8 +3524,7 @@ class UnlokApi:
             id (ID): No description
 
         Returns:
-            Mandate
-        """
+            Mandate"""
         variables: dict[str, builtins.object] = {}
         variables["id"] = id
         return self.execute(GetMandateQuery, variables).mandate
@@ -3590,8 +3537,7 @@ class UnlokApi:
         Args:
 
         Returns:
-            list[Mandate]
-        """
+            list[Mandate]"""
         variables: dict[str, builtins.object] = {}
         return (await self.aexecute(ListMandatesQuery, variables)).mandates
 
@@ -3603,8 +3549,7 @@ class UnlokApi:
         Args:
 
         Returns:
-            list[Mandate]
-        """
+            list[Mandate]"""
         variables: dict[str, builtins.object] = {}
         return self.execute(ListMandatesQuery, variables).mandates
 
@@ -3615,8 +3560,7 @@ class UnlokApi:
         Args:
 
         Returns:
-            list[ListRelease]
-        """
+            list[ListRelease]"""
         variables: dict[str, builtins.object] = {}
         return (await self.aexecute(ReleasesQuery, variables)).releases
 
@@ -3627,8 +3571,7 @@ class UnlokApi:
         Args:
 
         Returns:
-            list[ListRelease]
-        """
+            list[ListRelease]"""
         variables: dict[str, builtins.object] = {}
         return self.execute(ReleasesQuery, variables).releases
 
@@ -3649,8 +3592,7 @@ class UnlokApi:
             client_id (ID | None, optional): No description.
 
         Returns:
-            DetailRelease
-        """
+            DetailRelease"""
         variables: dict[str, builtins.object] = {}
         if identifier is not UNSET:
             variables["identifier"] = identifier
@@ -3679,8 +3621,7 @@ class UnlokApi:
             client_id (ID | None, optional): No description.
 
         Returns:
-            DetailRelease
-        """
+            DetailRelease"""
         variables: dict[str, builtins.object] = {}
         if identifier is not UNSET:
             variables["identifier"] = identifier
@@ -3700,8 +3641,7 @@ class UnlokApi:
             id (ID): No description
 
         Returns:
-            DetailRelease
-        """
+            DetailRelease"""
         variables: dict[str, builtins.object] = {}
         variables["id"] = id
         return (await self.aexecute(DetailReleaseQuery, variables)).release
@@ -3714,8 +3654,7 @@ class UnlokApi:
             id (ID): No description
 
         Returns:
-            DetailRelease
-        """
+            DetailRelease"""
         variables: dict[str, builtins.object] = {}
         variables["id"] = id
         return self.execute(DetailReleaseQuery, variables).release
@@ -3727,8 +3666,7 @@ class UnlokApi:
         Args:
 
         Returns:
-            list[ScopesQueryScopes]
-        """
+            list[ScopesQueryScopes]"""
         variables: dict[str, builtins.object] = {}
         return (await self.aexecute(ScopesQuery, variables)).scopes
 
@@ -3739,8 +3677,7 @@ class UnlokApi:
         Args:
 
         Returns:
-            list[ScopesQueryScopes]
-        """
+            list[ScopesQueryScopes]"""
         variables: dict[str, builtins.object] = {}
         return self.execute(ScopesQuery, variables).scopes
 
@@ -3751,8 +3688,7 @@ class UnlokApi:
         Args:
 
         Returns:
-            list[ScopesOptionsQueryScopes]
-        """
+            list[ScopesOptionsQueryScopes]"""
         variables: dict[str, builtins.object] = {}
         return (await self.aexecute(ScopesOptionsQuery, variables)).options
 
@@ -3763,8 +3699,7 @@ class UnlokApi:
         Args:
 
         Returns:
-            list[ScopesOptionsQueryScopes]
-        """
+            list[ScopesOptionsQueryScopes]"""
         variables: dict[str, builtins.object] = {}
         return self.execute(ScopesOptionsQuery, variables).options
 
@@ -3785,8 +3720,7 @@ class UnlokApi:
             pagination (OffsetPaginationInput | None, optional): No description.
 
         Returns:
-            GlobalSearchQuery
-        """
+            GlobalSearchQuery"""
         variables: dict[str, builtins.object] = {}
         if search is not UNSET:
             variables["search"] = search
@@ -3813,8 +3747,7 @@ class UnlokApi:
             pagination (OffsetPaginationInput | None, optional): No description.
 
         Returns:
-            GlobalSearchQuery
-        """
+            GlobalSearchQuery"""
         variables: dict[str, builtins.object] = {}
         if search is not UNSET:
             variables["search"] = search
@@ -3837,8 +3770,7 @@ class UnlokApi:
             filters (ServiceInstanceFilter | None, optional): No description.
 
         Returns:
-            list[ListServiceInstance]
-        """
+            list[ListServiceInstance]"""
         variables: dict[str, builtins.object] = {}
         if pagination is not UNSET:
             variables["pagination"] = pagination
@@ -3859,8 +3791,7 @@ class UnlokApi:
             filters (ServiceInstanceFilter | None, optional): No description.
 
         Returns:
-            list[ListServiceInstance]
-        """
+            list[ListServiceInstance]"""
         variables: dict[str, builtins.object] = {}
         if pagination is not UNSET:
             variables["pagination"] = pagination
@@ -3876,8 +3807,7 @@ class UnlokApi:
             id (ID): No description
 
         Returns:
-            ServiceInstance
-        """
+            ServiceInstance"""
         variables: dict[str, builtins.object] = {}
         variables["id"] = id
         return (await self.aexecute(GetServiceInstanceQuery, variables)).service_instance
@@ -3890,8 +3820,7 @@ class UnlokApi:
             id (ID): No description
 
         Returns:
-            ServiceInstance
-        """
+            ServiceInstance"""
         variables: dict[str, builtins.object] = {}
         variables["id"] = id
         return self.execute(GetServiceInstanceQuery, variables).service_instance
@@ -3909,8 +3838,7 @@ class UnlokApi:
             filters (ServiceReleaseFilter | None, optional): No description.
 
         Returns:
-            list[ListServiceRelease]
-        """
+            list[ListServiceRelease]"""
         variables: dict[str, builtins.object] = {}
         if pagination is not UNSET:
             variables["pagination"] = pagination
@@ -3931,8 +3859,7 @@ class UnlokApi:
             filters (ServiceReleaseFilter | None, optional): No description.
 
         Returns:
-            list[ListServiceRelease]
-        """
+            list[ListServiceRelease]"""
         variables: dict[str, builtins.object] = {}
         if pagination is not UNSET:
             variables["pagination"] = pagination
@@ -3948,8 +3875,7 @@ class UnlokApi:
             id (ID): No description
 
         Returns:
-            ServiceRelease
-        """
+            ServiceRelease"""
         variables: dict[str, builtins.object] = {}
         variables["id"] = id
         return (await self.aexecute(GetServiceReleaseQuery, variables)).service_release
@@ -3962,8 +3888,7 @@ class UnlokApi:
             id (ID): No description
 
         Returns:
-            ServiceRelease
-        """
+            ServiceRelease"""
         variables: dict[str, builtins.object] = {}
         variables["id"] = id
         return self.execute(GetServiceReleaseQuery, variables).service_release
@@ -3981,8 +3906,7 @@ class UnlokApi:
             filters (ServiceFilter | None, optional): No description.
 
         Returns:
-            list[ListService]
-        """
+            list[ListService]"""
         variables: dict[str, builtins.object] = {}
         if pagination is not UNSET:
             variables["pagination"] = pagination
@@ -4003,8 +3927,7 @@ class UnlokApi:
             filters (ServiceFilter | None, optional): No description.
 
         Returns:
-            list[ListService]
-        """
+            list[ListService]"""
         variables: dict[str, builtins.object] = {}
         if pagination is not UNSET:
             variables["pagination"] = pagination
@@ -4020,8 +3943,7 @@ class UnlokApi:
             id (ID): No description
 
         Returns:
-            Service
-        """
+            Service"""
         variables: dict[str, builtins.object] = {}
         variables["id"] = id
         return (await self.aexecute(GetServiceQuery, variables)).service
@@ -4034,8 +3956,7 @@ class UnlokApi:
             id (ID): No description
 
         Returns:
-            Service
-        """
+            Service"""
         variables: dict[str, builtins.object] = {}
         variables["id"] = id
         return self.execute(GetServiceQuery, variables).service
@@ -4047,8 +3968,7 @@ class UnlokApi:
         Args:
 
         Returns:
-            DetailUser
-        """
+            DetailUser"""
         variables: dict[str, builtins.object] = {}
         return (await self.aexecute(MeQuery, variables)).me
 
@@ -4059,8 +3979,7 @@ class UnlokApi:
         Args:
 
         Returns:
-            DetailUser
-        """
+            DetailUser"""
         variables: dict[str, builtins.object] = {}
         return self.execute(MeQuery, variables).me
 
@@ -4072,8 +3991,7 @@ class UnlokApi:
             id (ID): No description
 
         Returns:
-            DetailUser
-        """
+            DetailUser"""
         variables: dict[str, builtins.object] = {}
         variables["id"] = id
         return (await self.aexecute(UserQuery, variables)).user
@@ -4086,8 +4004,7 @@ class UnlokApi:
             id (ID): No description
 
         Returns:
-            DetailUser
-        """
+            DetailUser"""
         variables: dict[str, builtins.object] = {}
         variables["id"] = id
         return self.execute(UserQuery, variables).user
@@ -4100,8 +4017,7 @@ class UnlokApi:
             id (ID): No description
 
         Returns:
-            DetailUser
-        """
+            DetailUser"""
         variables: dict[str, builtins.object] = {}
         variables["id"] = id
         return (await self.aexecute(DetailUserQuery, variables)).user
@@ -4114,8 +4030,7 @@ class UnlokApi:
             id (ID): No description
 
         Returns:
-            DetailUser
-        """
+            DetailUser"""
         variables: dict[str, builtins.object] = {}
         variables["id"] = id
         return self.execute(DetailUserQuery, variables).user
@@ -4133,8 +4048,7 @@ class UnlokApi:
             pagination (OffsetPaginationInput | None, optional): No description.
 
         Returns:
-            list[ListUser]
-        """
+            list[ListUser]"""
         variables: dict[str, builtins.object] = {}
         if filters is not UNSET:
             variables["filters"] = filters
@@ -4155,8 +4069,7 @@ class UnlokApi:
             pagination (OffsetPaginationInput | None, optional): No description.
 
         Returns:
-            list[ListUser]
-        """
+            list[ListUser]"""
         variables: dict[str, builtins.object] = {}
         if filters is not UNSET:
             variables["filters"] = filters
@@ -4177,8 +4090,7 @@ class UnlokApi:
             values (list[ID] | None, optional): No description.
 
         Returns:
-            list[UserOptionsQueryUsers]
-        """
+            list[UserOptionsQueryUsers]"""
         variables: dict[str, builtins.object] = {}
         if search is not UNSET:
             variables["search"] = search
@@ -4199,8 +4111,7 @@ class UnlokApi:
             values (list[ID] | None, optional): No description.
 
         Returns:
-            list[UserOptionsQueryUsers]
-        """
+            list[UserOptionsQueryUsers]"""
         variables: dict[str, builtins.object] = {}
         if search is not UNSET:
             variables["search"] = search
@@ -4215,8 +4126,7 @@ class UnlokApi:
         Args:
 
         Returns:
-            MeUser
-        """
+            MeUser"""
         variables: dict[str, builtins.object] = {}
         return (await self.aexecute(ProfileQuery, variables)).me
 
@@ -4227,8 +4137,7 @@ class UnlokApi:
         Args:
 
         Returns:
-            MeUser
-        """
+            MeUser"""
         variables: dict[str, builtins.object] = {}
         return self.execute(ProfileQuery, variables).me
 
