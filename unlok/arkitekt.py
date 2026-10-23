@@ -47,8 +47,16 @@ def unlok(own: Annotated[Alias, Own()], tokens: TokenLoader) -> Unlok:
             link=UnlokLinkComposition(
                 auth=FaktsAuthLink(token_loader=tokens),
                 split=SplitLink(
-                    left=AIOHttpLink(endpoint_url=own.to_http_path("graphql"), proxy=own.proxy),
-                    right=GraphQLWSLink(ws_endpoint_url=own.to_ws_path("graphql"), proxy=own.proxy),
+                    left=AIOHttpLink(
+                        endpoint_url=own.to_http_path("graphql"),
+                        proxy=own.proxy,
+                        ssl_context=own.ssl_context(),
+                    ),
+                    right=GraphQLWSLink(
+                        ws_endpoint_url=own.to_ws_path("graphql"),
+                        proxy=own.proxy,
+                        ssl_context=own.ssl_context(),
+                    ),
                     split=lambda o: o.node.operation != OperationType.SUBSCRIPTION,
                 ),
             )
