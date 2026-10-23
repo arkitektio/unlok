@@ -25,6 +25,7 @@ dev-dependencies =  [
     "black>=23.1.0,<24",
     "pytest-aiohttp>=1.0.4,<2",
     "ruff>0.11",
+    "turms>=2.3.0",
     "basedpyright>=1.21",
     # The integration stack (tests/conftest.py) is driven by dokker; >=2.8 for the
     # owner-labelled stacks that let a run reap what a killed run left behind.
