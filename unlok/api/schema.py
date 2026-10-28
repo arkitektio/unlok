@@ -3,7 +3,7 @@ from datetime import datetime
 from enum import Enum
 from pydantic import AliasChoices, BaseModel, ConfigDict, Field
 from rath.scalars import ID, IDCoercible
-from typing import Annotated, Iterable, Literal
+from typing import Annotated, ClassVar, Iterable, Literal
 
 
 class Deprecated:
@@ -195,7 +195,9 @@ class CreateGroupProfileInput(BaseModel):
 class CreateMandateInput(BaseModel):
     """Pre-authorize an agent app to issue mandate keys for a subject app, acting as you."""
 
-    agent: str = Field(description="Identifier of the app allowed to issue keys (e.g. a deployer).")
+    agent: str = Field(
+        description="Identifier of the app allowed to issue keys (e.g. a deployer)."
+    )
     manifest: "ManifestInput" = Field(
         description="The subject app. Its scopes and requirements are the ceiling for every key issued under it, and may not exceed your app's own; deviceId is ignored."
     )
@@ -225,6 +227,13 @@ class CreateMandateInput(BaseModel):
         default=None,
         description="How many live keys may exist under the mandate at once.",
     )
+    allow_mesh: Annotated[bool | None, GraphQLDefault("False")] = Field(
+        validation_alias=AliasChoices("allow_mesh", "allowMesh"),
+        serialization_alias="allowMesh",
+        default=None,
+        description="Whether a client logging in with a key issued under the mandate may ask for a mesh key. Every child key inherits it.",
+    )
+    "Whether a client logging in with a key issued under the mandate may ask for a mesh key. Every child key inherits it.\nDefault: False"
     expires_in_days: int | None = Field(
         validation_alias=AliasChoices("expires_in_days", "expiresInDays"),
         serialization_alias="expiresInDays",
@@ -394,7 +403,9 @@ class ManifestInput(BaseModel):
     logo: str | None = None
     scopes: Annotated[tuple[str, ...] | None, GraphQLDefault("[]")] = None
     "Default: []"
-    requirements: Annotated[tuple["RequirementInput", ...] | None, GraphQLDefault("[]")] = None
+    requirements: Annotated[
+        tuple["RequirementInput", ...] | None, GraphQLDefault("[]")
+    ] = None
     "Default: []"
     device_id: str | None = Field(
         validation_alias=AliasChoices("device_id", "deviceId"),
@@ -707,7 +718,9 @@ class ListAppLogo(BaseModel):
     Provides convenience helpers for generating presigned URLs and
     uploading content."""
 
-    typename: Literal["MediaStore"] = Field(alias="__typename", default="MediaStore", exclude=True)
+    typename: Literal["MediaStore"] = Field(
+        alias="__typename", default="MediaStore", exclude=True
+    )
     presigned_url: str = Field(alias="presignedUrl")
     model_config = ConfigDict(frozen=True)
 
@@ -756,7 +769,9 @@ class ListClientReleaseLogo(BaseModel):
     Provides convenience helpers for generating presigned URLs and
     uploading content."""
 
-    typename: Literal["MediaStore"] = Field(alias="__typename", default="MediaStore", exclude=True)
+    typename: Literal["MediaStore"] = Field(
+        alias="__typename", default="MediaStore", exclude=True
+    )
     presigned_url: str = Field(alias="presignedUrl")
     model_config = ConfigDict(frozen=True)
 
@@ -767,7 +782,9 @@ class ListClientReleaseAppLogo(BaseModel):
     Provides convenience helpers for generating presigned URLs and
     uploading content."""
 
-    typename: Literal["MediaStore"] = Field(alias="__typename", default="MediaStore", exclude=True)
+    typename: Literal["MediaStore"] = Field(
+        alias="__typename", default="MediaStore", exclude=True
+    )
     presigned_url: str = Field(alias="presignedUrl")
     model_config = ConfigDict(frozen=True)
 
@@ -787,7 +804,9 @@ class ListClientReleaseApp(BaseModel):
 class ListClientRelease(BaseModel):
     """A Release is a version of an app. Releases might change over time. E.g. a release might be updated to fix a bug, and the release might be updated to add a new feature. This is why they are the home for `scopes` and `requirements`, which might change over the release cycle."""
 
-    typename: Literal["Release"] = Field(alias="__typename", default="Release", exclude=True)
+    typename: Literal["Release"] = Field(
+        alias="__typename", default="Release", exclude=True
+    )
     version: str
     "The version of the release. This should be a string that identifies the version of the release. We enforce semantic versioning notation. E.g. `0.1.0`. The version is unique per app."
     logo: ListClientReleaseLogo | None = Field(default=None)
@@ -804,7 +823,9 @@ class ListClient(BaseModel):
     but also a DEVELOPMENT client that is used by a developer to test the app. The client model thinly wraps the oauth2 client model, which is used to authenticate users.
     """
 
-    typename: Literal["Client"] = Field(alias="__typename", default="Client", exclude=True)
+    typename: Literal["Client"] = Field(
+        alias="__typename", default="Client", exclude=True
+    )
     id: ID
     user: ListClientUser | None = Field(default=None)
     "The user this client acts for (derived from its membership)."
@@ -855,7 +876,9 @@ class ListGroupProfileAvatar(BaseModel):
     Provides convenience helpers for generating presigned URLs and
     uploading content."""
 
-    typename: Literal["MediaStore"] = Field(alias="__typename", default="MediaStore", exclude=True)
+    typename: Literal["MediaStore"] = Field(
+        alias="__typename", default="MediaStore", exclude=True
+    )
     presigned_url: str = Field(alias="presignedUrl")
     model_config = ConfigDict(frozen=True)
 
@@ -882,7 +905,9 @@ class ListGroup(BaseModel):
     Groups are propagated to the respecting subservices. Permissions are not. Each subservice has to define its own permissions and mappings to groups.
     """
 
-    typename: Literal["Group"] = Field(alias="__typename", default="Group", exclude=True)
+    typename: Literal["Group"] = Field(
+        alias="__typename", default="Group", exclude=True
+    )
     id: ID
     name: str
     profile: ListGroupProfile | None = Field(default=None)
@@ -902,7 +927,9 @@ class GroupProfileAvatar(BaseModel):
     Provides convenience helpers for generating presigned URLs and
     uploading content."""
 
-    typename: Literal["MediaStore"] = Field(alias="__typename", default="MediaStore", exclude=True)
+    typename: Literal["MediaStore"] = Field(
+        alias="__typename", default="MediaStore", exclude=True
+    )
     presigned_url: str = Field(alias="presignedUrl")
     model_config = ConfigDict(frozen=True)
 
@@ -936,7 +963,9 @@ class LayerLogo(BaseModel):
     Provides convenience helpers for generating presigned URLs and
     uploading content."""
 
-    typename: Literal["MediaStore"] = Field(alias="__typename", default="MediaStore", exclude=True)
+    typename: Literal["MediaStore"] = Field(
+        alias="__typename", default="MediaStore", exclude=True
+    )
     presigned_url: str = Field(alias="presignedUrl")
     model_config = ConfigDict(frozen=True)
 
@@ -944,7 +973,9 @@ class LayerLogo(BaseModel):
 class Layer(BaseModel):
     """A Layer is a network through which service instances can be reached (e.g. the public web, a tailnet, a VPN, or a docker network). Instance aliases are resolved relative to the layer they belong to."""
 
-    typename: Literal["Layer"] = Field(alias="__typename", default="Layer", exclude=True)
+    typename: Literal["Layer"] = Field(
+        alias="__typename", default="Layer", exclude=True
+    )
     id: ID
     name: str
     "The name of the layer"
@@ -970,7 +1001,9 @@ class ListLayerLogo(BaseModel):
     Provides convenience helpers for generating presigned URLs and
     uploading content."""
 
-    typename: Literal["MediaStore"] = Field(alias="__typename", default="MediaStore", exclude=True)
+    typename: Literal["MediaStore"] = Field(
+        alias="__typename", default="MediaStore", exclude=True
+    )
     presigned_url: str = Field(alias="presignedUrl")
     model_config = ConfigDict(frozen=True)
 
@@ -978,7 +1011,9 @@ class ListLayerLogo(BaseModel):
 class ListLayer(BaseModel):
     """A Layer is a network through which service instances can be reached (e.g. the public web, a tailnet, a VPN, or a docker network). Instance aliases are resolved relative to the layer they belong to."""
 
-    typename: Literal["Layer"] = Field(alias="__typename", default="Layer", exclude=True)
+    typename: Literal["Layer"] = Field(
+        alias="__typename", default="Layer", exclude=True
+    )
     id: ID
     name: str
     "The name of the layer"
@@ -1010,7 +1045,9 @@ class MandatePinRequirements(BaseModel):
 class MandatePin(BaseModel):
     """The ceiling a mandate puts on the apps that log in under it. A null field is open."""
 
-    typename: Literal["MandatePin"] = Field(alias="__typename", default="MandatePin", exclude=True)
+    typename: Literal["MandatePin"] = Field(
+        alias="__typename", default="MandatePin", exclude=True
+    )
     identifier: str | None = Field(default=None)
     "The app. Null: fixed by the first app that logs in."
     version: str | None = Field(default=None)
@@ -1037,7 +1074,9 @@ class ProfileAvatar(BaseModel):
     Provides convenience helpers for generating presigned URLs and
     uploading content."""
 
-    typename: Literal["MediaStore"] = Field(alias="__typename", default="MediaStore", exclude=True)
+    typename: Literal["MediaStore"] = Field(
+        alias="__typename", default="MediaStore", exclude=True
+    )
     presigned_url: str = Field(alias="presignedUrl")
     model_config = ConfigDict(frozen=True)
 
@@ -1047,7 +1086,9 @@ class Profile(BaseModel):
     A Profile of a User. A Profile can be used to display personalised information about a user,
     such as a display name, a short bio and an avatar."""
 
-    typename: Literal["Profile"] = Field(alias="__typename", default="Profile", exclude=True)
+    typename: Literal["Profile"] = Field(
+        alias="__typename", default="Profile", exclude=True
+    )
     id: ID
     name: str | None = Field(default=None)
     "The name of the user"
@@ -1069,7 +1110,9 @@ class ServiceLogo(BaseModel):
     Provides convenience helpers for generating presigned URLs and
     uploading content."""
 
-    typename: Literal["MediaStore"] = Field(alias="__typename", default="MediaStore", exclude=True)
+    typename: Literal["MediaStore"] = Field(
+        alias="__typename", default="MediaStore", exclude=True
+    )
     presigned_url: str = Field(alias="presignedUrl")
     model_config = ConfigDict(frozen=True)
 
@@ -1077,7 +1120,9 @@ class ServiceLogo(BaseModel):
 class Service(BaseModel):
     """A Service is a Webservice that a Client might want to access. It is not the configured instance of the service, but the service itself."""
 
-    typename: Literal["Service"] = Field(alias="__typename", default="Service", exclude=True)
+    typename: Literal["Service"] = Field(
+        alias="__typename", default="Service", exclude=True
+    )
     identifier: str
     "The identifier of the service. This should be a globally unique string that identifies the service. We encourage you to use the reverse domain name notation. E.g. `com.example.myservice`"
     id: ID
@@ -1100,7 +1145,9 @@ class Service(BaseModel):
 class ListServiceReleaseService(BaseModel):
     """A Service is a Webservice that a Client might want to access. It is not the configured instance of the service, but the service itself."""
 
-    typename: Literal["Service"] = Field(alias="__typename", default="Service", exclude=True)
+    typename: Literal["Service"] = Field(
+        alias="__typename", default="Service", exclude=True
+    )
     id: ID
     name: str
     "The name of the service"
@@ -1196,7 +1243,9 @@ class ListReleaseLogo(BaseModel):
     Provides convenience helpers for generating presigned URLs and
     uploading content."""
 
-    typename: Literal["MediaStore"] = Field(alias="__typename", default="MediaStore", exclude=True)
+    typename: Literal["MediaStore"] = Field(
+        alias="__typename", default="MediaStore", exclude=True
+    )
     presigned_url: str = Field(alias="presignedUrl")
     model_config = ConfigDict(frozen=True)
 
@@ -1204,7 +1253,9 @@ class ListReleaseLogo(BaseModel):
 class ListRelease(BaseModel):
     """A Release is a version of an app. Releases might change over time. E.g. a release might be updated to fix a bug, and the release might be updated to add a new feature. This is why they are the home for `scopes` and `requirements`, which might change over the release cycle."""
 
-    typename: Literal["Release"] = Field(alias="__typename", default="Release", exclude=True)
+    typename: Literal["Release"] = Field(
+        alias="__typename", default="Release", exclude=True
+    )
     id: ID
     version: str
     "The version of the release. This should be a string that identifies the version of the release. We enforce semantic versioning notation. E.g. `0.1.0`. The version is unique per app."
@@ -1228,7 +1279,9 @@ class DetailReleaseLogo(BaseModel):
     Provides convenience helpers for generating presigned URLs and
     uploading content."""
 
-    typename: Literal["MediaStore"] = Field(alias="__typename", default="MediaStore", exclude=True)
+    typename: Literal["MediaStore"] = Field(
+        alias="__typename", default="MediaStore", exclude=True
+    )
     presigned_url: str = Field(alias="presignedUrl")
     model_config = ConfigDict(frozen=True)
 
@@ -1236,7 +1289,9 @@ class DetailReleaseLogo(BaseModel):
 class DetailRelease(BaseModel):
     """A Release is a version of an app. Releases might change over time. E.g. a release might be updated to fix a bug, and the release might be updated to add a new feature. This is why they are the home for `scopes` and `requirements`, which might change over the release cycle."""
 
-    typename: Literal["Release"] = Field(alias="__typename", default="Release", exclude=True)
+    typename: Literal["Release"] = Field(
+        alias="__typename", default="Release", exclude=True
+    )
     id: ID
     version: str
     "The version of the release. This should be a string that identifies the version of the release. We enforce semantic versioning notation. E.g. `0.1.0`. The version is unique per app."
@@ -1284,7 +1339,9 @@ class MandateHub(BaseModel):
 class MandateParent(BaseModel):
     """A standing authority to act as the grantor, inside one hub, up to a pinned app. Whoever holds its key logs in as the grantor (a keyed mandate), or the agent app it names may issue keyed mandates under it (an agent mandate). It dies with whoever issued it."""
 
-    typename: Literal["Mandate"] = Field(alias="__typename", default="Mandate", exclude=True)
+    typename: Literal["Mandate"] = Field(
+        alias="__typename", default="Mandate", exclude=True
+    )
     id: ID
     model_config = ConfigDict(frozen=True)
 
@@ -1296,7 +1353,9 @@ class MandateClients(BaseModel):
     but also a DEVELOPMENT client that is used by a developer to test the app. The client model thinly wraps the oauth2 client model, which is used to authenticate users.
     """
 
-    typename: Literal["Client"] = Field(alias="__typename", default="Client", exclude=True)
+    typename: Literal["Client"] = Field(
+        alias="__typename", default="Client", exclude=True
+    )
     id: ID
     client_id: str = Field(alias="clientId")
     "The OAuth2 client id this client authenticates as."
@@ -1306,7 +1365,9 @@ class MandateClients(BaseModel):
 class Mandate(BaseModel):
     """A standing authority to act as the grantor, inside one hub, up to a pinned app. Whoever holds its key logs in as the grantor (a keyed mandate), or the agent app it names may issue keyed mandates under it (an agent mandate). It dies with whoever issued it."""
 
-    typename: Literal["Mandate"] = Field(alias="__typename", default="Mandate", exclude=True)
+    typename: Literal["Mandate"] = Field(
+        alias="__typename", default="Mandate", exclude=True
+    )
     id: ID
     claimant: MandateClaimant
     "Who may use the mandate."
@@ -1331,7 +1392,9 @@ class Mandate(BaseModel):
     "After this the mandate no longer works. Null: as long as its issuer."
     revoked_at: datetime | None = Field(default=None, alias="revokedAt")
     "When the mandate was withdrawn; its clients were deleted then."
-    revocation_reason: MandateRevocation | None = Field(default=None, alias="revocationReason")
+    revocation_reason: MandateRevocation | None = Field(
+        default=None, alias="revocationReason"
+    )
     "Why the mandate was withdrawn."
     last_used_at: datetime | None = Field(default=None, alias="lastUsedAt")
     "When the key was last exchanged for a token."
@@ -1361,7 +1424,9 @@ class DetailUserGroups(BaseModel):
     Groups are propagated to the respecting subservices. Permissions are not. Each subservice has to define its own permissions and mappings to groups.
     """
 
-    typename: Literal["Group"] = Field(alias="__typename", default="Group", exclude=True)
+    typename: Literal["Group"] = Field(
+        alias="__typename", default="Group", exclude=True
+    )
     id: ID
     name: str
     model_config = ConfigDict(frozen=True)
@@ -1404,7 +1469,9 @@ class DetailUser(BaseModel):
 class ListService(BaseModel):
     """A Service is a Webservice that a Client might want to access. It is not the configured instance of the service, but the service itself."""
 
-    typename: Literal["Service"] = Field(alias="__typename", default="Service", exclude=True)
+    typename: Literal["Service"] = Field(
+        alias="__typename", default="Service", exclude=True
+    )
     identifier: str
     "The identifier of the service. This should be a globally unique string that identifies the service. We encourage you to use the reverse domain name notation. E.g. `com.example.myservice`"
     id: ID
@@ -1428,7 +1495,9 @@ class DetailGroup(BaseModel):
     Groups are propagated to the respecting subservices. Permissions are not. Each subservice has to define its own permissions and mappings to groups.
     """
 
-    typename: Literal["Group"] = Field(alias="__typename", default="Group", exclude=True)
+    typename: Literal["Group"] = Field(
+        alias="__typename", default="Group", exclude=True
+    )
     id: ID
     name: str
     users: tuple[ListUser, ...]
@@ -1473,7 +1542,9 @@ class DetailAppLogo(BaseModel):
     Provides convenience helpers for generating presigned URLs and
     uploading content."""
 
-    typename: Literal["MediaStore"] = Field(alias="__typename", default="MediaStore", exclude=True)
+    typename: Literal["MediaStore"] = Field(
+        alias="__typename", default="MediaStore", exclude=True
+    )
     presigned_url: str = Field(alias="presignedUrl")
     model_config = ConfigDict(frozen=True)
 
@@ -1521,7 +1592,9 @@ class IssuedMandateKey(BaseModel):
 class ServiceReleaseService(BaseModel):
     """A Service is a Webservice that a Client might want to access. It is not the configured instance of the service, but the service itself."""
 
-    typename: Literal["Service"] = Field(alias="__typename", default="Service", exclude=True)
+    typename: Literal["Service"] = Field(
+        alias="__typename", default="Service", exclude=True
+    )
     id: ID
     name: str
     "The name of the service"
@@ -1601,7 +1674,9 @@ class DetailClientLogo(BaseModel):
     Provides convenience helpers for generating presigned URLs and
     uploading content."""
 
-    typename: Literal["MediaStore"] = Field(alias="__typename", default="MediaStore", exclude=True)
+    typename: Literal["MediaStore"] = Field(
+        alias="__typename", default="MediaStore", exclude=True
+    )
     presigned_url: str = Field(alias="presignedUrl")
     model_config = ConfigDict(frozen=True)
 
@@ -1613,7 +1688,9 @@ class DetailClient(BaseModel):
     but also a DEVELOPMENT client that is used by a developer to test the app. The client model thinly wraps the oauth2 client model, which is used to authenticate users.
     """
 
-    typename: Literal["Client"] = Field(alias="__typename", default="Client", exclude=True)
+    typename: Literal["Client"] = Field(
+        alias="__typename", default="Client", exclude=True
+    )
     id: ID
     name: str
     "A human-readable label for the client that folds in the app, version, operator and device — e.g. `com.example.app:v0.1.1 by Johannes on my-laptop`."
@@ -1644,7 +1721,9 @@ class DetailClient(BaseModel):
 class ServiceInstanceReleaseService(BaseModel):
     """A Service is a Webservice that a Client might want to access. It is not the configured instance of the service, but the service itself."""
 
-    typename: Literal["Service"] = Field(alias="__typename", default="Service", exclude=True)
+    typename: Literal["Service"] = Field(
+        alias="__typename", default="Service", exclude=True
+    )
     id: ID
     identifier: str
     "The identifier of the service. This should be a globally unique string that identifies the service. We encourage you to use the reverse domain name notation. E.g. `com.example.myservice`"
@@ -1670,7 +1749,9 @@ class ServiceInstanceLogo(BaseModel):
     Provides convenience helpers for generating presigned URLs and
     uploading content."""
 
-    typename: Literal["MediaStore"] = Field(alias="__typename", default="MediaStore", exclude=True)
+    typename: Literal["MediaStore"] = Field(
+        alias="__typename", default="MediaStore", exclude=True
+    )
     presigned_url: str = Field(alias="presignedUrl")
     model_config = ConfigDict(frozen=True)
 
@@ -1827,7 +1908,7 @@ class IssueChildMandateKeyMutation(BaseModel):
     class Meta:
         """Meta class for IssueChildMandateKey"""
 
-        document = "fragment MandatePin on MandatePin {\n  identifier\n  version\n  deviceId\n  scopes\n  requirements {\n    key\n    service\n    __typename\n  }\n  __typename\n}\n\nfragment Mandate on Mandate {\n  id\n  claimant\n  origin\n  label\n  keyPrefix\n  agentIdentifier\n  subject {\n    ...MandatePin\n    __typename\n  }\n  attestation\n  maxClients\n  allowMesh\n  createdAt\n  expiresAt\n  revokedAt\n  revocationReason\n  lastUsedAt\n  isLive\n  grantor {\n    id\n    __typename\n  }\n  hub {\n    id\n    __typename\n  }\n  parent {\n    id\n    __typename\n  }\n  clients {\n    id\n    clientId\n    __typename\n  }\n  __typename\n}\n\nfragment IssuedMandateKey on IssuedMandateKey {\n  key\n  mandate {\n    ...Mandate\n    __typename\n  }\n  __typename\n}\n\nmutation IssueChildMandateKey($mandate: ID!, $deviceId: String!, $expiresInDays: Int, $label: String) {\n  issueChildMandateKey(\n    input: {\n      mandate: $mandate\n      deviceId: $deviceId\n      expiresInDays: $expiresInDays\n      label: $label\n    }\n  ) {\n    ...IssuedMandateKey\n    __typename\n  }\n}"
+        document = "fragment MandatePin on MandatePin {\n  identifier\n  version\n  deviceId\n  scopes\n  requirements {\n    key\n    service\n    __typename\n  }\n  __typename\n}\n\nfragment Mandate on Mandate {\n  id\n  claimant\n  origin\n  label\n  keyPrefix\n  agentIdentifier\n  subject {\n    ...MandatePin\n    __typename\n  }\n  attestation\n  maxClients\n  allowMesh\n  createdAt\n  expiresAt\n  revokedAt\n  revocationReason\n  lastUsedAt\n  isLive\n  grantor {\n    id\n    __typename\n  }\n  hub {\n    id\n    __typename\n  }\n  parent {\n    id\n    __typename\n  }\n  clients {\n    id\n    clientId\n    __typename\n  }\n  __typename\n}\n\nfragment IssuedMandateKey on IssuedMandateKey {\n  key\n  mandate {\n    ...Mandate\n    __typename\n  }\n  __typename\n}\n\nmutation IssueChildMandateKey($mandate: ID!, $deviceId: String!, $expiresInDays: Int, $label: String) {\n  issueChildMandateKey(\n    input: {mandate: $mandate, deviceId: $deviceId, expiresInDays: $expiresInDays, label: $label}\n  ) {\n    ...IssuedMandateKey\n    __typename\n  }\n}"
 
 
 class RevokeMandateMutation(BaseModel):
@@ -1843,7 +1924,7 @@ class RevokeMandateMutation(BaseModel):
     class Meta:
         """Meta class for RevokeMandate"""
 
-        document = "fragment MandatePin on MandatePin {\n  identifier\n  version\n  deviceId\n  scopes\n  requirements {\n    key\n    service\n    __typename\n  }\n  __typename\n}\n\nfragment Mandate on Mandate {\n  id\n  claimant\n  origin\n  label\n  keyPrefix\n  agentIdentifier\n  subject {\n    ...MandatePin\n    __typename\n  }\n  attestation\n  maxClients\n  allowMesh\n  createdAt\n  expiresAt\n  revokedAt\n  revocationReason\n  lastUsedAt\n  isLive\n  grantor {\n    id\n    __typename\n  }\n  hub {\n    id\n    __typename\n  }\n  parent {\n    id\n    __typename\n  }\n  clients {\n    id\n    clientId\n    __typename\n  }\n  __typename\n}\n\nmutation RevokeMandate($id: ID!) {\n  revokeMandate(input: { id: $id }) {\n    ...Mandate\n    __typename\n  }\n}"
+        document = "fragment MandatePin on MandatePin {\n  identifier\n  version\n  deviceId\n  scopes\n  requirements {\n    key\n    service\n    __typename\n  }\n  __typename\n}\n\nfragment Mandate on Mandate {\n  id\n  claimant\n  origin\n  label\n  keyPrefix\n  agentIdentifier\n  subject {\n    ...MandatePin\n    __typename\n  }\n  attestation\n  maxClients\n  allowMesh\n  createdAt\n  expiresAt\n  revokedAt\n  revocationReason\n  lastUsedAt\n  isLive\n  grantor {\n    id\n    __typename\n  }\n  hub {\n    id\n    __typename\n  }\n  parent {\n    id\n    __typename\n  }\n  clients {\n    id\n    clientId\n    __typename\n  }\n  __typename\n}\n\nmutation RevokeMandate($id: ID!) {\n  revokeMandate(input: {id: $id}) {\n    ...Mandate\n    __typename\n  }\n}"
 
 
 class CreateUserProfileMutation(BaseModel):
@@ -1892,7 +1973,7 @@ class RequestMediaUploadMutation(BaseModel):
     class Meta:
         """Meta class for RequestMediaUpload"""
 
-        document = "fragment PresignedPostCredentials on PresignedPostCredentials {\n  xAmzAlgorithm\n  xAmzCredential\n  xAmzDate\n  xAmzSignature\n  key\n  bucket\n  datalayer\n  policy\n  store\n  __typename\n}\n\nmutation RequestMediaUpload($key: String!, $datalayer: String!) {\n  requestMediaUpload(input: { key: $key, datalayer: $datalayer }) {\n    ...PresignedPostCredentials\n    __typename\n  }\n}"
+        document = "fragment PresignedPostCredentials on PresignedPostCredentials {\n  xAmzAlgorithm\n  xAmzCredential\n  xAmzDate\n  xAmzSignature\n  key\n  bucket\n  datalayer\n  policy\n  store\n  __typename\n}\n\nmutation RequestMediaUpload($key: String!, $datalayer: String!) {\n  requestMediaUpload(input: {key: $key, datalayer: $datalayer}) {\n    ...PresignedPostCredentials\n    __typename\n  }\n}"
 
 
 class AppsQuery(BaseModel):
@@ -2024,7 +2105,9 @@ class GroupOptionsQueryOptions(BaseModel):
     Groups are propagated to the respecting subservices. Permissions are not. Each subservice has to define its own permissions and mappings to groups.
     """
 
-    typename: Literal["Group"] = Field(alias="__typename", default="Group", exclude=True)
+    typename: Literal["Group"] = Field(
+        alias="__typename", default="Group", exclude=True
+    )
     value: ID
     label: str
     model_config = ConfigDict(frozen=True)
@@ -2044,7 +2127,7 @@ class GroupOptionsQuery(BaseModel):
     class Meta:
         """Meta class for GroupOptions"""
 
-        document = "query GroupOptions($search: String, $values: [ID!]) {\n  options: groups(filters: { search: $search, ids: $values }) {\n    value: id\n    label: name\n    __typename\n  }\n}"
+        document = "query GroupOptions($search: String, $values: [ID!]) {\n  options: groups(filters: {search: $search, ids: $values}) {\n    value: id\n    label: name\n    __typename\n  }\n}"
 
 
 class DetailGroupQuery(BaseModel):
@@ -2204,7 +2287,9 @@ class DetailReleaseQuery(BaseModel):
 class ScopesQueryScopes(BaseModel):
     """A scope that can be assigned to a client. Scopes are used to limit the access of a client to a user's data. They represent app-level permissions."""
 
-    typename: Literal["Scope"] = Field(alias="__typename", default="Scope", exclude=True)
+    typename: Literal["Scope"] = Field(
+        alias="__typename", default="Scope", exclude=True
+    )
     description: str
     "The description of the scope. This is a human readable description of the scope."
     value: str
@@ -2233,7 +2318,9 @@ class ScopesQuery(BaseModel):
 class ScopesOptionsQueryOptions(BaseModel):
     """A scope that can be assigned to a client. Scopes are used to limit the access of a client to a user's data. They represent app-level permissions."""
 
-    typename: Literal["Scope"] = Field(alias="__typename", default="Scope", exclude=True)
+    typename: Literal["Scope"] = Field(
+        alias="__typename", default="Scope", exclude=True
+    )
     value: str
     "The value of the scope. This is the value that is used in the OAuth2 flow."
     label: str
@@ -2280,7 +2367,7 @@ class GlobalSearchQuery(BaseModel):
     class Meta:
         """Meta class for GlobalSearch"""
 
-        document = "fragment ListGroup on Group {\n  id\n  name\n  profile {\n    id\n    bio\n    avatar {\n      presignedUrl\n      __typename\n    }\n    __typename\n  }\n  __typename\n}\n\nfragment ListUser on User {\n  username\n  firstName\n  lastName\n  email\n  avatar\n  id\n  __typename\n}\n\nquery GlobalSearch($search: String, $noUsers: Boolean!, $noGroups: Boolean!, $pagination: OffsetPaginationInput) {\n  users: users(filters: { search: $search }, pagination: $pagination) @skip(if: $noUsers) {\n    ...ListUser\n    __typename\n  }\n  groups: groups(filters: { search: $search }, pagination: $pagination) @skip(if: $noGroups) {\n    ...ListGroup\n    __typename\n  }\n}"
+        document = "fragment ListGroup on Group {\n  id\n  name\n  profile {\n    id\n    bio\n    avatar {\n      presignedUrl\n      __typename\n    }\n    __typename\n  }\n  __typename\n}\n\nfragment ListUser on User {\n  username\n  firstName\n  lastName\n  email\n  avatar\n  id\n  __typename\n}\n\nquery GlobalSearch($search: String, $noUsers: Boolean!, $noGroups: Boolean!, $pagination: OffsetPaginationInput) {\n  users: users(filters: {search: $search}, pagination: $pagination) @skip(if: $noUsers) {\n    ...ListUser\n    __typename\n  }\n  groups: groups(filters: {search: $search}, pagination: $pagination) @skip(if: $noGroups) {\n    ...ListGroup\n    __typename\n  }\n}"
 
 
 class ListServiceInstancesQuery(BaseModel):
@@ -2480,7 +2567,7 @@ class UserOptionsQuery(BaseModel):
     class Meta:
         """Meta class for UserOptions"""
 
-        document = "query UserOptions($search: String, $values: [ID!]) {\n  options: users(filters: { search: $search, ids: $values }) {\n    value: id\n    label: username\n    __typename\n  }\n}"
+        document = "query UserOptions($search: String, $values: [ID!]) {\n  options: users(filters: {search: $search, ids: $values}) {\n    value: id\n    label: username\n    __typename\n  }\n}"
 
 
 class ProfileQuery(BaseModel):
@@ -2505,6 +2592,13 @@ class UnlokApi:
     Each method hands its operation to ``execute``, ``aexecute``, ``subscribe``, ``asubscribe`` of ``self``, which the class this one is mixed into (or a base of it) provides.
     """
 
+    __scopes__: ClassVar[tuple[str, ...]] = (
+        "lok_mandates",
+        "lok_profile",
+        "lok_read",
+        "lok_services",
+    )
+
     async def acreate_group_profile(
         self, group: IDCoercible, name: str, avatar: IDCoercible
     ) -> GroupProfile:
@@ -2524,7 +2618,9 @@ class UnlokApi:
         _input["name"] = name
         _input["avatar"] = avatar
         variables["input"] = _input
-        return (await self.aexecute(CreateGroupProfileMutation, variables)).create_group_profile
+        return (
+            await self.aexecute(CreateGroupProfileMutation, variables)
+        ).create_group_profile
 
     def create_group_profile(
         self, group: IDCoercible, name: str, avatar: IDCoercible
@@ -2566,9 +2662,13 @@ class UnlokApi:
         _input["name"] = name
         _input["avatar"] = avatar
         variables["input"] = _input
-        return (await self.aexecute(UpdateGroupProfileMutation, variables)).update_group_profile
+        return (
+            await self.aexecute(UpdateGroupProfileMutation, variables)
+        ).update_group_profile
 
-    def update_group_profile(self, id: IDCoercible, name: str, avatar: IDCoercible) -> GroupProfile:
+    def update_group_profile(
+        self, id: IDCoercible, name: str, avatar: IDCoercible
+    ) -> GroupProfile:
         """UpdateGroupProfile
 
 
@@ -2655,7 +2755,9 @@ class UnlokApi:
             _input["deniedUsers"] = denied_users
         _input["id"] = id
         variables["input"] = _input
-        return self.execute(UpdateServiceInstanceMutation, variables).update_service_instance
+        return self.execute(
+            UpdateServiceInstanceMutation, variables
+        ).update_service_instance
 
     async def acreate_service_instance(
         self,
@@ -2731,12 +2833,15 @@ class UnlokApi:
         if denied_users is not UNSET:
             _input["deniedUsers"] = denied_users
         variables["input"] = _input
-        return self.execute(CreateServiceInstanceMutation, variables).create_service_instance
+        return self.execute(
+            CreateServiceInstanceMutation, variables
+        ).create_service_instance
 
     async def acreate_mandate(
         self,
         agent: str,
         manifest: ManifestInput,
+        allow_mesh: bool,
         hub: IDCoercible | None | UnsetType = UNSET,
         attestation: str | None | UnsetType = UNSET,
         agent_device_id: str | None | UnsetType = UNSET,
@@ -2755,6 +2860,7 @@ class UnlokApi:
             agent_device_id: Only an agent running on this device may issue.
             agent_user: Only an agent acting as this user may issue.
             max_clients: How many live keys may exist under the mandate at once.
+            allow_mesh: Whether a client logging in with a key issued under the mandate may ask for a mesh key. Every child key inherits it.
             expires_in_days: The mandate (and every key issued under it) stops working after this many days (1–365). Null: as long as your app.
 
         Returns:
@@ -2773,6 +2879,7 @@ class UnlokApi:
             _input["agentUser"] = agent_user
         if max_clients is not UNSET:
             _input["maxClients"] = max_clients
+        _input["allowMesh"] = allow_mesh
         if expires_in_days is not UNSET:
             _input["expiresInDays"] = expires_in_days
         variables["input"] = _input
@@ -2782,6 +2889,7 @@ class UnlokApi:
         self,
         agent: str,
         manifest: ManifestInput,
+        allow_mesh: bool,
         hub: IDCoercible | None | UnsetType = UNSET,
         attestation: str | None | UnsetType = UNSET,
         agent_device_id: str | None | UnsetType = UNSET,
@@ -2800,6 +2908,7 @@ class UnlokApi:
             agent_device_id: Only an agent running on this device may issue.
             agent_user: Only an agent acting as this user may issue.
             max_clients: How many live keys may exist under the mandate at once.
+            allow_mesh: Whether a client logging in with a key issued under the mandate may ask for a mesh key. Every child key inherits it.
             expires_in_days: The mandate (and every key issued under it) stops working after this many days (1–365). Null: as long as your app.
 
         Returns:
@@ -2818,6 +2927,7 @@ class UnlokApi:
             _input["agentUser"] = agent_user
         if max_clients is not UNSET:
             _input["maxClients"] = max_clients
+        _input["allowMesh"] = allow_mesh
         if expires_in_days is not UNSET:
             _input["expiresInDays"] = expires_in_days
         variables["input"] = _input
@@ -2860,7 +2970,9 @@ class UnlokApi:
         if label is not UNSET:
             _input["label"] = label
         variables["input"] = _input
-        return (await self.aexecute(IssueMandateKeyMutation, variables)).issue_mandate_key
+        return (
+            await self.aexecute(IssueMandateKeyMutation, variables)
+        ).issue_mandate_key
 
     def issue_mandate_key(
         self,
@@ -2955,7 +3067,9 @@ class UnlokApi:
             variables["expiresInDays"] = expires_in_days
         if label is not UNSET:
             variables["label"] = label
-        return self.execute(IssueChildMandateKeyMutation, variables).issue_child_mandate_key
+        return self.execute(
+            IssueChildMandateKeyMutation, variables
+        ).issue_child_mandate_key
 
     async def arevoke_mandate(self, id: IDCoercible) -> Mandate:
         """RevokeMandate
@@ -2998,7 +3112,9 @@ class UnlokApi:
         _input["user"] = user
         _input["name"] = name
         variables["input"] = _input
-        return (await self.aexecute(CreateUserProfileMutation, variables)).create_profile
+        return (
+            await self.aexecute(CreateUserProfileMutation, variables)
+        ).create_profile
 
     def create_user_profile(self, user: IDCoercible, name: str) -> Profile:
         """CreateUserProfile
@@ -3036,9 +3152,13 @@ class UnlokApi:
         _input["name"] = name
         _input["avatar"] = avatar
         variables["input"] = _input
-        return (await self.aexecute(UpdateUserProfileMutation, variables)).update_profile
+        return (
+            await self.aexecute(UpdateUserProfileMutation, variables)
+        ).update_profile
 
-    def update_user_profile(self, id: IDCoercible, name: str, avatar: IDCoercible) -> Profile:
+    def update_user_profile(
+        self, id: IDCoercible, name: str, avatar: IDCoercible
+    ) -> Profile:
         """UpdateUserProfile
 
 
@@ -3057,7 +3177,9 @@ class UnlokApi:
         variables["input"] = _input
         return self.execute(UpdateUserProfileMutation, variables).update_profile
 
-    async def arequest_media_upload(self, key: str, datalayer: str) -> PresignedPostCredentials:
+    async def arequest_media_upload(
+        self, key: str, datalayer: str
+    ) -> PresignedPostCredentials:
         """RequestMediaUpload
 
 
@@ -3070,9 +3192,13 @@ class UnlokApi:
         variables: dict[str, builtins.object] = {}
         variables["key"] = key
         variables["datalayer"] = datalayer
-        return (await self.aexecute(RequestMediaUploadMutation, variables)).request_media_upload
+        return (
+            await self.aexecute(RequestMediaUploadMutation, variables)
+        ).request_media_upload
 
-    def request_media_upload(self, key: str, datalayer: str) -> PresignedPostCredentials:
+    def request_media_upload(
+        self, key: str, datalayer: str
+    ) -> PresignedPostCredentials:
         """RequestMediaUpload
 
 
@@ -3284,7 +3410,9 @@ class UnlokApi:
             list[ListClient]"""
         variables: dict[str, builtins.object] = {}
         variables["kind"] = kind
-        return (await self.aexecute(MyManagedClientsQuery, variables)).my_managed_clients
+        return (
+            await self.aexecute(MyManagedClientsQuery, variables)
+        ).my_managed_clients
 
     def my_managed_clients(self, kind: ClientKind) -> tuple[ListClient, ...]:
         """MyManagedClients
@@ -3776,7 +3904,9 @@ class UnlokApi:
             variables["pagination"] = pagination
         if filters is not UNSET:
             variables["filters"] = filters
-        return (await self.aexecute(ListServiceInstancesQuery, variables)).service_instances
+        return (
+            await self.aexecute(ListServiceInstancesQuery, variables)
+        ).service_instances
 
     def list_service_instances(
         self,
@@ -3810,7 +3940,9 @@ class UnlokApi:
             ServiceInstance"""
         variables: dict[str, builtins.object] = {}
         variables["id"] = id
-        return (await self.aexecute(GetServiceInstanceQuery, variables)).service_instance
+        return (
+            await self.aexecute(GetServiceInstanceQuery, variables)
+        ).service_instance
 
     def get_service_instance(self, id: IDCoercible) -> ServiceInstance:
         """GetServiceInstance
@@ -3844,7 +3976,9 @@ class UnlokApi:
             variables["pagination"] = pagination
         if filters is not UNSET:
             variables["filters"] = filters
-        return (await self.aexecute(ListServiceReleasesQuery, variables)).service_releases
+        return (
+            await self.aexecute(ListServiceReleasesQuery, variables)
+        ).service_releases
 
     def list_service_releases(
         self,

@@ -71,6 +71,7 @@
             "external_modules": [],
             "additional_bases": {},
             "additional_config": {},
+            "class_fields": [],
             "force_plugin_order": true,
             "omitted_document_rules": [],
             "parsers": [],
@@ -90,6 +91,18 @@
                 {
                     "type": "turms.plugins.client.ClientPlugin",
                     "client_class": "UnlokApi",
+                    "client_fields": [
+                        {
+                            "name": "__scopes__",
+                            "kind": "tuple[str, ...]",
+                            "collector": {
+                                "type": "root_field_directive",
+                                "directive": "auth",
+                                "argument": "required_scopes"
+                            },
+                            "combine": "union"
+                        }
+                    ],
                     "reserved_from": [
                         "unlok.unlok.Unlok"
                     ],

@@ -33,6 +33,17 @@ projects:
             # asubscribe of self, which the Unlok client implements over its
             # rath; no call looks a client up.
             client_class: UnlokApi
+            # What the operations need at lok, read off the schema's
+            # `@auth(required_scopes: ...)` on every root field they select: every
+            # app using unlok asks for it (arkitekt-spec reads it off the client).
+            client_fields:
+              - name: __scopes__
+                kind: tuple[str, ...]
+                collector:
+                  type: root_field_directive
+                  directive: auth
+                  argument: required_scopes
+                combine: union
             # The client's own attributes: pydantic lets a field hide a method.
             reserved_from:
               - unlok.unlok.Unlok

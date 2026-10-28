@@ -1,3 +1,5 @@
+directive @auth(required_scopes: [String!], required_roles: [String!], required_org_roles: [String!], any_scope_of: [String!], any_role_of: [String!], any_org_role_of: [String!], allow_scoped: Boolean) on FIELD_DEFINITION
+
 directive @oneOf on INPUT_OBJECT
 
 input AcceptInviteInput {
@@ -307,6 +309,11 @@ input CreateMandateInput {
   maxClients: Int = null
 
   """
+  Whether a client logging in with a key issued under the mandate may ask for a mesh key. Every child key inherits it.
+  """
+  allowMesh: Boolean! = false
+
+  """
   The mandate (and every key issued under it) stops working after this many days (1–365). Null: as long as your app.
   """
   expiresInDays: Int = null
@@ -504,7 +511,7 @@ type Hub {
 }
 
 """
-Hub(id, name, organization, identifier, description, creator, client, token, uid, auth_key, last_seen_at, last_healthy, version, mesh_connected, mesh_host)
+Hub(id, name, organization, identifier, description, creator, client, token, uid, auth_key, tls_certificate, last_seen_at, last_healthy, version, mesh_connected, mesh_host)
 """
 input HubFilter {
   AND: HubFilter
@@ -1025,33 +1032,33 @@ type MembershipRequest {
 }
 
 type Mutation {
-  addUserToOrganization(input: AddUserToOrganizationInput!): Membership!
-  createOrganization(input: CreateOrganizationInput!): Organization!
-  registerComChannel(input: RegisterComChannelInput!): ComChannel!
-  notifyUser(input: NotifyUserInput!): Boolean!
-  createMandate(input: CreateMandateInput!): Mandate!
-  issueMandateKey(input: IssueMandateKeyInput!): IssuedMandateKey!
-  issueChildMandateKey(input: IssueChildMandateKeyInput!): IssuedMandateKey!
-  revokeMandate(input: RevokeMandateInput!): Mandate!
-  render(input: RenderInput!): Fakt!
-  acknowledgeMessage(input: AcknowledgeMessageInput!): SystemMessage!
-  createServiceInstance(input: CreateServiceInstanceInput!): ServiceInstance!
-  updateServiceInstance(input: UpdateServiceInstanceInput!): ServiceInstance!
-  requestMediaUpload(input: RequestMediaUploadInput!): PresignedPostCredentials!
-  updateProfile(input: UpdateProfileInput!): Profile!
-  createProfile(input: CreateProfileInput!): Profile!
-  updateGroupProfile(input: UpdateGroupProfileInput!): GroupProfile!
-  createGroupProfile(input: CreateGroupProfileInput!): GroupProfile!
-  createInvite(input: CreateInviteInput!): Invite!
-  acceptInvite(input: AcceptInviteInput!): Membership!
-  declineInvite(input: DeclineInviteInput!): Invite!
-  cancelInvite(input: CancelInviteInput!): Invite!
-  updateOrganization(input: UpdateOrganizationInput!): Organization!
-  updateMembershipColors(input: UpdateMembershipColorsInput!): Membership!
-  requestMembership(input: RequestMembershipInput!): Boolean!
-  approveMembershipRequest(input: ApproveMembershipRequestInput!): Membership!
-  declineMembershipRequest(input: DeclineMembershipRequestInput!): MembershipRequest!
-  updateDevice(input: UpdateDeviceInput!): Device!
+  addUserToOrganization(input: AddUserToOrganizationInput!): Membership! @auth(required_scopes: ["lok_organizations"])
+  createOrganization(input: CreateOrganizationInput!): Organization! @auth(required_scopes: ["lok_organizations"])
+  registerComChannel(input: RegisterComChannelInput!): ComChannel! @auth(required_scopes: ["lok_messages"])
+  notifyUser(input: NotifyUserInput!): Boolean! @auth(required_scopes: ["lok_messages"])
+  createMandate(input: CreateMandateInput!): Mandate! @auth(required_scopes: ["lok_mandates"])
+  issueMandateKey(input: IssueMandateKeyInput!): IssuedMandateKey! @auth(required_scopes: ["lok_mandates"])
+  issueChildMandateKey(input: IssueChildMandateKeyInput!): IssuedMandateKey! @auth(required_scopes: ["lok_mandates"])
+  revokeMandate(input: RevokeMandateInput!): Mandate! @auth(required_scopes: ["lok_mandates"])
+  render(input: RenderInput!): Fakt! @auth(required_scopes: ["lok_services"])
+  acknowledgeMessage(input: AcknowledgeMessageInput!): SystemMessage! @auth(required_scopes: ["lok_messages"])
+  createServiceInstance(input: CreateServiceInstanceInput!): ServiceInstance! @auth(required_scopes: ["lok_services"])
+  updateServiceInstance(input: UpdateServiceInstanceInput!): ServiceInstance! @auth(required_scopes: ["lok_services"])
+  requestMediaUpload(input: RequestMediaUploadInput!): PresignedPostCredentials! @auth(required_scopes: ["lok_profile"])
+  updateProfile(input: UpdateProfileInput!): Profile! @auth(required_scopes: ["lok_profile"])
+  createProfile(input: CreateProfileInput!): Profile! @auth(required_scopes: ["lok_profile"])
+  updateGroupProfile(input: UpdateGroupProfileInput!): GroupProfile! @auth(required_scopes: ["lok_profile"])
+  createGroupProfile(input: CreateGroupProfileInput!): GroupProfile! @auth(required_scopes: ["lok_profile"])
+  createInvite(input: CreateInviteInput!): Invite! @auth(required_scopes: ["lok_organizations"])
+  acceptInvite(input: AcceptInviteInput!): Membership! @auth(required_scopes: ["lok_organizations"])
+  declineInvite(input: DeclineInviteInput!): Invite! @auth(required_scopes: ["lok_organizations"])
+  cancelInvite(input: CancelInviteInput!): Invite! @auth(required_scopes: ["lok_organizations"])
+  updateOrganization(input: UpdateOrganizationInput!): Organization! @auth(required_scopes: ["lok_organizations"])
+  updateMembershipColors(input: UpdateMembershipColorsInput!): Membership! @auth(required_scopes: ["lok_profile"])
+  requestMembership(input: RequestMembershipInput!): Boolean! @auth(required_scopes: ["lok_organizations"])
+  approveMembershipRequest(input: ApproveMembershipRequestInput!): Membership! @auth(required_scopes: ["lok_organizations"])
+  declineMembershipRequest(input: DeclineMembershipRequestInput!): MembershipRequest! @auth(required_scopes: ["lok_organizations"])
+  updateDevice(input: UpdateDeviceInput!): Device! @auth(required_scopes: ["lok_profile"])
 }
 
 input NotifyUserInput {
@@ -1208,59 +1215,59 @@ enum PublicSourceKind {
 
 type Query {
   _service: _Service!
-  organizations(filters: OrganizationFilter, ordering: [OrganizationOrdering!]! = [], pagination: OffsetPaginationInput): [Organization!]!
-  devices(filters: DeviceFilter, ordering: [DeviceOrdering!]! = [], pagination: OffsetPaginationInput): [Device!]!
-  apps(filters: AppFilter, ordering: [AppOrdering!]! = [], pagination: OffsetPaginationInput): [App!]!
-  releases(ordering: [ReleaseOrdering!]! = []): [Release!]!
-  clients(filters: ClientFilter, ordering: [ClientOrdering!]! = [], pagination: OffsetPaginationInput): [Client!]!
-  users(filters: UserFilter, ordering: [UserOrdering!]! = [], pagination: OffsetPaginationInput): [User!]!
-  roles(filters: RoleFilter, ordering: [RoleOrdering!]! = [], pagination: OffsetPaginationInput): [Role!]!
-  groups(filters: GroupFilter, ordering: [GroupOrdering!]! = [], pagination: OffsetPaginationInput): [Group!]!
-  services(filters: ServiceFilter, ordering: [ServiceOrdering!]! = [], pagination: OffsetPaginationInput): [Service!]!
-  hubs(filters: HubFilter, ordering: [HubOrdering!]! = [], pagination: OffsetPaginationInput): [Hub!]!
-  deviceGroups(filters: DeviceGroupFilter, ordering: [DeviceGroupOrdering!]! = [], pagination: OffsetPaginationInput): [DeviceGroup!]!
-  serviceInstances(filters: ServiceInstanceFilter, ordering: [ServiceInstanceOrdering!]! = [], pagination: OffsetPaginationInput): [ServiceInstance!]!
-  serviceReleases(filters: ServiceReleaseFilter, ordering: [ServiceReleaseOrdering!]! = [], pagination: OffsetPaginationInput): [ServiceRelease!]!
-  invites(filters: InviteFilter, ordering: [InviteOrdering!]! = [], pagination: OffsetPaginationInput): [Invite!]!
-  layers(filters: LayerFilter, ordering: [LayerOrdering!]! = [], pagination: OffsetPaginationInput): [Layer!]!
+  organizations(filters: OrganizationFilter, ordering: [OrganizationOrdering!]! = [], pagination: OffsetPaginationInput): [Organization!]! @auth(required_scopes: ["lok_read"])
+  devices(filters: DeviceFilter, ordering: [DeviceOrdering!]! = [], pagination: OffsetPaginationInput): [Device!]! @auth(required_scopes: ["lok_read"])
+  apps(filters: AppFilter, ordering: [AppOrdering!]! = [], pagination: OffsetPaginationInput): [App!]! @auth(required_scopes: ["lok_read"])
+  releases(ordering: [ReleaseOrdering!]! = []): [Release!]! @auth(required_scopes: ["lok_read"])
+  clients(filters: ClientFilter, ordering: [ClientOrdering!]! = [], pagination: OffsetPaginationInput): [Client!]! @auth(required_scopes: ["lok_read"])
+  users(filters: UserFilter, ordering: [UserOrdering!]! = [], pagination: OffsetPaginationInput): [User!]! @auth(required_scopes: ["lok_read"])
+  roles(filters: RoleFilter, ordering: [RoleOrdering!]! = [], pagination: OffsetPaginationInput): [Role!]! @auth(required_scopes: ["lok_read"])
+  groups(filters: GroupFilter, ordering: [GroupOrdering!]! = [], pagination: OffsetPaginationInput): [Group!]! @auth(required_scopes: ["lok_read"])
+  services(filters: ServiceFilter, ordering: [ServiceOrdering!]! = [], pagination: OffsetPaginationInput): [Service!]! @auth(required_scopes: ["lok_read"])
+  hubs(filters: HubFilter, ordering: [HubOrdering!]! = [], pagination: OffsetPaginationInput): [Hub!]! @auth(required_scopes: ["lok_read"])
+  deviceGroups(filters: DeviceGroupFilter, ordering: [DeviceGroupOrdering!]! = [], pagination: OffsetPaginationInput): [DeviceGroup!]! @auth(required_scopes: ["lok_read"])
+  serviceInstances(filters: ServiceInstanceFilter, ordering: [ServiceInstanceOrdering!]! = [], pagination: OffsetPaginationInput): [ServiceInstance!]! @auth(required_scopes: ["lok_read"])
+  serviceReleases(filters: ServiceReleaseFilter, ordering: [ServiceReleaseOrdering!]! = [], pagination: OffsetPaginationInput): [ServiceRelease!]! @auth(required_scopes: ["lok_read"])
+  invites(filters: InviteFilter, ordering: [InviteOrdering!]! = [], pagination: OffsetPaginationInput): [Invite!]! @auth(required_scopes: ["lok_read"])
+  layers(filters: LayerFilter, ordering: [LayerOrdering!]! = [], pagination: OffsetPaginationInput): [Layer!]! @auth(required_scopes: ["lok_read"])
 
   """
   Mandates you granted, your app issued, or (as an agent app) you may issue under or did. Org admins see all.
   """
-  mandates(filters: MandateFilter, ordering: [MandateOrdering!]! = [], pagination: OffsetPaginationInput): [Mandate!]!
-  userStats(filters: UserFilter = null): UserStats!
-  mycontext: Context!
-  user(id: ID!): User!
-  me: User!
-  group(id: ID!): Group!
-  mygroups: [Group!]!
-  app(id: ID = null, identifier: AppIdentifier = null, clientId: ID = null): App!
-  release(id: ID = null, identifier: AppIdentifier = null, version: Version = null, clientId: ID = null): Release!
-  client(id: ID = null, clientId: ID = null): Client!
-  myManagedClients(kind: ClientKind!): [Client!]!
-  scopes: [Scope!]!
-  mandate(id: ID!): Mandate!
-  myActiveMessages: [SystemMessage!]!
-  message(id: ID!): SystemMessage!
-  hallo: String!
-  service(id: ID!): Service!
-  device(id: ID!): Device!
+  mandates(filters: MandateFilter, ordering: [MandateOrdering!]! = [], pagination: OffsetPaginationInput): [Mandate!]! @auth(required_scopes: ["lok_read"])
+  userStats(filters: UserFilter = null): UserStats! @auth(required_scopes: ["lok_read"])
+  mycontext: Context! @auth(required_scopes: ["lok_read"])
+  user(id: ID!): User! @auth(required_scopes: ["lok_read"])
+  me: User! @auth(required_scopes: ["lok_read"])
+  group(id: ID!): Group! @auth(required_scopes: ["lok_read"])
+  mygroups: [Group!]! @auth(required_scopes: ["lok_read"])
+  app(id: ID = null, identifier: AppIdentifier = null, clientId: ID = null): App! @auth(required_scopes: ["lok_read"])
+  release(id: ID = null, identifier: AppIdentifier = null, version: Version = null, clientId: ID = null): Release! @auth(required_scopes: ["lok_read"])
+  client(id: ID = null, clientId: ID = null): Client! @auth(required_scopes: ["lok_read"])
+  myManagedClients(kind: ClientKind!): [Client!]! @auth(required_scopes: ["lok_read"])
+  scopes: [Scope!]! @auth(required_scopes: ["lok_read"])
+  mandate(id: ID!): Mandate! @auth(required_scopes: ["lok_read"])
+  myActiveMessages: [SystemMessage!]! @auth(required_scopes: ["lok_read"])
+  message(id: ID!): SystemMessage! @auth(required_scopes: ["lok_read"])
+  hallo: String! @auth(required_scopes: ["lok_read"])
+  service(id: ID!): Service! @auth(required_scopes: ["lok_read"])
+  device(id: ID!): Device! @auth(required_scopes: ["lok_read"])
 
   """
   Look a device up by its raw device id, as reported by the client. Device ids are stored as a per-organization hash, so the raw id is hashed with the caller's organization before lookup.
   """
-  deviceByDeviceId(id: ID!): Device!
-  deviceGroup(id: ID!): DeviceGroup!
-  serviceRelease(id: ID!): ServiceRelease!
-  role(id: ID!): Role!
-  organization(id: ID!): Organization!
-  layer(id: ID!): Layer!
-  serviceInstance(id: ID!): ServiceInstance!
+  deviceByDeviceId(id: ID!): Device! @auth(required_scopes: ["lok_read"])
+  deviceGroup(id: ID!): DeviceGroup! @auth(required_scopes: ["lok_read"])
+  serviceRelease(id: ID!): ServiceRelease! @auth(required_scopes: ["lok_read"])
+  role(id: ID!): Role! @auth(required_scopes: ["lok_read"])
+  organization(id: ID!): Organization! @auth(required_scopes: ["lok_read"])
+  layer(id: ID!): Layer! @auth(required_scopes: ["lok_read"])
+  serviceInstance(id: ID!): ServiceInstance! @auth(required_scopes: ["lok_read"])
 
   """
   A hub of the caller's organization, including its last reported health. The caller's own hub is also reachable as `mycontext { hub }`.
   """
-  hub(id: ID!): Hub!
+  hub(id: ID!): Hub! @auth(required_scopes: ["lok_read"])
 }
 
 input RegisterComChannelInput {
@@ -1356,6 +1363,14 @@ type Role {
   id: ID!
   identifier: String!
   organization: Organization!
+
+  """
+  The role lets a member do everything in the service declaring it. Lok gives it to the organization's owner and admins.
+  """
+  isAdminRole: Boolean!
+
+  """Every full member holds the role, unless an admin took it away."""
+  isDefaultRole: Boolean!
   description: String!
 }
 
@@ -1623,7 +1638,7 @@ input StrFilterLookup {
 }
 
 type Subscription {
-  communications(channels: [ID!]!): Communication!
+  communications(channels: [ID!]!): Communication! @auth(required_scopes: ["lok_read"])
 }
 
 "\nA System Message is a message that is sent to a user. \nIt can be used to notify the user of important events or to request their attention.\nSystem messages can use Rekuest Hooks as actions to allow the user to interact with the message.\n\n\n"
