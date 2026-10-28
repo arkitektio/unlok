@@ -2841,12 +2841,12 @@ class UnlokApi:
         self,
         agent: str,
         manifest: ManifestInput,
-        allow_mesh: bool,
         hub: IDCoercible | None | UnsetType = UNSET,
         attestation: str | None | UnsetType = UNSET,
         agent_device_id: str | None | UnsetType = UNSET,
         agent_user: IDCoercible | None | UnsetType = UNSET,
         max_clients: int | None | UnsetType = UNSET,
+        allow_mesh: bool | UnsetType = UNSET,
         expires_in_days: int | None | UnsetType = UNSET,
     ) -> Mandate:
         """CreateMandate
@@ -2879,7 +2879,8 @@ class UnlokApi:
             _input["agentUser"] = agent_user
         if max_clients is not UNSET:
             _input["maxClients"] = max_clients
-        _input["allowMesh"] = allow_mesh
+        if allow_mesh is not UNSET:
+            _input["allowMesh"] = allow_mesh
         if expires_in_days is not UNSET:
             _input["expiresInDays"] = expires_in_days
         variables["input"] = _input
@@ -2889,12 +2890,12 @@ class UnlokApi:
         self,
         agent: str,
         manifest: ManifestInput,
-        allow_mesh: bool,
         hub: IDCoercible | None | UnsetType = UNSET,
         attestation: str | None | UnsetType = UNSET,
         agent_device_id: str | None | UnsetType = UNSET,
         agent_user: IDCoercible | None | UnsetType = UNSET,
         max_clients: int | None | UnsetType = UNSET,
+        allow_mesh: bool | UnsetType = UNSET,
         expires_in_days: int | None | UnsetType = UNSET,
     ) -> Mandate:
         """CreateMandate
@@ -2927,7 +2928,8 @@ class UnlokApi:
             _input["agentUser"] = agent_user
         if max_clients is not UNSET:
             _input["maxClients"] = max_clients
-        _input["allowMesh"] = allow_mesh
+        if allow_mesh is not UNSET:
+            _input["allowMesh"] = allow_mesh
         if expires_in_days is not UNSET:
             _input["expiresInDays"] = expires_in_days
         variables["input"] = _input
@@ -2937,10 +2939,10 @@ class UnlokApi:
         self,
         manifest: ManifestInput,
         expires_in_days: int,
-        any_version: bool,
-        allow_mesh: bool,
         hub: IDCoercible | None | UnsetType = UNSET,
+        any_version: bool | UnsetType = UNSET,
         max_clients: int | None | UnsetType = UNSET,
+        allow_mesh: bool | UnsetType = UNSET,
         label: str | None | UnsetType = UNSET,
     ) -> IssuedMandateKey:
         """IssueMandateKey
@@ -2963,10 +2965,12 @@ class UnlokApi:
         _input["expiresInDays"] = expires_in_days
         if hub is not UNSET:
             _input["hub"] = hub
-        _input["anyVersion"] = any_version
+        if any_version is not UNSET:
+            _input["anyVersion"] = any_version
         if max_clients is not UNSET:
             _input["maxClients"] = max_clients
-        _input["allowMesh"] = allow_mesh
+        if allow_mesh is not UNSET:
+            _input["allowMesh"] = allow_mesh
         if label is not UNSET:
             _input["label"] = label
         variables["input"] = _input
@@ -2978,10 +2982,10 @@ class UnlokApi:
         self,
         manifest: ManifestInput,
         expires_in_days: int,
-        any_version: bool,
-        allow_mesh: bool,
         hub: IDCoercible | None | UnsetType = UNSET,
+        any_version: bool | UnsetType = UNSET,
         max_clients: int | None | UnsetType = UNSET,
+        allow_mesh: bool | UnsetType = UNSET,
         label: str | None | UnsetType = UNSET,
     ) -> IssuedMandateKey:
         """IssueMandateKey
@@ -3004,10 +3008,12 @@ class UnlokApi:
         _input["expiresInDays"] = expires_in_days
         if hub is not UNSET:
             _input["hub"] = hub
-        _input["anyVersion"] = any_version
+        if any_version is not UNSET:
+            _input["anyVersion"] = any_version
         if max_clients is not UNSET:
             _input["maxClients"] = max_clients
-        _input["allowMesh"] = allow_mesh
+        if allow_mesh is not UNSET:
+            _input["allowMesh"] = allow_mesh
         if label is not UNSET:
             _input["label"] = label
         variables["input"] = _input

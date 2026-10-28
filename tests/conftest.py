@@ -74,7 +74,9 @@ STACK_MANDATE_KEY = "unlok-integration-tests-mandate-key-0123456789"
 TEST_MANIFEST = Manifest(
     identifier="live.arkitekt.unlok_tests",
     version="0.0.1",
-    scopes=[],
+    # What every app using unlok asks for: the lok scopes its operations need (the generated
+    # client says them, `Unlok.__scopes__`).
+    scopes=["openid", *Unlok.__scopes__],
     requirements=[],
     node_id="unlok-integration-tests",
 )
