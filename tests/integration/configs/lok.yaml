@@ -94,7 +94,8 @@ kommunity_partners:
       identifier: localhost
       description: The hub every test client enrols into.
 organizations:
-  - name: Demo
+  - id: 1
+    name: Demo
     identifier: demo
     owner: demo
     auto_configure: true
