@@ -4,7 +4,8 @@ No server: the rath is a fake returning canned data.
 """
 
 from types import SimpleNamespace
-from typing import Any, AsyncIterator, Optional
+from typing import Any
+from collections.abc import AsyncIterator
 
 import pytest
 from koil import Koil
@@ -52,7 +53,7 @@ class GetService(BaseModel):
 
     class Arguments(BaseModel):
         id: str
-        note: Optional[str] = None
+        note: str | None = None
 
     class Meta:
         document = "query GetService($id: ID!) { service(id: $id) { id owner { id } } }"
