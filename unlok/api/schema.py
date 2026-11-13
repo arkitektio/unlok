@@ -1358,7 +1358,7 @@ class MandateClients(BaseModel):
     )
     id: ID
     client_id: str = Field(alias="clientId")
-    "The OAuth2 client id this client authenticates as."
+    "The id the services know this client by: the `client_id` claim of its tokens. It is the client's own OAuth2 client id until the client has run more than one release of its app, and from then on one per release, so that what it did as an earlier version stays that version's. A client can still be looked up by any id it has had."
     model_config = ConfigDict(frozen=True)
 
 
@@ -1695,7 +1695,7 @@ class DetailClient(BaseModel):
     name: str
     "A human-readable label for the client that folds in the app, version, operator and device — e.g. `com.example.app:v0.1.1 by Johannes on my-laptop`."
     client_id: str = Field(alias="clientId")
-    "The OAuth2 client id this client authenticates as."
+    "The id the services know this client by: the `client_id` claim of its tokens. It is the client's own OAuth2 client id until the client has run more than one release of its app, and from then on one per release, so that what it did as an earlier version stays that version's. A client can still be looked up by any id it has had."
     user: DetailClientUser | None = Field(default=None)
     "The user this client acts for (derived from its membership)."
     kind: ClientKind
