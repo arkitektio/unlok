@@ -24,18 +24,18 @@ class FakeRath:
     def __init__(self) -> None:
         self.sent: list[dict[str, Any]] = []
 
-    def _answer(self, variables: dict[str, Any]) -> Any:
+    def _answer(self, variables: dict[str, Any]) -> SimpleNamespace:
         self.sent.append(variables)
         return SimpleNamespace(
             data={"service": {"id": "service-1", "owner": {"id": "u-1"}}}
         )
 
-    async def aquery(self, document: str, variables: dict[str, Any]) -> Any:
+    async def aquery(self, document: str, variables: dict[str, Any]) -> SimpleNamespace:
         return self._answer(variables)
 
     async def asubscribe(
         self, document: str, variables: dict[str, Any]
-    ) -> AsyncIterator[Any]:
+    ) -> AsyncIterator[SimpleNamespace]:
         yield self._answer(variables)
 
 
@@ -63,9 +63,16 @@ class GetService(BaseModel):
         document = "query GetService($id: ID!) { service(id: $id) { id owner { id } } }"
 
 
-def client() -> Any:
+def client() -> Unlok:
     """The real client over a fake rath, built without validating the rath's type."""
     return Unlok.model_construct(rath=FakeRath())
+
+
+def sent(unlok: Unlok) -> list[dict[str, Any]]:
+    """What the fake rath under ``unlok`` was sent."""
+    rath = unlok.rath
+    assert isinstance(rath, FakeRath)
+    return rath.sent
 
 
 @pytest.mark.asyncio
@@ -74,7 +81,7 @@ async def test_aexecute_goes_through_the_client_and_results_remember_it() -> Non
 
     result = await mine.aexecute(GetService, {"id": "service-1"})
 
-    assert (len(mine.rath.sent), len(other.rath.sent)) == (1, 0)
+    assert (len(sent(mine)), len(sent(other))) == (1, 0)
     origin = get_origin(result.service.owner)
     assert origin is not None and origin.client is mine and origin.rath is mine.rath
 
@@ -83,7 +90,7 @@ def test_execute_goes_through_the_client() -> None:
     mine = client()
     with Koil():
         assert mine.execute(GetService, {"id": "service-1"}).service.id == "service-1"
-    assert len(mine.rath.sent) == 1
+    assert len(sent(mine)) == 1
 
 
 @pytest.mark.asyncio
@@ -99,7 +106,7 @@ def test_subscribe_goes_through_the_client() -> None:
     with Koil():
         events = list(mine.subscribe(GetService, {"id": "service-1"}))
     assert [e.service.id for e in events] == ["service-1"]
-    assert len(mine.rath.sent) == 1
+    assert len(sent(mine)) == 1
 
 
 @pytest.mark.asyncio
@@ -112,7 +119,7 @@ async def test_unset_arguments_are_left_out() -> None:
     mine = client()
     await mine.aexecute(GetService, {"id": "service-1"})
     await mine.aexecute(GetService, {"id": "service-1", "note": None})
-    assert mine.rath.sent == [{"id": "service-1"}, {"id": "service-1", "note": None}]
+    assert sent(mine) == [{"id": "service-1"}, {"id": "service-1", "note": None}]
 
 
 def test_every_operation_is_a_method_of_the_client() -> None:
@@ -128,9 +135,11 @@ async def test_a_generated_method_delegates_to_its_own_aexecute(
 ) -> None:
     import unlok.api.schema as schema
 
-    seen: list[Any] = []
+    seen: list[tuple[Unlok, type[BaseModel], dict[str, Any]]] = []
 
-    async def fake_aexecute(self: Any, operation: Any, variables: Any) -> Any:
+    async def fake_aexecute(
+        self: Unlok, operation: type[BaseModel], variables: dict[str, Any]
+    ) -> SimpleNamespace:
         seen.append((self, operation, variables))
         return SimpleNamespace(service="the-service")
 

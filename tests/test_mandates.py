@@ -13,7 +13,7 @@ from fakts.errors import NeedsReauthenticationError
 from fakts.models import Manifest
 from rath.operation import GraphQLException
 
-from unlok.api.schema import ManifestInput
+from unlok.api.schema import Mandate, ManifestInput
 from unlok.unlok import Unlok
 
 from .conftest import TEST_MANIFEST, DeployedUnlok, build_key_fakts
@@ -31,7 +31,7 @@ def _subject(device_id: str) -> Manifest:
     )
 
 
-def _mandate(unlok: Unlok, max_clients: int = 1):
+def _mandate(unlok: Unlok, max_clients: int = 1) -> Mandate:
     return unlok.create_mandate(
         agent=TEST_MANIFEST.identifier,
         manifest=SUBJECT,
