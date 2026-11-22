@@ -21,9 +21,7 @@ import pytest
 from dokker import Deployment, testing
 from dokker.log_watcher import LogWatcher
 from fakts import Fakts
-from rath.links.aiohttp import AIOHttpLink
 from fakts.contrib.rath.auth import FaktsAuthLink
-from rath.links.graphql_ws import GraphQLWSLink
 from fakts.grants.remote.authorizers.device_code import (
     ClientKind,
     DeviceCodeAuthorizer,
@@ -33,10 +31,12 @@ from fakts.grants.remote.authorizers.mandate_key import MandateKeyAuthorizer
 from fakts.grants.remote.base import RemoteGrant
 from fakts.grants.remote.discovery.well_known import WellKnownDiscovery
 from fakts.models import Manifest
-from graphql import OperationType
 from pydantic import SecretStr
+from rath.links.aiohttp import AIOHttpLink
+from rath.links.graphql_ws import GraphQLWSLink
 from rath.links.split import SplitLink
 
+from graphql import OperationType
 from unlok.rath import UnlokLinkComposition, UnlokRath
 from unlok.unlok import Unlok
 
@@ -206,7 +206,9 @@ class DeployedUnlok:
 
 
 @pytest.fixture(scope="session")
-def deployed_app(integration_ports: dict[str, int]) -> Generator[DeployedUnlok, None, None]:
+def deployed_app(
+    integration_ports: dict[str, int],
+) -> Generator[DeployedUnlok, None, None]:
     """Deploy the lok stack with Docker Compose and enrol a client into it.
 
     Yields:
@@ -216,7 +218,9 @@ def deployed_app(integration_ports: dict[str, int]) -> Generator[DeployedUnlok, 
     """
     setup = testing(compose_files)
     setup.add_health_check(
-        url=lambda spec: f"http://localhost:{spec.find_service('lok').get_port_for_internal(80).published}/lok/ht",
+        url=lambda spec: (
+            f"http://localhost:{spec.find_service('lok').get_port_for_internal(80).published}/lok/ht"
+        ),
         service="lok",
         timeout=5,
         max_retries=40,

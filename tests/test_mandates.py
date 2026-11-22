@@ -33,7 +33,10 @@ def _subject(device_id: str) -> Manifest:
 
 def _mandate(unlok: Unlok, max_clients: int = 1):
     return unlok.create_mandate(
-        agent=TEST_MANIFEST.identifier, manifest=SUBJECT, max_clients=max_clients, expires_in_days=1
+        agent=TEST_MANIFEST.identifier,
+        manifest=SUBJECT,
+        max_clients=max_clients,
+        expires_in_days=1,
     )
 
 
@@ -55,7 +58,9 @@ def test_a_mandate_pins_its_subject_and_is_listed(unlok: Unlok) -> None:
 
 
 @pytest.mark.integration
-def test_a_child_key_logs_the_subject_in(deployed_app: DeployedUnlok, unlok: Unlok) -> None:
+def test_a_child_key_logs_the_subject_in(
+    deployed_app: DeployedUnlok, unlok: Unlok
+) -> None:
     mandate = _mandate(unlok)
     device = _device()
 

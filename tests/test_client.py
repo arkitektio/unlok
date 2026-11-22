@@ -3,9 +3,9 @@
 No server: the rath is a fake returning canned data.
 """
 
+from collections.abc import AsyncIterator
 from types import SimpleNamespace
 from typing import Any
-from collections.abc import AsyncIterator
 
 import pytest
 from koil import Koil
@@ -26,12 +26,16 @@ class FakeRath:
 
     def _answer(self, variables: dict[str, Any]) -> Any:
         self.sent.append(variables)
-        return SimpleNamespace(data={"service": {"id": "service-1", "owner": {"id": "u-1"}}})
+        return SimpleNamespace(
+            data={"service": {"id": "service-1", "owner": {"id": "u-1"}}}
+        )
 
     async def aquery(self, document: str, variables: dict[str, Any]) -> Any:
         return self._answer(variables)
 
-    async def asubscribe(self, document: str, variables: dict[str, Any]) -> AsyncIterator[Any]:
+    async def asubscribe(
+        self, document: str, variables: dict[str, Any]
+    ) -> AsyncIterator[Any]:
         yield self._answer(variables)
 
 

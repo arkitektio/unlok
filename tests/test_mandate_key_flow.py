@@ -32,9 +32,15 @@ def _manifest(**overrides: object) -> Manifest:
 
 
 @pytest.mark.integration
-def test_an_issued_key_is_pinned_and_shown_once(deployed_app: DeployedUnlok, unlok: Unlok) -> None:
+def test_an_issued_key_is_pinned_and_shown_once(
+    deployed_app: DeployedUnlok, unlok: Unlok
+) -> None:
     issued = unlok.issue_mandate_key(
-        manifest=PINNED, expires_in_days=1, max_clients=1, any_version=False, allow_mesh=False
+        manifest=PINNED,
+        expires_in_days=1,
+        max_clients=1,
+        any_version=False,
+        allow_mesh=False,
     )
 
     assert len(issued.key) >= 32
@@ -65,7 +71,9 @@ def test_a_key_refuses_a_deviating_manifest(
         manifest=PINNED, expires_in_days=1, any_version=False, allow_mesh=False
     )
 
-    with build_key_fakts(deployed_app.base_url, issued.key, _manifest(**deviation)) as impostor:
+    with build_key_fakts(
+        deployed_app.base_url, issued.key, _manifest(**deviation)
+    ) as impostor:
         with pytest.raises(NeedsReauthenticationError, match=fragment):
             impostor.get_self_alias()
 

@@ -26,13 +26,15 @@ def test_issue_mandate_key_input_serializes_under_graphql_names() -> None:
         scopes=["read"],
         node_id="node-a",
         requirements=[
-            RequirementInput(key="rekuest", service="live.arkitekt.rekuest", optional=False)
+            RequirementInput(
+                key="rekuest", service="live.arkitekt.rekuest", optional=False
+            )
         ],
     )
 
-    wire = IssueMandateKeyInput(manifest=manifest, expires_in_days=1, max_clients=1).model_dump(
-        by_alias=True, exclude_none=True
-    )
+    wire = IssueMandateKeyInput(
+        manifest=manifest, expires_in_days=1, max_clients=1
+    ).model_dump(by_alias=True, exclude_none=True)
 
     assert wire["manifest"] == {
         "identifier": "com.example.app",

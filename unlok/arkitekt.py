@@ -8,15 +8,14 @@ ask for the client it returns. An app takes all of it in with
 import os
 from typing import Annotated
 
+from arkitekt_spec.declare.app import AppRegistry
 from fakts import Alias, Own, TokenLoader
 from fakts.contrib.rath.auth import FaktsAuthLink
-from graphql import OperationType
 from rath.links.aiohttp import AIOHttpLink
 from rath.links.graphql_ws import GraphQLWSLink
 from rath.links.split import SplitLink
 
-from arkitekt_spec.declare.app import AppRegistry
-
+from graphql import OperationType
 from unlok.api.schema import Service
 from unlok.rath import UnlokLinkComposition, UnlokRath
 from unlok.unlok import Unlok

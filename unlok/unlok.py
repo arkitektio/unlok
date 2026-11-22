@@ -31,7 +31,9 @@ class Unlok(Composition, UnlokApi):
     )
 
     @staticmethod
-    def _serialize(operation: type[TOperation], variables: dict[str, Any]) -> dict[str, Any]:
+    def _serialize(
+        operation: type[TOperation], variables: dict[str, Any]
+    ) -> dict[str, Any]:
         """The variables as sent on the wire.
 
         Arguments are serialised with ``exclude_unset=True``: an input field the
@@ -41,16 +43,26 @@ class Unlok(Composition, UnlokApi):
         non-nullable defaulted field is a validation error on the server, which is
         what happened before this was added.
         """
-        return operation.Arguments(**variables).model_dump(by_alias=True, exclude_unset=True)
+        return operation.Arguments(**variables).model_dump(
+            by_alias=True, exclude_unset=True
+        )
 
-    def execute(self, operation: type[TOperation], variables: dict[str, Any]) -> TOperation:
+    def execute(
+        self, operation: type[TOperation], variables: dict[str, Any]
+    ) -> TOperation:
         """Executes a query or mutation in a blocking way."""
         return unkoil(self.aexecute, operation, variables)
 
-    async def aexecute(self, operation: type[TOperation], variables: dict[str, Any]) -> TOperation:
+    async def aexecute(
+        self, operation: type[TOperation], variables: dict[str, Any]
+    ) -> TOperation:
         """Executes a query or mutation in a non-blocking way."""
-        x = await self.rath.aquery(operation.Meta.document, self._serialize(operation, variables))
-        return operation.model_validate(x.data, context=origin_context(client=self, rath=self.rath))
+        x = await self.rath.aquery(
+            operation.Meta.document, self._serialize(operation, variables)
+        )
+        return operation.model_validate(
+            x.data, context=origin_context(client=self, rath=self.rath)
+        )
 
     def subscribe(
         self, operation: type[TOperation], variables: dict[str, Any]
