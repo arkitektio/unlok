@@ -130,6 +130,10 @@ class AppFilter(BaseModel):
     )
     ids: tuple[ID, ...] | None = None
     search: str | None = None
+    identifiers: tuple[str, ...] | None = Field(
+        default=None,
+        description="Only the apps with one of these identifiers (exact match).",
+    )
     model_config = ConfigDict(
         frozen=True, extra="forbid", populate_by_name=True, use_enum_values=True
     )
@@ -462,6 +466,7 @@ class RequirementInput(BaseModel):
     "Default: False"
     description: str | None = None
     key: str
+    version: str | None = None
     model_config = ConfigDict(
         frozen=True, extra="forbid", populate_by_name=True, use_enum_values=True
     )

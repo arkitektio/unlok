@@ -34,12 +34,15 @@ type App {
   """
   The releases of the app. A release is a version of the app that can be installed by a user.
   """
-  releases(ordering: [ReleaseOrdering!]! = []): [Release!]!
+  releases(filters: ReleaseFilter, ordering: [ReleaseOrdering!]! = [], pagination: OffsetPaginationInput): [Release!]!
 
   """
   The logo of the app. This should be a url to a logo that can be used to represent the app.
   """
   logo: MediaStore
+
+  """How many releases the app has."""
+  releaseCount: Int!
 }
 
 """App(id, name, identifier, organization, logo)"""
@@ -50,6 +53,9 @@ input AppFilter {
   DISTINCT: Boolean
   ids: [ID!]
   search: String
+
+  """Only the apps with one of these identifiers (exact match)."""
+  identifiers: [AppIdentifier!]
 }
 
 """
@@ -271,6 +277,19 @@ type Client {
 }
 
 """
+A client looked up by an id another service knows it by (`clientsByClientId`).
+"""
+type ClientByClientId {
+  """
+  The id that was asked for. The client's current `clientId` may differ: a client keeps one id per release it ran.
+  """
+  requestedId: ID!
+
+  """The client known by that id."""
+  client: Client!
+}
+
+"""
 The one client model: every OAuth2 principal is a row here.
 
 Kinds of rows and their lifecycle:
@@ -342,11 +361,6 @@ input ComChannelOrdering @oneOf {
   name: Ordering
 }
 
-"""A Communication"""
-type Communication {
-  channel: ID!
-}
-
 type Context {
   """The user that is associated with this app"""
   user: User!
@@ -364,6 +378,21 @@ type Context {
   The hub this client was approved into (for an app client) or is the identity of (for a hub client). Null for clients bound to no hub, e.g. plain OIDC relying parties. Apps can pass its id back as `?hub=` on a later configure link to preselect it.
   """
   hub: Hub
+
+  """
+  The user's membership in the organization, or null when they are not a member of it.
+  """
+  membership: Membership
+
+  """
+  The brand hue (0–360) in effect: the member's own choice for the organization, else the organization's default. Null when neither is set.
+  """
+  brandHue: Float
+
+  """
+  The brand chroma (0–1) in effect: the member's own choice for the organization, else the organization's default. Null when neither is set.
+  """
+  brandChroma: Float
 
   """Are we acting in the active organization of the user?"""
   fitsActiveOrganization: Boolean!
@@ -409,7 +438,7 @@ input CreateInviteInput {
   roles: [String!] = null
 
   """
-  Grant only these collaborations of the organization's service instances, each with the roles that hold inside it, instead of making the holder a member.
+  Grant only these collaborations of the organization, each with the roles that hold inside it, instead of making the holder a member.
   """
   collaborations: [SharedCollaborationInput!] = null
 
@@ -419,7 +448,7 @@ input CreateInviteInput {
   maxUses: Int = null
 
   """
-  For a collaboration invite: whether the guests' apps may join the organization's mesh. They then reach only the hubs the granted collaborations run on, nothing else of the mesh.
+  For a collaboration invite: whether the guests' apps may join the organization's mesh. They then reach only the organization's hubs, nothing else of the mesh.
   """
   allowMesh: Boolean! = true
 }
@@ -508,6 +537,9 @@ type Device {
   """The device groups that belong to this device."""
   deviceGroups(filters: DeviceGroupFilter, ordering: [DeviceGroupOrdering!]! = [], pagination: OffsetPaginationInput): [DeviceGroup!]!
 
+  """How many clients run on this device."""
+  clientCount: Int!
+
   """The (per-organization hashed) id of the device."""
   deviceId: ID!
 }
@@ -520,6 +552,14 @@ input DeviceFilter {
   DISTINCT: Boolean
   ids: [ID!]
   search: String
+
+  """
+  Only the devices with one of these device ids: the ids the other services know a device by (`Device.deviceId`, a token's `client_device` claim), used as they are, never hashed again.
+  """
+  deviceIds: [ID!]
+
+  """Only the devices in this device group."""
+  deviceGroup: ID
 }
 
 """
@@ -665,6 +705,11 @@ type Hub {
   """
   online: Boolean!
 
+  """
+  When the hub stops counting as online unless it reports again: its last report plus three reporting intervals. Null if it never reported. A client watching `hubHealth` sets a timer for it instead of polling.
+  """
+  offlineAt: DateTime
+
   """The hub's most recent health report, or null if it never reported."""
   latestHealth: HubHealthReport
 }
@@ -797,7 +842,7 @@ type Invite {
   uses: Int!
 
   """
-  For a collaboration invite: whether its guests' apps may join the organization's mesh, reaching only the hubs the granted collaborations run on.
+  For a collaboration invite: whether its guests' apps may join the organization's mesh, reaching only its hubs.
   """
   mesh: Boolean!
 
@@ -824,6 +869,19 @@ input InviteFilter {
   ids: [ID!]
   search: String
   status: String
+
+  """Only the invites granting this collaboration (its key)."""
+  collaboration: ID
+
+  """
+  Only the links that grant collaborations (true), or only the invites to become a member (false).
+  """
+  grantsCollaborations: Boolean
+
+  """
+  Only the invites that can still be accepted (true: pending and not expired), or only the others (false).
+  """
+  valid: Boolean
 }
 
 input InviteOrdering @oneOf {
@@ -1009,6 +1067,9 @@ type Mandate {
   """Why the mandate was withdrawn."""
   revocationReason: MandateRevocation
 
+  """How many clients are logged in with the key."""
+  clientCount: Int!
+
   """The app the mandate admits, and the ceilings it puts on it."""
   subject: MandatePin!
 
@@ -1056,6 +1117,27 @@ input MandateFilter {
   ids: [ID!]
   search: String
   live: Boolean
+
+  """
+  Only the mandates this claimant may use: KEY (keyed) or AGENT (an agent app issues keys under it).
+  """
+  claimant: MandateClaimant
+
+  """
+  Only the mandates issued under a parent agent mandate (true), or only the top-level ones (false).
+  """
+  hasParent: Boolean
+
+  """Only the agent mandates this app (by identifier) may issue keys under."""
+  agentIdentifier: AppIdentifier
+
+  """Only the mandates admitting this app (by identifier, exact)."""
+  subjectIdentifier: AppIdentifier
+
+  """
+  Only the mandates whose clients may (true) or may not (false) ask for a mesh key.
+  """
+  allowMesh: Boolean
 }
 
 input MandateOrdering @oneOf {
@@ -1143,6 +1225,11 @@ type Membership {
   user: User!
   organization: Organization!
 
+  """
+  When the user became a member. Null for an old membership whose invite or request did not tell.
+  """
+  createdAt: DateTime
+
   """The roles that the user has in the organization"""
   roles(filters: RoleFilter, ordering: [RoleOrdering!]! = [], pagination: OffsetPaginationInput): [Role!]!
 
@@ -1157,6 +1244,11 @@ type Membership {
   brandChroma: Float
 }
 
+"""Numeric/aggregatable fields of Membership"""
+enum MembershipField {
+  CREATED_AT
+}
+
 """__doc__"""
 input MembershipFilter {
   AND: MembershipFilter
@@ -1165,10 +1257,30 @@ input MembershipFilter {
   DISTINCT: Boolean
   ids: [ID!]
   search: String
+
+  """Only the memberships holding this role."""
+  role: ID
+
+  """Only the organization's admins (true) or only the others (false)."""
+  isAdmin: Boolean
+
+  """
+  Only the memberships made at or after this time. A membership whose creation time is unknown (older than the record) never matches.
+  """
+  createdAfter: DateTime
+
+  """
+  Only the memberships made before this time. A membership whose creation time is unknown never matches.
+  """
+  createdBefore: DateTime
 }
 
 input MembershipOrdering @oneOf {
   id: Ordering
+  createdAt: Ordering
+
+  """By the member's username."""
+  username: Ordering
 }
 
 """
@@ -1179,6 +1291,10 @@ type MembershipRequest {
 
   """Optional note from the user explaining the request."""
   reason: String
+
+  """
+  `pending`, `approved` or `declined` (filter with `MembershipRequestStatus`).
+  """
   status: String!
   createdAt: DateTime!
   resolvedBy: User
@@ -1188,6 +1304,73 @@ type MembershipRequest {
   The user who asks to join. Not a member yet, so they are visible here and nowhere else.
   """
   user: User!
+}
+
+"""
+A membership request into the active organization was made or answered. Exactly one field is set.
+"""
+type MembershipRequestEvent {
+  """A new request."""
+  create: MembershipRequest
+
+  """A request that was answered."""
+  update: MembershipRequest
+}
+
+"""__doc__"""
+input MembershipRequestFilter {
+  AND: MembershipRequestFilter
+  OR: MembershipRequestFilter
+  NOT: MembershipRequestFilter
+  DISTINCT: Boolean
+  ids: [ID!]
+
+  """Matches the requester's username or their reason."""
+  search: String
+
+  """Only the requests in one of these states."""
+  status: [MembershipRequestStatus!]
+}
+
+input MembershipRequestOrdering @oneOf {
+  id: Ordering
+  createdAt: Ordering
+  respondedAt: Ordering
+}
+
+"""Where a membership request stands."""
+enum MembershipRequestStatus {
+  PENDING
+  APPROVED
+  DECLINED
+}
+
+type MembershipStats {
+  """Total number of items in the selection"""
+  count: Int!
+
+  """Number of distinct values for the field"""
+  distinctCount(field: MembershipField!): Int!
+
+  """Maximum"""
+  max(field: MembershipField!): Float
+
+  """Minimum"""
+  min(field: MembershipField!): Float
+
+  """Average"""
+  avg(field: MembershipField!): Float
+
+  """Sum"""
+  sum(field: MembershipField!): Float
+
+  """Time-bucketed stats over a datetime field."""
+  series(field: MembershipField!, timestampField: MembershipTimestampField!, by: Granularity!): [TimeBucket!]!
+}
+
+"""Datetime fields of Membership for bucketing"""
+enum MembershipTimestampField {
+  CREATED_AT
 }
 
 type Mutation {
@@ -1278,7 +1461,7 @@ type Organization {
   """
   Requests of non-members to join this organization. Only its owner and admins see any.
   """
-  membershipRequests: [MembershipRequest!]!
+  membershipRequests(filters: MembershipRequestFilter, ordering: [MembershipRequestOrdering!]! = [], pagination: OffsetPaginationInput): [MembershipRequest!]!
 
   """
   The logo of the organization. Mirrors `profile.avatar`; prefer that field.
@@ -1288,7 +1471,9 @@ type Organization {
   """The roles that are available in the organization"""
   roles: [Role!]!
 
-  """The users that are part of the organization"""
+  """
+  The users that are part of the organization. Only yourself for a guest who was only granted some collaborations.
+  """
   users: [User!]!
 
   """The name of this organization"""
@@ -1382,7 +1567,7 @@ type Query {
   organizations(filters: OrganizationFilter, ordering: [OrganizationOrdering!]! = [], pagination: OffsetPaginationInput): [Organization!]! @auth(required_scopes: ["lok_read"])
   devices(filters: DeviceFilter, ordering: [DeviceOrdering!]! = [], pagination: OffsetPaginationInput): [Device!]! @auth(required_scopes: ["lok_read"])
   apps(filters: AppFilter, ordering: [AppOrdering!]! = [], pagination: OffsetPaginationInput): [App!]! @auth(required_scopes: ["lok_read"])
-  releases(ordering: [ReleaseOrdering!]! = []): [Release!]! @auth(required_scopes: ["lok_read"])
+  releases(filters: ReleaseFilter, ordering: [ReleaseOrdering!]! = [], pagination: OffsetPaginationInput): [Release!]! @auth(required_scopes: ["lok_read"])
   clients(filters: ClientFilter, ordering: [ClientOrdering!]! = [], pagination: OffsetPaginationInput): [Client!]! @auth(required_scopes: ["lok_read"])
 
   """
@@ -1398,6 +1583,11 @@ type Query {
   serviceInstances(filters: ServiceInstanceFilter, ordering: [ServiceInstanceOrdering!]! = [], pagination: OffsetPaginationInput): [ServiceInstance!]! @auth(required_scopes: ["lok_read"])
   serviceReleases(filters: ServiceReleaseFilter, ordering: [ServiceReleaseOrdering!]! = [], pagination: OffsetPaginationInput): [ServiceRelease!]! @auth(required_scopes: ["lok_read"])
   invites(filters: InviteFilter, ordering: [InviteOrdering!]! = [], pagination: OffsetPaginationInput): [Invite!]! @auth(required_scopes: ["lok_read"])
+
+  """
+  Requests of non-members to join the active organization. Only its owner and admins see any.
+  """
+  membershipRequests(filters: MembershipRequestFilter, ordering: [MembershipRequestOrdering!]! = [], pagination: OffsetPaginationInput): [MembershipRequest!]! @auth(required_scopes: ["lok_read"])
   layers(filters: LayerFilter, ordering: [LayerOrdering!]! = [], pagination: OffsetPaginationInput): [Layer!]! @auth(required_scopes: ["lok_read"])
 
   """
@@ -1405,6 +1595,11 @@ type Query {
   """
   mandates(filters: MandateFilter, ordering: [MandateOrdering!]! = [], pagination: OffsetPaginationInput): [Mandate!]! @auth(required_scopes: ["lok_read"])
   userStats(filters: UserFilter = null): UserStats! @auth(required_scopes: ["lok_read"])
+
+  """
+  Counts over the memberships of the active organization, e.g. per role with `filters: { role }`.
+  """
+  membershipStats(filters: MembershipFilter = null): MembershipStats! @auth(required_scopes: ["lok_read"])
   mycontext: Context! @auth(required_scopes: ["lok_read"])
   bugReport(id: ID!): BugReport! @auth(required_scopes: ["lok_read"])
   user(id: ID!): User! @auth(required_scopes: ["lok_read"])
@@ -1414,6 +1609,11 @@ type Query {
   app(id: ID = null, identifier: AppIdentifier = null, clientId: ID = null): App! @auth(required_scopes: ["lok_read"])
   release(id: ID = null, identifier: AppIdentifier = null, version: Version = null, clientId: ID = null): Release! @auth(required_scopes: ["lok_read"])
   client(id: ID = null, clientId: ID = null): Client! @auth(required_scopes: ["lok_read"])
+
+  """
+  The clients of the organization other services know by these ids (a token's `client_id` claim), in one query.
+  """
+  clientsByClientId(clientIds: [ID!]!): [ClientByClientId!]! @auth(required_scopes: ["lok_read"])
   myManagedClients(kind: ClientKind!): [Client!]! @auth(required_scopes: ["lok_read"])
   scopes: [Scope!]! @auth(required_scopes: ["lok_read"])
   mandate(id: ID!): Mandate! @auth(required_scopes: ["lok_read"])
@@ -1424,7 +1624,7 @@ type Query {
   device(id: ID!): Device! @auth(required_scopes: ["lok_read"])
 
   """
-  Look a device up by its raw device id, as reported by the client. Device ids are stored as a per-organization hash, so the raw id is hashed with the caller's organization before lookup.
+  Look a device up by its device id: the id the other services know it by (`Device.deviceId`, a token's `client_device` claim, rekuest's `Agent.device.deviceId`). The raw id a client reports about itself is accepted too.
   """
   deviceByDeviceId(id: ID!): Device! @auth(required_scopes: ["lok_read"])
   deviceGroup(id: ID!): DeviceGroup! @auth(required_scopes: ["lok_read"])
@@ -1476,10 +1676,32 @@ type Release {
   """The clients of the release"""
   clients(filters: ClientFilter, ordering: [ClientOrdering!]! = [], pagination: OffsetPaginationInput): [Client!]!
 
+  """How many clients run the release."""
+  clientCount: Int!
+
   """
   The requirements of the release: the services (by key and service identifier) a client of this release needs composed against it. Each entry is a manifest `Requirement` object (`key`, `service`, `optional`, `description`).
   """
   requirements: [JSON!]!
+}
+
+"""
+Release(id, app, version, is_latest, is_dev, name, logo, scopes, requirements)
+"""
+input ReleaseFilter {
+  AND: ReleaseFilter
+  OR: ReleaseFilter
+  NOT: ReleaseFilter
+  DISTINCT: Boolean
+  ids: [ID!]
+
+  """Only the releases of these apps."""
+  apps: [ID!]
+
+  """
+  Releases whose version, name or app name or identifier contain this (any case).
+  """
+  search: String
 }
 
 input ReleaseOrdering @oneOf {
@@ -1514,6 +1736,7 @@ input RequirementInput {
   optional: Boolean! = false
   description: String = null
   key: String!
+  version: String = null
 }
 
 """A requirement as a mandate pins it."""
@@ -1762,14 +1985,13 @@ input ServiceReleaseOrdering @oneOf {
 }
 
 """
-One collaboration a collaboration invite grants: a collaboration of a service instance, with the roles that hold inside it.
+One collaboration a collaboration invite grants, by its key, with the roles that hold inside it.
 """
 type SharedCollaboration {
-  """The service instance the collaboration lives in."""
-  instance: ID!
-
-  """The collaboration's id in that service."""
-  collaboration: String!
+  """
+  The collaboration's key: what every service of the organization names it by.
+  """
+  collaboration: ID!
 
   """
   Identifiers of the organization's roles that hold inside the collaboration. Empty: view only.
@@ -1779,12 +2001,9 @@ type SharedCollaboration {
 
 input SharedCollaborationInput {
   """
-  The service instance the collaboration lives in (on a hub of the organization): its id, or, when called from an app, the app's own requirement key for it (e.g. 'mikro'), resolved through the app's service mappings.
+  The collaboration's key (`createCollaboration`): one across all of the organization's services.
   """
-  instance: ID!
-
-  """The collaboration's id in that service."""
-  collaboration: String!
+  collaboration: ID!
 
   """
   Identifiers of the organization's roles that hold for the guest inside the collaboration. Empty: view only.
@@ -1813,7 +2032,9 @@ input StrFilterLookup {
 }
 
 type Subscription {
-  communications(channels: [ID!]!): Communication! @auth(required_scopes: ["lok_read"])
+  myMessages: SystemMessageEvent! @auth(required_scopes: ["lok_read"])
+  membershipRequests: MembershipRequestEvent! @auth(required_scopes: ["lok_read"])
+  hubHealth(hub: ID = null): Hub! @auth(required_scopes: ["lok_read"])
 }
 
 "\nA System Message is a message that is sent to a user. \nIt can be used to notify the user of important events or to request their attention.\nSystem messages can use Rekuest Hooks as actions to allow the user to interact with the message.\n\n\n"
@@ -1825,6 +2046,20 @@ type SystemMessage {
   """The action to take (e.g. the node)"""
   action: String!
   user: User!
+}
+
+"""
+A change to one of the caller's system messages. Exactly one field is set.
+"""
+type SystemMessageEvent {
+  """A message the caller just got."""
+  create: SystemMessage
+
+  """A message of the caller that changed (e.g. was acknowledged)."""
+  update: SystemMessage
+
+  """The id of a message of the caller that was deleted."""
+  delete: ID
 }
 
 type TimeBucket {
