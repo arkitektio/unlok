@@ -185,6 +185,55 @@ class ClientFilter(BaseModel):
     )
 
 
+class CollaborationFilter(BaseModel):
+    """What a guest of an organization is let in to: one key across all of its services.
+
+    lok names it and grants it; what is in it, each service of the organization
+    holds itself (``arkitekt_service.collaborations``), under a row with the same
+    ``key``, made the first time something is put in there. lok never learns what
+    is in it: a guest's token lists the keys (``collabs``), and each service shows
+    what it put in them."""
+
+    and_: "CollaborationFilter | None" = Field(
+        validation_alias=AliasChoices("and_", "AND"),
+        serialization_alias="AND",
+        default=None,
+    )
+    or_: "CollaborationFilter | None" = Field(
+        validation_alias=AliasChoices("or_", "OR"),
+        serialization_alias="OR",
+        default=None,
+    )
+    not_: "CollaborationFilter | None" = Field(
+        validation_alias=AliasChoices("not_", "NOT"),
+        serialization_alias="NOT",
+        default=None,
+    )
+    distinct: bool | None = Field(
+        validation_alias=AliasChoices("distinct", "DISTINCT"),
+        serialization_alias="DISTINCT",
+        default=None,
+    )
+    ids: tuple[ID, ...] | None = None
+    keys: tuple[ID, ...] | None = Field(
+        default=None, description="Only these collaborations, by their key."
+    )
+    search: str | None = None
+    model_config = ConfigDict(
+        frozen=True, extra="forbid", populate_by_name=True, use_enum_values=True
+    )
+
+
+class CreateCollaborationInput(BaseModel):
+    """No documentation"""
+
+    name: str
+    description: str | None = None
+    model_config = ConfigDict(
+        frozen=True, extra="forbid", populate_by_name=True, use_enum_values=True
+    )
+
+
 class CreateGroupProfileInput(BaseModel):
     """No documentation"""
 
@@ -628,6 +677,17 @@ class StrFilterLookup(BaseModel):
     )
 
 
+class UpdateCollaborationInput(BaseModel):
+    """No documentation"""
+
+    id: ID
+    name: str | None = None
+    description: str | None = None
+    model_config = ConfigDict(
+        frozen=True, extra="forbid", populate_by_name=True, use_enum_values=True
+    )
+
+
 class UpdateGroupProfileInput(BaseModel):
     """No documentation"""
 
@@ -848,6 +908,48 @@ class ListClient(BaseModel):
         document = "fragment ListClient on Client {\n  id\n  user {\n    id\n    username\n    __typename\n  }\n  name\n  kind\n  release {\n    version\n    logo {\n      presignedUrl\n      __typename\n    }\n    app {\n      id\n      identifier\n      logo {\n        presignedUrl\n        __typename\n      }\n      __typename\n    }\n    __typename\n  }\n  __typename\n}"
         name = "ListClient"
         type = "Client"
+
+
+class CollaborationCreatedBy(BaseModel):
+    """
+    A User is a person that can log in to the system. They are uniquely identified by their username.
+    And can have an email address associated with them (but don't have to).
+
+    A user can be assigned to groups and has a profile that can be used to display information about them.
+    Detail information about a user can be found in the profile.
+
+    All users can have social accounts associated with them. These are used to authenticate the user with external services,
+    such as ORCID or GitHub.
+    """
+
+    typename: Literal["User"] = Field(alias="__typename", default="User", exclude=True)
+    id: ID
+    username: str
+    "Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only."
+    model_config = ConfigDict(frozen=True)
+
+
+class Collaboration(BaseModel):
+    """What a guest of the organization is let in to: one key across all of its services, each of which holds what was put in it there (`addToCollaboration`, `shareWorkflow` with the key). lok names it and grants it (`createInvite(collaborations:)`); it never sees what is in it."""
+
+    typename: Literal["Collaboration"] = Field(
+        alias="__typename", default="Collaboration", exclude=True
+    )
+    id: ID
+    key: ID
+    "The key every service of the organization names the collaboration by."
+    name: str
+    description: str | None = Field(default=None)
+    created_at: datetime = Field(alias="createdAt")
+    created_by: CollaborationCreatedBy | None = Field(default=None, alias="createdBy")
+    model_config = ConfigDict(frozen=True)
+
+    class Meta:
+        """Meta class for Collaboration"""
+
+        document = "fragment Collaboration on Collaboration {\n  id\n  key\n  name\n  description\n  createdAt\n  createdBy {\n    id\n    username\n    __typename\n  }\n  __typename\n}"
+        name = "Collaboration"
+        type = "Collaboration"
 
 
 class PresignedPostCredentials(BaseModel):
@@ -1794,6 +1896,55 @@ class ServiceInstance(BaseModel):
         type = "ServiceInstance"
 
 
+class CreateCollaborationMutation(BaseModel):
+    """No documentation found for this operation."""
+
+    create_collaboration: Collaboration = Field(alias="createCollaboration")
+
+    class Arguments(BaseModel):
+        """Arguments for CreateCollaboration"""
+
+        input: CreateCollaborationInput
+
+    class Meta:
+        """Meta class for CreateCollaboration"""
+
+        document = "fragment Collaboration on Collaboration {\n  id\n  key\n  name\n  description\n  createdAt\n  createdBy {\n    id\n    username\n    __typename\n  }\n  __typename\n}\n\nmutation CreateCollaboration($input: CreateCollaborationInput!) {\n  createCollaboration(input: $input) {\n    ...Collaboration\n    __typename\n  }\n}"
+
+
+class UpdateCollaborationMutation(BaseModel):
+    """No documentation found for this operation."""
+
+    update_collaboration: Collaboration = Field(alias="updateCollaboration")
+
+    class Arguments(BaseModel):
+        """Arguments for UpdateCollaboration"""
+
+        input: UpdateCollaborationInput
+
+    class Meta:
+        """Meta class for UpdateCollaboration"""
+
+        document = "fragment Collaboration on Collaboration {\n  id\n  key\n  name\n  description\n  createdAt\n  createdBy {\n    id\n    username\n    __typename\n  }\n  __typename\n}\n\nmutation UpdateCollaboration($input: UpdateCollaborationInput!) {\n  updateCollaboration(input: $input) {\n    ...Collaboration\n    __typename\n  }\n}"
+
+
+class DeleteCollaborationMutation(BaseModel):
+    """No documentation found for this operation."""
+
+    delete_collaboration: ID = Field(alias="deleteCollaboration")
+    "Delete a collaboration, and every grant of it."
+
+    class Arguments(BaseModel):
+        """Arguments for DeleteCollaboration"""
+
+        id: ID
+
+    class Meta:
+        """Meta class for DeleteCollaboration"""
+
+        document = "mutation DeleteCollaboration($id: ID!) {\n  deleteCollaboration(input: {id: $id})\n}"
+
+
 class CreateGroupProfileMutation(BaseModel):
     """No documentation found for this operation."""
 
@@ -2102,6 +2253,41 @@ class ClientQuery(BaseModel):
         """Meta class for Client"""
 
         document = "fragment ListUser on User {\n  username\n  firstName\n  lastName\n  email\n  avatar\n  id\n  __typename\n}\n\nfragment ListApp on App {\n  id\n  identifier\n  logo {\n    presignedUrl\n    __typename\n  }\n  __typename\n}\n\nfragment ListClient on Client {\n  id\n  user {\n    id\n    username\n    __typename\n  }\n  name\n  kind\n  release {\n    version\n    logo {\n      presignedUrl\n      __typename\n    }\n    app {\n      id\n      identifier\n      logo {\n        presignedUrl\n        __typename\n      }\n      __typename\n    }\n    __typename\n  }\n  __typename\n}\n\nfragment ListServiceInstance on ServiceInstance {\n  id\n  instanceId\n  allowedUsers {\n    ...ListUser\n    __typename\n  }\n  deniedUsers {\n    ...ListUser\n    __typename\n  }\n  __typename\n}\n\nfragment ListRelease on Release {\n  id\n  version\n  logo {\n    presignedUrl\n    __typename\n  }\n  app {\n    ...ListApp\n    __typename\n  }\n  __typename\n}\n\nfragment ListServiceInstanceMapping on ServiceInstanceMapping {\n  id\n  key\n  instance {\n    ...ListServiceInstance\n    __typename\n  }\n  client {\n    ...ListClient\n    __typename\n  }\n  optional\n  __typename\n}\n\nfragment DetailClient on Client {\n  id\n  name\n  clientId\n  user {\n    id\n    username\n    __typename\n  }\n  kind\n  release {\n    ...ListRelease\n    __typename\n  }\n  logo {\n    presignedUrl\n    __typename\n  }\n  mappings {\n    ...ListServiceInstanceMapping\n    __typename\n  }\n  issueUrl\n  __typename\n}\n\nquery Client($clientId: ID!) {\n  client(clientId: $clientId) {\n    ...DetailClient\n    __typename\n  }\n}"
+
+
+class GetCollaborationQuery(BaseModel):
+    """No documentation found for this operation."""
+
+    collaboration: Collaboration
+
+    class Arguments(BaseModel):
+        """Arguments for GetCollaboration"""
+
+        id: ID | None = Field(default=None)
+        key: ID | None = Field(default=None)
+
+    class Meta:
+        """Meta class for GetCollaboration"""
+
+        document = "fragment Collaboration on Collaboration {\n  id\n  key\n  name\n  description\n  createdAt\n  createdBy {\n    id\n    username\n    __typename\n  }\n  __typename\n}\n\nquery GetCollaboration($id: ID, $key: ID) {\n  collaboration(id: $id, key: $key) {\n    ...Collaboration\n    __typename\n  }\n}"
+
+
+class ListCollaborationsQuery(BaseModel):
+    """No documentation found for this operation."""
+
+    collaborations: tuple[Collaboration, ...]
+    "The active organization's collaborations (a guest: theirs)."
+
+    class Arguments(BaseModel):
+        """Arguments for ListCollaborations"""
+
+        filters: CollaborationFilter | None = Field(default=None)
+        pagination: OffsetPaginationInput | None = Field(default=None)
+
+    class Meta:
+        """Meta class for ListCollaborations"""
+
+        document = "fragment Collaboration on Collaboration {\n  id\n  key\n  name\n  description\n  createdAt\n  createdBy {\n    id\n    username\n    __typename\n  }\n  __typename\n}\n\nquery ListCollaborations($filters: CollaborationFilter, $pagination: OffsetPaginationInput) {\n  collaborations(filters: $filters, pagination: $pagination) {\n    ...Collaboration\n    __typename\n  }\n}"
 
 
 class GroupOptionsQueryOptions(BaseModel):
@@ -2599,10 +2785,137 @@ class UnlokApi:
 
     __scopes__: ClassVar[tuple[str, ...]] = (
         "lok_mandates",
+        "lok_organizations",
         "lok_profile",
         "lok_read",
         "lok_services",
     )
+
+    async def acreate_collaboration(
+        self, name: str, description: str | None | UnsetType = UNSET
+    ) -> Collaboration:
+        """CreateCollaboration
+
+
+        Args:
+            name: The `String` scalar type represents textual data, represented as UTF-8 character sequences. The String type is most often used by GraphQL to represent free-form human-readable text. (required)
+            description: The `String` scalar type represents textual data, represented as UTF-8 character sequences. The String type is most often used by GraphQL to represent free-form human-readable text.
+
+        Returns:
+            Collaboration"""
+        variables: dict[str, builtins.object] = {}
+        _input: dict[str, builtins.object] = {}
+        _input["name"] = name
+        if description is not UNSET:
+            _input["description"] = description
+        variables["input"] = _input
+        return (
+            await self.aexecute(CreateCollaborationMutation, variables)
+        ).create_collaboration
+
+    def create_collaboration(
+        self, name: str, description: str | None | UnsetType = UNSET
+    ) -> Collaboration:
+        """CreateCollaboration
+
+
+        Args:
+            name: The `String` scalar type represents textual data, represented as UTF-8 character sequences. The String type is most often used by GraphQL to represent free-form human-readable text. (required)
+            description: The `String` scalar type represents textual data, represented as UTF-8 character sequences. The String type is most often used by GraphQL to represent free-form human-readable text.
+
+        Returns:
+            Collaboration"""
+        variables: dict[str, builtins.object] = {}
+        _input: dict[str, builtins.object] = {}
+        _input["name"] = name
+        if description is not UNSET:
+            _input["description"] = description
+        variables["input"] = _input
+        return self.execute(CreateCollaborationMutation, variables).create_collaboration
+
+    async def aupdate_collaboration(
+        self,
+        id: IDCoercible,
+        name: str | None | UnsetType = UNSET,
+        description: str | None | UnsetType = UNSET,
+    ) -> Collaboration:
+        """UpdateCollaboration
+
+
+        Args:
+            id: The `ID` scalar type represents a unique identifier, often used to refetch an object or as key for a cache. The ID type appears in a JSON response as a String; however, it is not intended to be human-readable. When expected as an input type, any string (such as `"4"`) or integer (such as `4`) input value will be accepted as an ID. (required)
+            name: The `String` scalar type represents textual data, represented as UTF-8 character sequences. The String type is most often used by GraphQL to represent free-form human-readable text.
+            description: The `String` scalar type represents textual data, represented as UTF-8 character sequences. The String type is most often used by GraphQL to represent free-form human-readable text.
+
+        Returns:
+            Collaboration"""
+        variables: dict[str, builtins.object] = {}
+        _input: dict[str, builtins.object] = {}
+        _input["id"] = id
+        if name is not UNSET:
+            _input["name"] = name
+        if description is not UNSET:
+            _input["description"] = description
+        variables["input"] = _input
+        return (
+            await self.aexecute(UpdateCollaborationMutation, variables)
+        ).update_collaboration
+
+    def update_collaboration(
+        self,
+        id: IDCoercible,
+        name: str | None | UnsetType = UNSET,
+        description: str | None | UnsetType = UNSET,
+    ) -> Collaboration:
+        """UpdateCollaboration
+
+
+        Args:
+            id: The `ID` scalar type represents a unique identifier, often used to refetch an object or as key for a cache. The ID type appears in a JSON response as a String; however, it is not intended to be human-readable. When expected as an input type, any string (such as `"4"`) or integer (such as `4`) input value will be accepted as an ID. (required)
+            name: The `String` scalar type represents textual data, represented as UTF-8 character sequences. The String type is most often used by GraphQL to represent free-form human-readable text.
+            description: The `String` scalar type represents textual data, represented as UTF-8 character sequences. The String type is most often used by GraphQL to represent free-form human-readable text.
+
+        Returns:
+            Collaboration"""
+        variables: dict[str, builtins.object] = {}
+        _input: dict[str, builtins.object] = {}
+        _input["id"] = id
+        if name is not UNSET:
+            _input["name"] = name
+        if description is not UNSET:
+            _input["description"] = description
+        variables["input"] = _input
+        return self.execute(UpdateCollaborationMutation, variables).update_collaboration
+
+    async def adelete_collaboration(self, id: IDCoercible) -> ID:
+        """DeleteCollaboration
+
+        Delete a collaboration, and every grant of it.
+
+        Args:
+            id (ID): No description
+
+        Returns:
+            ID"""
+        variables: dict[str, builtins.object] = {}
+        variables["id"] = id
+        return (
+            await self.aexecute(DeleteCollaborationMutation, variables)
+        ).delete_collaboration
+
+    def delete_collaboration(self, id: IDCoercible) -> ID:
+        """DeleteCollaboration
+
+        Delete a collaboration, and every grant of it.
+
+        Args:
+            id (ID): No description
+
+        Returns:
+            ID"""
+        variables: dict[str, builtins.object] = {}
+        variables["id"] = id
+        return self.execute(DeleteCollaborationMutation, variables).delete_collaboration
 
     async def acreate_group_profile(
         self, group: IDCoercible, name: str, avatar: IDCoercible
@@ -3464,6 +3777,92 @@ class UnlokApi:
         variables["clientId"] = client_id
         return self.execute(ClientQuery, variables).client
 
+    async def aget_collaboration(
+        self,
+        id: IDCoercible | None | UnsetType = UNSET,
+        key: IDCoercible | None | UnsetType = UNSET,
+    ) -> Collaboration:
+        """GetCollaboration
+
+
+        Args:
+            id (ID | None, optional): No description.
+            key (ID | None, optional): No description.
+
+        Returns:
+            Collaboration"""
+        variables: dict[str, builtins.object] = {}
+        if id is not UNSET:
+            variables["id"] = id
+        if key is not UNSET:
+            variables["key"] = key
+        return (await self.aexecute(GetCollaborationQuery, variables)).collaboration
+
+    def get_collaboration(
+        self,
+        id: IDCoercible | None | UnsetType = UNSET,
+        key: IDCoercible | None | UnsetType = UNSET,
+    ) -> Collaboration:
+        """GetCollaboration
+
+
+        Args:
+            id (ID | None, optional): No description.
+            key (ID | None, optional): No description.
+
+        Returns:
+            Collaboration"""
+        variables: dict[str, builtins.object] = {}
+        if id is not UNSET:
+            variables["id"] = id
+        if key is not UNSET:
+            variables["key"] = key
+        return self.execute(GetCollaborationQuery, variables).collaboration
+
+    async def alist_collaborations(
+        self,
+        filters: CollaborationFilter | None | UnsetType = UNSET,
+        pagination: OffsetPaginationInput | None | UnsetType = UNSET,
+    ) -> tuple[Collaboration, ...]:
+        """ListCollaborations
+
+        The active organization's collaborations (a guest: theirs).
+
+        Args:
+            filters (CollaborationFilter | None, optional): No description.
+            pagination (OffsetPaginationInput | None, optional): No description.
+
+        Returns:
+            list[Collaboration]"""
+        variables: dict[str, builtins.object] = {}
+        if filters is not UNSET:
+            variables["filters"] = filters
+        if pagination is not UNSET:
+            variables["pagination"] = pagination
+        return (await self.aexecute(ListCollaborationsQuery, variables)).collaborations
+
+    def list_collaborations(
+        self,
+        filters: CollaborationFilter | None | UnsetType = UNSET,
+        pagination: OffsetPaginationInput | None | UnsetType = UNSET,
+    ) -> tuple[Collaboration, ...]:
+        """ListCollaborations
+
+        The active organization's collaborations (a guest: theirs).
+
+        Args:
+            filters (CollaborationFilter | None, optional): No description.
+            pagination (OffsetPaginationInput | None, optional): No description.
+
+        Returns:
+            list[Collaboration]"""
+        variables: dict[str, builtins.object] = {}
+        if filters is not UNSET:
+            variables["filters"] = filters
+        if pagination is not UNSET:
+            variables["pagination"] = pagination
+        return self.execute(ListCollaborationsQuery, variables).collaborations
+
     async def agroup_options(
         self,
         search: str | None | UnsetType = UNSET,
@@ -4289,6 +4688,7 @@ class UnlokApi:
 
 AppFilter.model_rebuild()
 ClientFilter.model_rebuild()
+CollaborationFilter.model_rebuild()
 CreateMandateInput.model_rebuild()
 GroupFilter.model_rebuild()
 IssueMandateKeyInput.model_rebuild()

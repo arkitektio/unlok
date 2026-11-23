@@ -339,6 +339,41 @@ enum ClientRole {
 }
 
 """
+What a guest of the organization is let in to: one key across all of its services, each of which holds what was put in it there (`addToCollaboration`, `shareWorkflow` with the key). lok names it and grants it (`createInvite(collaborations:)`); it never sees what is in it.
+"""
+type Collaboration {
+  id: ID!
+  name: String!
+  description: String
+  createdAt: DateTime!
+  createdBy: User
+
+  """The key every service of the organization names the collaboration by."""
+  key: ID!
+}
+
+"""
+What a guest of an organization is let in to: one key across all of its services.
+
+lok names it and grants it; what is in it, each service of the organization
+holds itself (``arkitekt_service.collaborations``), under a row with the same
+``key``, made the first time something is put in there. lok never learns what
+is in it: a guest's token lists the keys (``collabs``), and each service shows
+what it put in them.
+"""
+input CollaborationFilter {
+  AND: CollaborationFilter
+  OR: CollaborationFilter
+  NOT: CollaborationFilter
+  DISTINCT: Boolean
+  ids: [ID!]
+
+  """Only these collaborations, by their key."""
+  keys: [ID!]
+  search: String
+}
+
+"""
 A communication channel through which a user can be notified (e.g. a push token).
 """
 type ComChannel {
@@ -424,6 +459,11 @@ input CreateBugReportInput {
 
   """A data URL (JPEG, PNG or WebP) of at most 1 MB."""
   screenshot: String = null
+}
+
+input CreateCollaborationInput {
+  name: String!
+  description: String = null
 }
 
 input CreateGroupProfileInput {
@@ -524,6 +564,10 @@ input DeclineMembershipRequestInput {
 }
 
 input DeleteBugReportInput {
+  id: ID!
+}
+
+input DeleteCollaborationInput {
   id: ID!
 }
 
@@ -1397,6 +1441,11 @@ type Mutation {
   updateGroupProfile(input: UpdateGroupProfileInput!): GroupProfile! @auth(required_scopes: ["lok_profile"])
   createGroupProfile(input: CreateGroupProfileInput!): GroupProfile! @auth(required_scopes: ["lok_profile"])
   createInvite(input: CreateInviteInput!): Invite! @auth(required_scopes: ["lok_organizations"])
+  createCollaboration(input: CreateCollaborationInput!): Collaboration! @auth(required_scopes: ["lok_organizations"])
+  updateCollaboration(input: UpdateCollaborationInput!): Collaboration! @auth(required_scopes: ["lok_organizations"])
+
+  """Delete a collaboration, and every grant of it."""
+  deleteCollaboration(input: DeleteCollaborationInput!): ID! @auth(required_scopes: ["lok_organizations"])
   acceptInvite(input: AcceptInviteInput!): Membership! @auth(required_scopes: ["lok_organizations"])
   declineInvite(input: DeclineInviteInput!): Invite! @auth(required_scopes: ["lok_organizations"])
   cancelInvite(input: CancelInviteInput!): Invite! @auth(required_scopes: ["lok_organizations"])
@@ -1584,6 +1633,9 @@ type Query {
   serviceReleases(filters: ServiceReleaseFilter, ordering: [ServiceReleaseOrdering!]! = [], pagination: OffsetPaginationInput): [ServiceRelease!]! @auth(required_scopes: ["lok_read"])
   invites(filters: InviteFilter, ordering: [InviteOrdering!]! = [], pagination: OffsetPaginationInput): [Invite!]! @auth(required_scopes: ["lok_read"])
 
+  """The active organization's collaborations (a guest: theirs)."""
+  collaborations(filters: CollaborationFilter, pagination: OffsetPaginationInput): [Collaboration!]! @auth(required_scopes: ["lok_read"])
+
   """
   Requests of non-members to join the active organization. Only its owner and admins see any.
   """
@@ -1620,6 +1672,7 @@ type Query {
   myActiveMessages: [SystemMessage!]! @auth(required_scopes: ["lok_read"])
   message(id: ID!): SystemMessage! @auth(required_scopes: ["lok_read"])
   hallo: String! @auth(required_scopes: ["lok_read"])
+  collaboration(id: ID = null, key: ID = null): Collaboration! @auth(required_scopes: ["lok_read"])
   service(id: ID!): Service! @auth(required_scopes: ["lok_read"])
   device(id: ID!): Device! @auth(required_scopes: ["lok_read"])
 
@@ -2074,6 +2127,12 @@ type TimeBucket {
 
 input UnresolveBugReportInput {
   id: ID!
+}
+
+input UpdateCollaborationInput {
+  id: ID!
+  name: String = null
+  description: String = null
 }
 
 input UpdateDeviceInput {

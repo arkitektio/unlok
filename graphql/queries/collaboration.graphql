@@ -1,0 +1,14 @@
+query GetCollaboration($id: ID, $key: ID) {
+  collaboration(id: $id, key: $key) {
+    ...Collaboration
+  }
+}
+
+query ListCollaborations(
+  $filters: CollaborationFilter
+  $pagination: OffsetPaginationInput
+) {
+  collaborations(filters: $filters, pagination: $pagination) {
+    ...Collaboration
+  }
+}

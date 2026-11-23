@@ -1,0 +1,11 @@
+fragment Collaboration on Collaboration {
+  id
+  key
+  name
+  description
+  createdAt
+  createdBy {
+    id
+    username
+  }
+}

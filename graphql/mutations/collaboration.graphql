@@ -1,0 +1,15 @@
+mutation CreateCollaboration($input: CreateCollaborationInput!) {
+  createCollaboration(input: $input) {
+    ...Collaboration
+  }
+}
+
+mutation UpdateCollaboration($input: UpdateCollaborationInput!) {
+  updateCollaboration(input: $input) {
+    ...Collaboration
+  }
+}
+
+mutation DeleteCollaboration($id: ID!) {
+  deleteCollaboration(input: { id: $id })
+}
