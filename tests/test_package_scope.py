@@ -1,8 +1,7 @@
 """unlok must stay importable, and correct, without arkitekt.
 
 arkitekt is an optional integration. Two places may know about it: the integration
-module ``unlok/arkitekt.py``, and ``unlok/__init__.py``, which imports that module
-behind ``try/except ImportError``. Everything else takes the client it works with explicitly.
+module ``unlok/structures.py``, and ``unlok/__init__.py``, which imports that module. Everything else takes the client it works with explicitly.
 """
 
 import ast
@@ -13,7 +12,7 @@ from pathlib import Path
 import unlok
 
 PACKAGE = Path(unlok.__file__).parent
-MAY_KNOW_ARKITEKT = {PACKAGE / "arkitekt.py", PACKAGE / "__init__.py"}
+MAY_KNOW_ARKITEKT = {PACKAGE / "structures.py", PACKAGE / "__init__.py"}
 
 
 def _module_scope_imports(tree: ast.Module) -> list[str]:

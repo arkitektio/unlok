@@ -171,13 +171,8 @@ def build_approved_fakts(setup: Deployment, base_url: str, manifest: Manifest) -
 
 
 def build_unlok(fakts: Fakts) -> Unlok:
-    """The unlok client over a fakts session, composed like ``unlok.arkitekt.unlok``.
-
-    Resolved once, here, exactly as a run resolves it: the service talks to the
-    app's own fakts server, so the address is the self alias. Kept in sync with
-    the service by hand because this is the sync path and the service builds
-    asynchronously.
-    """
+    """The unlok client over a fakts session, composed like ``Unlok.from_fakts``:
+    it talks to the app's own fakts server, so the address is the self alias."""
     own = fakts.get_self_alias()
     return Unlok(
         rath=UnlokRath(

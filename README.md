@@ -25,14 +25,14 @@ app's *own* lok server, the one the app authenticated against.
 
 ### In an arkitekt app
 
-Add the service to your app and ask for `unlok: Unlok`; the client is injected by annotation.
+Ask for `unlok: Unlok`; the client is injected by annotation.
 Services travel between actions by id (`@lok/service`):
 
 ```python
 from arkitekt import App, run
-from unlok import Unlok, unlok_service
+from unlok import Unlok
 
-app = App("whoami", "0.1.0", services=[unlok_service])
+app = App("whoami", "0.1.0")
 
 
 @app.action
@@ -51,10 +51,10 @@ if __name__ == "__main__":
 ### From a script
 
 ```python
-from arkitekt import easy
-from unlok import unlok_service
+from arkitekt import connect
+from unlok import Unlok
 
-with easy("my-script", unlok_service) as unlok:
+with connect(Unlok) as unlok:
     for service in unlok.list_services():
         print(service.identifier, service.name)
 ```

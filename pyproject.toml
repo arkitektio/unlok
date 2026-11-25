@@ -9,7 +9,7 @@ dependencies = [
     "rath>=4.1.1",
     "websockets>=15.0.1",
     # The service and structures are declared with arkitekt-spec.
-    "arkitekt-spec>=5.0",
+    "arkitekt-spec>=14",
     # The service wiring (Alias, Require, FaktsAuthLink); it came through rekuest before.
     "fakts>=6.1",
 ]
@@ -99,6 +99,6 @@ dev = [
     "dokker>=2.8",
     # The integration session authenticates the way a deployed app does -- by
     # redeeming the stack's provisioned token through fakts' redeem grant -- and
-    # `unlok.arkitekt` composes its links from `fakts.contrib.rath`.
+    # `unlok.connect` composes its links from `fakts.contrib.rath`.
     "fakts>=6.1",
 ]

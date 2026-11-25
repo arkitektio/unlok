@@ -1,8 +1,11 @@
 """The base client for unlok"""
 
+import os
 from collections.abc import AsyncGenerator, Generator
-from typing import Any
+from typing import Annotated, Any, Self
 
+from arkitekt_spec.declare.client import client
+from arkitekt_spec.declare.wiring import Alias, Own, TokenLoader
 from koil import unkoil, unkoil_gen
 from koil.composition import Composition
 from pydantic import Field
@@ -12,7 +15,13 @@ from rath.turms.funcs import TOperation
 from unlok.api.schema import UnlokApi
 from unlok.rath import UnlokRath
 
+_API = os.path.join(os.path.dirname(__file__), "api")
 
+
+@client(
+    schema=os.path.join(_API, "schema.graphql"),
+    turms=os.path.join(_API, "project.json"),
+)
 class Unlok(Composition, UnlokApi):
     """Unlok
 
@@ -29,6 +38,13 @@ class Unlok(Composition, UnlokApi):
         ...,
         description="The Rath client used to interact with the lok API.",
     )
+
+    @classmethod
+    def from_fakts(cls, own: Annotated[Alias, Own()], tokens: TokenLoader) -> Self:
+        """Unlok over the app's own lok: it requires nothing of a deployment."""
+        from unlok.connect import unlok_rath
+
+        return cls(rath=unlok_rath(own, tokens))
 
     @staticmethod
     def _serialize(
